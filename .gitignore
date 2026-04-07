@@ -1,0 +1,7 @@
+﻿instantclient*
+evidencias/
+evidencias_variante/
+evidencias_teste_auto/
+*.zip
+__pycache__/
+.vscode/
