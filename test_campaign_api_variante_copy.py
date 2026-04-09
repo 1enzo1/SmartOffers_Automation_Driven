@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 import oracledb
 import os
+from logging_helper import log_success, log_error
 
 BASE_PATH = os.getenv("PASTA_EXECUCAO", "evidencias_variante")
 
@@ -186,7 +187,10 @@ def executar_pos(tipo, numero, conn):
     salvar_json(f"{pasta}/01_create_request.json",payload)
     salvar_json(f"{pasta}/01_create_response.json",r.json())
 
-    print(f"[POS-{tipo}] criação -> {msisdn}")
+    if not r.ok:
+        log_error(f"pos-{tipo}", "create", "request failed", msisdn=msisdn, offer=offer_inicial, external_id=external_id, extra={"http_status": r.status_code})
+    else:
+        log_success(f"pos-{tipo}", "create", "request sent", msisdn=msisdn, offer=offer_inicial, external_id=external_id)
 
     time.sleep(10)
 
@@ -226,7 +230,10 @@ def executar_pos(tipo, numero, conn):
     salvar_json(f"{pasta}/04_change_request.json",payload2)
     salvar_json(f"{pasta}/04_change_response.json",r2.json())
 
-    print(f"[POS-{tipo}] alteração -> {offer_final}")
+    if not r2.ok:
+        log_error(f"pos-{tipo}", "change", "request failed", msisdn=msisdn, offer=offer_final, external_id=external_id, extra={"http_status": r2.status_code})
+    else:
+        log_success(f"pos-{tipo}", "change", "request sent", msisdn=msisdn, offer=offer_final, external_id=external_id)
 
 # ==========================
 # EXECUÇÃO PRE
@@ -245,7 +252,10 @@ def executar_pre(numero, conn):
     salvar_json(f"{pasta}/01_request.json", payload)
     salvar_json(f"{pasta}/01_response.json", r.json())
 
-    print(f"[PRE] {msisdn}")
+    if not r.ok:
+        log_error("pre", "create", "request failed", msisdn=msisdn, external_id=external_id, extra={"http_status": r.status_code})
+    else:
+        log_success("pre", "create", "request sent", msisdn=msisdn, external_id=external_id)
 
     time.sleep(10)
 
@@ -259,7 +269,7 @@ def executar_pre(numero, conn):
 # ==========================
 # MAIN
 # ==========================
-print("\n====== INICIO TESTES ======\n")
+log_success("suite", "start", "inicio testes")
 
 conn = conectar_db()
 
@@ -274,4 +284,4 @@ if CONFIG["rodar_pre"]:
 
 conn.close()
 
-print("\n====== FINALIZADO ======\n")
+log_success("suite", "end", "finalizado")

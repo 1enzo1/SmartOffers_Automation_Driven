@@ -5,6 +5,7 @@ import os
 import time
 from datetime import datetime
 import oracledb
+from logging_helper import log_success, log_error
 
 BASE_PATH = os.getenv("PASTA_EXECUCAO", "evidencias_variante")
 
@@ -162,7 +163,7 @@ def salvar_json(caminho,dados):
 def registrar_erro(msg):
     global ERROS
     ERROS += 1
-    print(f"ERRO: {msg}")
+    log_error("global", "runtime", msg)
 
 
 def validar_db(conn, external_id):
@@ -249,7 +250,8 @@ def executar_cenario(tipo,numero,conn):
 
     r = requests.post(URL,json=payload,headers=HEADERS)
     if not r.ok:
-        registrar_erro(f"[{tipo}] criação HTTP {r.status_code} para {msisdn}")
+        registrar_erro(f"HTTP {r.status_code} during create")
+        log_error(tipo, "create", "request failed", msisdn=msisdn, offer=offer_inicial, external_id=external_id, extra={"http_status": r.status_code})
 
     salvar_json(f"{pasta}/01_create_request.json",payload)
 
@@ -258,7 +260,7 @@ def executar_cenario(tipo,numero,conn):
     except:
         open(f"{pasta}/01_create_response.txt","w").write(r.text)
 
-    print(f"{tipo} criação -> {msisdn} offer {offer_inicial}")
+    log_success(tipo, "create", "request sent", msisdn=msisdn, offer=offer_inicial, external_id=external_id)
 
     time.sleep(20)
 
@@ -266,7 +268,8 @@ def executar_cenario(tipo,numero,conn):
 
     salvar_json(f"{pasta}/02_db_validation.json",{"rows":str(rows)})
     if not rows:
-        registrar_erro(f"[{tipo}] CUST_DISCOVERY vazio para EXTERNAL_ID={external_id}")
+        registrar_erro(f"CUST_DISCOVERY vazio para EXTERNAL_ID={external_id}")
+        log_error(tipo, "db_validate_discovery", "no rows found", msisdn=msisdn, offer=offer_inicial, external_id=external_id)
 
     upsell, rehab, downgrade = escolher_planos(offer_inicial,rank)
 
@@ -281,7 +284,8 @@ def executar_cenario(tipo,numero,conn):
 
     r2 = requests.post(URL,json=payload2,headers=HEADERS)
     if not r2.ok:
-        registrar_erro(f"[{tipo}] alteração HTTP {r2.status_code} para {msisdn}")
+        registrar_erro(f"HTTP {r2.status_code} during change")
+        log_error(tipo, "change", "request failed", msisdn=msisdn, offer=offer_final, external_id=external_id, extra={"http_status": r2.status_code})
 
     salvar_json(f"{pasta}/03_{tipo}_request.json",payload2)
 
@@ -290,11 +294,11 @@ def executar_cenario(tipo,numero,conn):
     except:
         open(f"{pasta}/03_{tipo}_response.txt","w").write(r2.text)
 
-    print(f"{tipo} alteração -> {offer_final}")
+    log_success(tipo, "change", "request sent", msisdn=msisdn, offer=offer_final, external_id=external_id)
     
 
 
-print("\n====== INICIO TESTES CAMPANHA ======\n")
+log_success("campaign", "suite_start", "inicio testes campanha")
 
 if not os.path.exists("evidencias"):
     os.makedirs("evidencias")
@@ -310,7 +314,7 @@ for i in range(1,6):
 for i in range(1,6):
     executar_cenario("downgrade",i,conn)
 
-print("\n====== TESTES FINALIZADOS ======\n")
+log_success("campaign", "suite_end", "testes finalizados", extra={"errors": ERROS})
 
 conn.close()
 if ERROS > 0:
