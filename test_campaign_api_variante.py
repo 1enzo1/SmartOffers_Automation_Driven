@@ -6,6 +6,7 @@ import time
 from datetime import datetime
 import oracledb
 import os
+from logging_helper import log_success, log_error
 
 BASE_PATH = os.getenv("PASTA_EXECUCAO", "evidencias_variante")
 
@@ -148,7 +149,7 @@ def salvar_json(caminho,dados):
 def registrar_erro(msg):
     global ERROS
     ERROS += 1
-    print(f"ERRO: {msg}")
+    log_error("global", "runtime", msg)
 
 
 def query_table_as_text(conn, query, params=None):
@@ -263,27 +264,31 @@ def executar_pos(tipo,numero,conn):
     salvar_json(f"{pasta}/01_request.json",payload)
     salvar_json(f"{pasta}/01_response.json",r.json())
     if not r.ok:
-        registrar_erro(f"[POS-{tipo}] criação HTTP {r.status_code} para {msisdn}")
+        registrar_erro(f"HTTP {r.status_code} during create")
+        log_error(f"pos-{tipo}", "create", "request failed", msisdn=msisdn, offer=offer, external_id=external_id, extra={"http_status": r.status_code})
 
-    print(f"[POS] {tipo} -> {msisdn}")
+    log_success(f"pos-{tipo}", "create", "request sent", msisdn=msisdn, offer=offer, external_id=external_id)
 
     time.sleep(10)
 
     id_customer = buscar_customer(conn, external_id)
 
     if not id_customer:
-        registrar_erro(f"[POS-{tipo}] CUST_DISCOVERY não encontrado para EXTERNAL_ID={external_id}")
+        registrar_erro(f"CUST_DISCOVERY não encontrado para EXTERNAL_ID={external_id}")
+        log_error(f"pos-{tipo}", "db_validate_discovery", "customer not found", msisdn=msisdn, offer=offer, external_id=external_id)
         return
 
     id_contract,_ = buscar_contrato(conn, id_customer)
     if not id_contract:
-        registrar_erro(f"[POS-{tipo}] CUST_CAMPAIGNS sem contrato para CUSTOMER_ID={id_customer}")
+        registrar_erro(f"CUST_CAMPAIGNS sem contrato para CUSTOMER_ID={id_customer}")
+        log_error(f"pos-{tipo}", "db_validate_campaign", "contract not found", msisdn=msisdn, offer=offer, external_id=external_id, extra={"id_customer": id_customer})
         return
 
     audit_rows = validar_auditoria(conn,id_customer,id_contract)
     salvar_json(f"{pasta}/audit.json",audit_rows)
     if not audit_rows:
-        registrar_erro(f"[POS-{tipo}] ACM_AUDIT_RECORDS vazio para CUSTOMER_ID={id_customer}, CONTRACT_ID={id_contract}")
+        registrar_erro(f"ACM_AUDIT_RECORDS vazio para CUSTOMER_ID={id_customer}, CONTRACT_ID={id_contract}")
+        log_error(f"pos-{tipo}", "db_validate_audit", "audit rows missing", msisdn=msisdn, offer=offer, external_id=external_id, extra={"id_customer": id_customer, "id_contract": id_contract})
 
 
 def executar_pre(numero,conn):
@@ -300,34 +305,38 @@ def executar_pre(numero,conn):
     salvar_json(f"{pasta}/01_request.json",payload)
     salvar_json(f"{pasta}/01_response.json",r.json())
     if not r.ok:
-        registrar_erro(f"[PRE] criação HTTP {r.status_code} para {msisdn}")
+        registrar_erro(f"HTTP {r.status_code} during create")
+        log_error("pre", "create", "request failed", msisdn=msisdn, external_id=external_id, extra={"http_status": r.status_code})
 
-    print(f"[PRE] -> {msisdn}")
+    log_success("pre", "create", "request sent", msisdn=msisdn, external_id=external_id)
 
     time.sleep(10)
 
     id_customer = buscar_customer(conn, external_id)
 
     if not id_customer:
-        registrar_erro(f"[PRE] CUST_DISCOVERY não encontrado para EXTERNAL_ID={external_id}")
+        registrar_erro(f"CUST_DISCOVERY não encontrado para EXTERNAL_ID={external_id}")
+        log_error("pre", "db_validate_discovery", "customer not found", msisdn=msisdn, external_id=external_id)
         return
 
     id_contract,_ = buscar_contrato(conn, id_customer)
     if not id_contract:
-        registrar_erro(f"[PRE] CUST_CAMPAIGNS sem contrato para CUSTOMER_ID={id_customer}")
+        registrar_erro(f"CUST_CAMPAIGNS sem contrato para CUSTOMER_ID={id_customer}")
+        log_error("pre", "db_validate_campaign", "contract not found", msisdn=msisdn, external_id=external_id, extra={"id_customer": id_customer})
         return
 
     audit_rows = validar_auditoria(conn,id_customer,id_contract)
     salvar_json(f"{pasta}/audit.json",audit_rows)
     if not audit_rows:
-        registrar_erro(f"[PRE] ACM_AUDIT_RECORDS vazio para CUSTOMER_ID={id_customer}, CONTRACT_ID={id_contract}")
+        registrar_erro(f"ACM_AUDIT_RECORDS vazio para CUSTOMER_ID={id_customer}, CONTRACT_ID={id_contract}")
+        log_error("pre", "db_validate_audit", "audit rows missing", msisdn=msisdn, external_id=external_id, extra={"id_customer": id_customer, "id_contract": id_contract})
 
 
 # ==========================
 # MAIN
 # ==========================
 
-print("\n====== INICIO TESTES ======\n")
+log_success("suite", "start", "inicio testes")
 
 conn = conectar_db()
 
@@ -339,6 +348,6 @@ for i in range(1,3):
 
 conn.close()
 
-print("\n====== FINALIZADO ======\n")
+log_success("suite", "end", "finalizado", extra={"errors": ERROS})
 if ERROS > 0:
     raise SystemExit(1)
