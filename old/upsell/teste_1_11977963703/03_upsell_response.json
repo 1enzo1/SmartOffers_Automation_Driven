@@ -1,0 +1,22 @@
+{
+    "externalUniqueId": "879e4c22-c8a3-4bfc-a931-7a6ec5e1ca99",
+    "uniqueId": "203867769372691140.20594144006426085",
+    "status": "Error",
+    "result": false,
+    "message": "IHB_0012",
+    "error": {
+        "errorCode": "IHB_0012",
+        "errorMessage": "",
+        "initErrorMessage": "",
+        "module": "",
+        "cause": "",
+        "details": "",
+        "errorTrace": "IHB_0012|"
+    },
+    "returnCode": [
+        "IHB_0012"
+    ],
+    "event": "Event ID: 986557550",
+    "customer": null,
+    "trace": null
+}

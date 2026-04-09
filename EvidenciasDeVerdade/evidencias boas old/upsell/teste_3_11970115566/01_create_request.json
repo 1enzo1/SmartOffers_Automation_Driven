@@ -1,0 +1,79 @@
+{
+    "operation": "processEvent",
+    "extEventId": 986557550,
+    "eventTime": "16-03-2026 23:00:00",
+    "attributes": {
+        "70060213": "1",
+        "349876894": "104912312",
+        "425747132": "EMAIL",
+        "447500851": "70115566",
+        "908881601": "1",
+        "1576075623": "DD",
+        "1597489127": "NEXT_70115566",
+        "1666101552": "1",
+        "1667261676": "11970115566",
+        "1794057286": "1791234567",
+        "1840045565": "5",
+        "1997035279": "5",
+        "2020041941": "2",
+        "2118173840": "365123987"
+    },
+    "attributeDetails": {
+        "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+        },
+        "349876894": {
+            "type": "String",
+            "name": "OFFER"
+        },
+        "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+        },
+        "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+        },
+        "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+        },
+        "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+        },
+        "1597489127": {
+            "type": "String",
+            "name": "External Id"
+        },
+        "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+        },
+        "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+        },
+        "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+        },
+        "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+        },
+        "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+        },
+        "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+        },
+        "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+        }
+    }
+}

@@ -1,0 +1,23 @@
+{
+    "externalUniqueId": "468e5c05-4029-4bed-9265-a05ce9dae089",
+    "uniqueId": "203868180370250020.3995805810517149",
+    "status": "Success",
+    "result": true,
+    "message": "Event Processor Result: Success <true>",
+    "error": {
+        "errorCode": "",
+        "errorMessage": "",
+        "initErrorMessage": "",
+        "module": "",
+        "cause": "",
+        "details": "",
+        "errorTrace": ""
+    },
+    "returnCode": [
+        null,
+        ""
+    ],
+    "event": "Event ID: 986557550",
+    "customer": null,
+    "trace": null
+}
