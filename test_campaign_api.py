@@ -14,6 +14,8 @@ HEADERS = {
     "content-type": "application/json"
 }
 
+ERROS = 0
+
 PLANOS = [
 ("122429157",20430),
 ("122429137",20450),
@@ -157,6 +159,12 @@ def salvar_json(caminho,dados):
         json.dump(dados,f,indent=4)
 
 
+def registrar_erro(msg):
+    global ERROS
+    ERROS += 1
+    print(f"ERRO: {msg}")
+
+
 def validar_db(conn, external_id):
 
     cursor = conn.cursor()
@@ -225,7 +233,7 @@ def montar_payload_pre(msisdn):
         }
     }
 
-    return payload, external_
+    return payload, external_id
 
 def executar_cenario(tipo,numero,conn):
     
@@ -240,6 +248,8 @@ def executar_cenario(tipo,numero,conn):
     payload, external_id = montar_payload(msisdn,offer_inicial)
 
     r = requests.post(URL,json=payload,headers=HEADERS)
+    if not r.ok:
+        registrar_erro(f"[{tipo}] criação HTTP {r.status_code} para {msisdn}")
 
     salvar_json(f"{pasta}/01_create_request.json",payload)
 
@@ -255,6 +265,8 @@ def executar_cenario(tipo,numero,conn):
     rows = validar_db(conn,external_id)
 
     salvar_json(f"{pasta}/02_db_validation.json",{"rows":str(rows)})
+    if not rows:
+        registrar_erro(f"[{tipo}] CUST_DISCOVERY vazio para EXTERNAL_ID={external_id}")
 
     upsell, rehab, downgrade = escolher_planos(offer_inicial,rank)
 
@@ -268,6 +280,8 @@ def executar_cenario(tipo,numero,conn):
     payload2,_ = montar_payload(msisdn,offer_final)
 
     r2 = requests.post(URL,json=payload2,headers=HEADERS)
+    if not r2.ok:
+        registrar_erro(f"[{tipo}] alteração HTTP {r2.status_code} para {msisdn}")
 
     salvar_json(f"{pasta}/03_{tipo}_request.json",payload2)
 
@@ -299,3 +313,5 @@ for i in range(1,6):
 print("\n====== TESTES FINALIZADOS ======\n")
 
 conn.close()
+if ERROS > 0:
+    raise SystemExit(1)
