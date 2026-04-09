@@ -36,6 +36,8 @@ def executar():
     analisar = request.args.get("analisar") == "true"
 
     script = SCRIPTS.get(tipo)
+    if not script:
+        return jsonify({"erro": f"tipo de script inválido: {tipo}"}), 400
 
     def gerar_log():
 
@@ -74,6 +76,10 @@ def executar():
                     yield f"data:LOG|{linha}\n\n"
 
             processo.wait()
+
+            if processo.returncode != 0:
+                erros += 1
+                yield f"data:ERROR|processo finalizou com código {processo.returncode}\n\n"
 
             status = "PASS" if erros == 0 else "FAIL"
 

@@ -15,6 +15,8 @@ HEADERS = {
     "content-type": "application/json"
 }
 
+ERROS = 0
+
 PLANOS = [
 ("122429157",20430),
 ("122429137",20450),
@@ -143,6 +145,12 @@ def salvar_json(caminho,dados):
         json.dump(dados,f,indent=4)
 
 
+def registrar_erro(msg):
+    global ERROS
+    ERROS += 1
+    print(f"ERRO: {msg}")
+
+
 def query_table_as_text(conn, query, params=None):
 
     cursor = conn.cursor()
@@ -254,6 +262,8 @@ def executar_pos(tipo,numero,conn):
 
     salvar_json(f"{pasta}/01_request.json",payload)
     salvar_json(f"{pasta}/01_response.json",r.json())
+    if not r.ok:
+        registrar_erro(f"[POS-{tipo}] criação HTTP {r.status_code} para {msisdn}")
 
     print(f"[POS] {tipo} -> {msisdn}")
 
@@ -262,11 +272,18 @@ def executar_pos(tipo,numero,conn):
     id_customer = buscar_customer(conn, external_id)
 
     if not id_customer:
+        registrar_erro(f"[POS-{tipo}] CUST_DISCOVERY não encontrado para EXTERNAL_ID={external_id}")
         return
 
     id_contract,_ = buscar_contrato(conn, id_customer)
+    if not id_contract:
+        registrar_erro(f"[POS-{tipo}] CUST_CAMPAIGNS sem contrato para CUSTOMER_ID={id_customer}")
+        return
 
-    salvar_json(f"{pasta}/audit.json",validar_auditoria(conn,id_customer,id_contract))
+    audit_rows = validar_auditoria(conn,id_customer,id_contract)
+    salvar_json(f"{pasta}/audit.json",audit_rows)
+    if not audit_rows:
+        registrar_erro(f"[POS-{tipo}] ACM_AUDIT_RECORDS vazio para CUSTOMER_ID={id_customer}, CONTRACT_ID={id_contract}")
 
 
 def executar_pre(numero,conn):
@@ -282,6 +299,8 @@ def executar_pre(numero,conn):
 
     salvar_json(f"{pasta}/01_request.json",payload)
     salvar_json(f"{pasta}/01_response.json",r.json())
+    if not r.ok:
+        registrar_erro(f"[PRE] criação HTTP {r.status_code} para {msisdn}")
 
     print(f"[PRE] -> {msisdn}")
 
@@ -290,11 +309,18 @@ def executar_pre(numero,conn):
     id_customer = buscar_customer(conn, external_id)
 
     if not id_customer:
+        registrar_erro(f"[PRE] CUST_DISCOVERY não encontrado para EXTERNAL_ID={external_id}")
         return
 
     id_contract,_ = buscar_contrato(conn, id_customer)
+    if not id_contract:
+        registrar_erro(f"[PRE] CUST_CAMPAIGNS sem contrato para CUSTOMER_ID={id_customer}")
+        return
 
-    salvar_json(f"{pasta}/audit.json",validar_auditoria(conn,id_customer,id_contract))
+    audit_rows = validar_auditoria(conn,id_customer,id_contract)
+    salvar_json(f"{pasta}/audit.json",audit_rows)
+    if not audit_rows:
+        registrar_erro(f"[PRE] ACM_AUDIT_RECORDS vazio para CUSTOMER_ID={id_customer}, CONTRACT_ID={id_contract}")
 
 
 # ==========================
@@ -314,3 +340,5 @@ for i in range(1,3):
 conn.close()
 
 print("\n====== FINALIZADO ======\n")
+if ERROS > 0:
+    raise SystemExit(1)
