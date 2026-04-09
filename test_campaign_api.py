@@ -225,7 +225,7 @@ def montar_payload_pre(msisdn):
         }
     }
 
-    return payload, external_
+    return payload, external_id
 
 def executar_cenario(tipo,numero,conn):
     
