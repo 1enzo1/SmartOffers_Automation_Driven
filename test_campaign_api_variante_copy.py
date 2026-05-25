@@ -6,8 +6,12 @@ import time
 from datetime import datetime
 import oracledb
 import os
+from core.utils.evidence_paths import build_path, create_run_path, get_base_path
+from core.utils.evidence_analysis import analisar_teste, salvar_analise
 
-BASE_PATH = os.getenv("PASTA_EXECUCAO", "evidencias_variante")
+BASE_PATH = get_base_path("evidencias_variante")
+RUN_PATH = create_run_path(BASE_PATH)
+ANALISAR_EXECUCAO = os.getenv("ANALISAR_EXECUCAO", "0") == "1"
 
 # ==========================
 # CONFIG
@@ -98,6 +102,10 @@ def executar_query_debug(conn, nome, query, params=None):
         "rows": result
     }
 
+
+def registrar(msg):
+    print(msg, flush=True)
+
 # ==========================
 # PAYLOAD POS
 # ==========================
@@ -176,8 +184,9 @@ def executar_pos(tipo, numero, conn):
     msisdn = gerar_msisdn()
     offer_inicial, rank = random.choice(PLANOS)
 
-    pasta = f"evidencias_variante/pos/{tipo}/teste_{numero}_{msisdn}"
+    pasta = build_path(RUN_PATH, "pos", tipo, f"teste_{numero}_{msisdn}")
     os.makedirs(pasta, exist_ok=True)
+    registrar(f"SCENARIO|START|pos/{tipo}|{numero}|{msisdn}|{pasta}")
 
     payload, external_id = montar_payload_pos(msisdn, offer_inicial)
 
@@ -185,6 +194,8 @@ def executar_pos(tipo, numero, conn):
 
     salvar_json(f"{pasta}/01_create_request.json",payload)
     salvar_json(f"{pasta}/01_create_response.json",r.json())
+    registrar(f"STEP|pos/{tipo}|{numero}|01_request")
+    registrar(f"STEP|pos/{tipo}|{numero}|01_response")
 
     print(f"[POS-{tipo}] criação -> {msisdn}")
 
@@ -197,8 +208,14 @@ def executar_pos(tipo, numero, conn):
     )
 
     salvar_json(f"{pasta}/02_discovery.json", discovery)
+    registrar(f"STEP|pos/{tipo}|{numero}|02_discovery")
 
     if not discovery["rows"]:
+        resultado_analise = analisar_teste(pasta, tipo)
+        salvar_analise(pasta, resultado_analise)
+        if ANALISAR_EXECUCAO:
+            registrar(f"ANALYSIS|pos/{tipo}|{numero}|{json.dumps(resultado_analise, ensure_ascii=False)}")
+        registrar(f"SCENARIO|END|pos/{tipo}|{numero}|{msisdn}|{pasta}")
         return
 
     id_customer = discovery["rows"][0]["CUSTOMER_ID"]
@@ -209,6 +226,7 @@ def executar_pos(tipo, numero, conn):
     )
 
     salvar_json(f"{pasta}/03_campaign.json", campaign)
+    registrar(f"STEP|pos/{tipo}|{numero}|03_campaign")
 
     upsell, rehab, downgrade = escolher_planos(offer_inicial, rank)
 
@@ -225,8 +243,16 @@ def executar_pos(tipo, numero, conn):
 
     salvar_json(f"{pasta}/04_change_request.json",payload2)
     salvar_json(f"{pasta}/04_change_response.json",r2.json())
+    registrar(f"STEP|pos/{tipo}|{numero}|04_change_request")
+    registrar(f"STEP|pos/{tipo}|{numero}|04_change_response")
 
     print(f"[POS-{tipo}] alteração -> {offer_final}")
+
+    resultado_analise = analisar_teste(pasta, tipo)
+    salvar_analise(pasta, resultado_analise)
+    if ANALISAR_EXECUCAO:
+        registrar(f"ANALYSIS|pos/{tipo}|{numero}|{json.dumps(resultado_analise, ensure_ascii=False)}")
+    registrar(f"SCENARIO|END|pos/{tipo}|{numero}|{msisdn}|{pasta}")
 
 # ==========================
 # EXECUÇÃO PRE
@@ -235,8 +261,9 @@ def executar_pre(numero, conn):
 
     msisdn = gerar_msisdn()
 
-    pasta = f"evidencias_variante/pre/teste_{numero}_{msisdn}"
+    pasta = build_path(RUN_PATH, "pre", f"teste_{numero}_{msisdn}")
     os.makedirs(pasta, exist_ok=True)
+    registrar(f"SCENARIO|START|pre|{numero}|{msisdn}|{pasta}")
 
     payload, external_id = montar_payload_pre(msisdn)
 
@@ -244,6 +271,8 @@ def executar_pre(numero, conn):
 
     salvar_json(f"{pasta}/01_request.json", payload)
     salvar_json(f"{pasta}/01_response.json", r.json())
+    registrar(f"STEP|pre|{numero}|01_request")
+    registrar(f"STEP|pre|{numero}|01_response")
 
     print(f"[PRE] {msisdn}")
 
@@ -255,6 +284,13 @@ def executar_pre(numero, conn):
     )
 
     salvar_json(f"{pasta}/02_discovery.json", discovery)
+    registrar(f"STEP|pre|{numero}|02_discovery")
+
+    resultado_analise = analisar_teste(pasta, "pre")
+    salvar_analise(pasta, resultado_analise)
+    if ANALISAR_EXECUCAO:
+        registrar(f"ANALYSIS|pre|{numero}|{json.dumps(resultado_analise, ensure_ascii=False)}")
+    registrar(f"SCENARIO|END|pre|{numero}|{msisdn}|{pasta}")
 
 # ==========================
 # MAIN

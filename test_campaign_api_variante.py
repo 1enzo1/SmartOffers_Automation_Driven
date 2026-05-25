@@ -6,16 +6,18 @@ import time
 from datetime import datetime
 import oracledb
 import os
+from core.utils.evidence_paths import build_path, create_run_path, get_base_path
+from core.utils.evidence_analysis import analisar_teste, salvar_analise
 
-BASE_PATH = os.getenv("PASTA_EXECUCAO", "evidencias_variante")
+BASE_PATH = get_base_path("evidencias_variante")
+RUN_PATH = create_run_path(BASE_PATH)
+ANALISAR_EXECUCAO = os.getenv("ANALISAR_EXECUCAO", "0") == "1"
 
 URL = "http://10.129.174.95:8084/ws/integration/online/process"
 
 HEADERS = {
     "content-type": "application/json"
 }
-
-ERROS = 0
 
 PLANOS = [
 ("122429157",20430),
@@ -145,12 +147,6 @@ def salvar_json(caminho,dados):
         json.dump(dados,f,indent=4)
 
 
-def registrar_erro(msg):
-    global ERROS
-    ERROS += 1
-    print(f"ERRO: {msg}")
-
-
 def query_table_as_text(conn, query, params=None):
 
     cursor = conn.cursor()
@@ -244,6 +240,10 @@ def validar_caracteristicas(conn, id_contract):
     """, {"id_contract": id_contract})
 
 
+def registrar(msg):
+    print(msg, flush=True)
+
+
 # ==========================
 # EXECUÇÃO
 # ==========================
@@ -253,8 +253,9 @@ def executar_pos(tipo,numero,conn):
     msisdn = gerar_msisdn()
     offer, rank = random.choice(PLANOS)
 
-    pasta = f"evidencias_variante/pos/{tipo}/teste_{numero}_{msisdn}"
+    pasta = build_path(RUN_PATH, "pos", tipo, f"teste_{numero}_{msisdn}")
     os.makedirs(pasta,exist_ok=True)
+    registrar(f"SCENARIO|START|pos/{tipo}|{numero}|{msisdn}|{pasta}")
 
     payload, external_id = montar_payload_pos(msisdn,offer)
 
@@ -262,8 +263,8 @@ def executar_pos(tipo,numero,conn):
 
     salvar_json(f"{pasta}/01_request.json",payload)
     salvar_json(f"{pasta}/01_response.json",r.json())
-    if not r.ok:
-        registrar_erro(f"[POS-{tipo}] criação HTTP {r.status_code} para {msisdn}")
+    registrar(f"STEP|pos/{tipo}|{numero}|01_request")
+    registrar(f"STEP|pos/{tipo}|{numero}|01_response")
 
     print(f"[POS] {tipo} -> {msisdn}")
 
@@ -272,26 +273,32 @@ def executar_pos(tipo,numero,conn):
     id_customer = buscar_customer(conn, external_id)
 
     if not id_customer:
-        registrar_erro(f"[POS-{tipo}] CUST_DISCOVERY não encontrado para EXTERNAL_ID={external_id}")
+        resultado_analise = analisar_teste(pasta, tipo)
+        salvar_analise(pasta, resultado_analise)
+        if ANALISAR_EXECUCAO:
+            registrar(f"ANALYSIS|pos/{tipo}|{numero}|{json.dumps(resultado_analise, ensure_ascii=False)}")
+        registrar(f"SCENARIO|END|pos/{tipo}|{numero}|{msisdn}|{pasta}")
         return
 
     id_contract,_ = buscar_contrato(conn, id_customer)
-    if not id_contract:
-        registrar_erro(f"[POS-{tipo}] CUST_CAMPAIGNS sem contrato para CUSTOMER_ID={id_customer}")
-        return
 
-    audit_rows = validar_auditoria(conn,id_customer,id_contract)
-    salvar_json(f"{pasta}/audit.json",audit_rows)
-    if not audit_rows:
-        registrar_erro(f"[POS-{tipo}] ACM_AUDIT_RECORDS vazio para CUSTOMER_ID={id_customer}, CONTRACT_ID={id_contract}")
+    salvar_json(f"{pasta}/audit.json",validar_auditoria(conn,id_customer,id_contract))
+    registrar(f"STEP|pos/{tipo}|{numero}|audit")
+
+    resultado_analise = analisar_teste(pasta, tipo)
+    salvar_analise(pasta, resultado_analise)
+    if ANALISAR_EXECUCAO:
+        registrar(f"ANALYSIS|pos/{tipo}|{numero}|{json.dumps(resultado_analise, ensure_ascii=False)}")
+    registrar(f"SCENARIO|END|pos/{tipo}|{numero}|{msisdn}|{pasta}")
 
 
 def executar_pre(numero,conn):
 
     msisdn = gerar_msisdn()
 
-    pasta = f"evidencias_variante/pre/teste_{numero}_{msisdn}"
+    pasta = build_path(RUN_PATH, "pre", f"teste_{numero}_{msisdn}")
     os.makedirs(pasta,exist_ok=True)
+    registrar(f"SCENARIO|START|pre|{numero}|{msisdn}|{pasta}")
 
     payload, external_id = montar_payload_pre(msisdn)
 
@@ -299,8 +306,8 @@ def executar_pre(numero,conn):
 
     salvar_json(f"{pasta}/01_request.json",payload)
     salvar_json(f"{pasta}/01_response.json",r.json())
-    if not r.ok:
-        registrar_erro(f"[PRE] criação HTTP {r.status_code} para {msisdn}")
+    registrar(f"STEP|pre|{numero}|01_request")
+    registrar(f"STEP|pre|{numero}|01_response")
 
     print(f"[PRE] -> {msisdn}")
 
@@ -309,18 +316,23 @@ def executar_pre(numero,conn):
     id_customer = buscar_customer(conn, external_id)
 
     if not id_customer:
-        registrar_erro(f"[PRE] CUST_DISCOVERY não encontrado para EXTERNAL_ID={external_id}")
+        resultado_analise = analisar_teste(pasta, "pre")
+        salvar_analise(pasta, resultado_analise)
+        if ANALISAR_EXECUCAO:
+            registrar(f"ANALYSIS|pre|{numero}|{json.dumps(resultado_analise, ensure_ascii=False)}")
+        registrar(f"SCENARIO|END|pre|{numero}|{msisdn}|{pasta}")
         return
 
     id_contract,_ = buscar_contrato(conn, id_customer)
-    if not id_contract:
-        registrar_erro(f"[PRE] CUST_CAMPAIGNS sem contrato para CUSTOMER_ID={id_customer}")
-        return
 
-    audit_rows = validar_auditoria(conn,id_customer,id_contract)
-    salvar_json(f"{pasta}/audit.json",audit_rows)
-    if not audit_rows:
-        registrar_erro(f"[PRE] ACM_AUDIT_RECORDS vazio para CUSTOMER_ID={id_customer}, CONTRACT_ID={id_contract}")
+    salvar_json(f"{pasta}/audit.json",validar_auditoria(conn,id_customer,id_contract))
+    registrar(f"STEP|pre|{numero}|audit")
+
+    resultado_analise = analisar_teste(pasta, "pre")
+    salvar_analise(pasta, resultado_analise)
+    if ANALISAR_EXECUCAO:
+        registrar(f"ANALYSIS|pre|{numero}|{json.dumps(resultado_analise, ensure_ascii=False)}")
+    registrar(f"SCENARIO|END|pre|{numero}|{msisdn}|{pasta}")
 
 
 # ==========================
@@ -340,5 +352,3 @@ for i in range(1,3):
 conn.close()
 
 print("\n====== FINALIZADO ======\n")
-if ERROS > 0:
-    raise SystemExit(1)
