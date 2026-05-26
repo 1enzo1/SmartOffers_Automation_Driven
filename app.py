@@ -6,6 +6,15 @@ from pathlib import Path
 
 from flask import Flask, Response, jsonify, render_template, request
 
+from core.generation import (
+    ScenarioValidationError,
+    generate_scenario,
+    get_questions,
+    list_scenarios,
+    load_scenario,
+    save_scenario,
+)
+
 
 app = Flask(__name__)
 
@@ -21,6 +30,39 @@ SCRIPTS = {
 @app.route("/")
 def index():
     return render_template("index.html", scripts=SCRIPTS.keys())
+
+
+@app.route("/api/questions")
+def api_questions():
+    return jsonify({"questions": get_questions()})
+
+
+@app.route("/api/scenarios/generate", methods=["POST"])
+def api_generate_scenario():
+    data = request.get_json(silent=True) or {}
+
+    try:
+        scenario = generate_scenario(data)
+        saved_path = save_scenario(scenario)
+    except ScenarioValidationError as exc:
+        return jsonify({"erro": str(exc), "details": exc.errors}), 400
+
+    return jsonify({"scenario": scenario, "saved_path": saved_path}), 201
+
+
+@app.route("/api/scenarios")
+def api_list_scenarios():
+    return jsonify({"scenarios": list_scenarios()})
+
+
+@app.route("/api/scenarios/<scenario_id>")
+def api_get_scenario(scenario_id):
+    scenario = load_scenario(scenario_id)
+
+    if not scenario:
+        return jsonify({"erro": "cenario nao encontrado"}), 404
+
+    return jsonify({"scenario": scenario})
 
 
 @app.route("/executar")

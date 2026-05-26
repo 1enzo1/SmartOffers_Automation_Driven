@@ -2,6 +2,9 @@
 evidencias/
 evidencias_variante/
 evidencias_teste_auto/
+cenarios_gerados/
 *.zip
 __pycache__/
+.pytest_tmp/
+.test_output/
 .vscode/
