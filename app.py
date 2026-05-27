@@ -14,6 +14,7 @@ from core.generation import (
     load_scenario,
     save_scenario,
 )
+from core.simulation import run_dry_run, save_dry_run_report
 
 
 app = Flask(__name__)
@@ -63,6 +64,19 @@ def api_get_scenario(scenario_id):
         return jsonify({"erro": "cenario nao encontrado"}), 404
 
     return jsonify({"scenario": scenario})
+
+
+@app.route("/api/scenarios/<scenario_id>/dry-run", methods=["POST"])
+def api_dry_run_scenario(scenario_id):
+    scenario = load_scenario(scenario_id)
+
+    if not scenario:
+        return jsonify({"erro": "cenario nao encontrado"}), 404
+
+    report = run_dry_run(scenario)
+    saved_path = save_dry_run_report(report)
+
+    return jsonify({"report": report, "saved_path": saved_path}), 201
 
 
 @app.route("/executar")
