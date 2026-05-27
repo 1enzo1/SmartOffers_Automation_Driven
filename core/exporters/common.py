@@ -21,6 +21,8 @@ EXPORT_EXTENSIONS = {
     "json": "json",
 }
 
+PLANNED_CONTENT_KEYS = ("sql", "lookup", "request", "endpoint", "method", "files")
+
 
 def utc_now_iso():
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
@@ -54,6 +56,24 @@ def dedupe_preserve_order(items):
         unique.append(item)
 
     return unique
+
+
+def render_planned_content(item):
+    if not isinstance(item, Mapping):
+        return "" if item is None else str(item)
+
+    for key in PLANNED_CONTENT_KEYS:
+        value = item.get(key)
+        if value not in (None, "", [], {}):
+            return render_json_value(value)
+
+    return render_json_value(item)
+
+
+def render_json_value(value):
+    if isinstance(value, (dict, list)):
+        return json.dumps(value, ensure_ascii=False, sort_keys=True)
+    return str(value)
 
 
 def flatten_json(value, prefix=""):

@@ -3,6 +3,7 @@ import uuid
 from pathlib import Path
 
 import app as app_module
+from core.exporters.common import render_planned_content
 from docx import Document
 from openpyxl import load_workbook
 
@@ -82,6 +83,8 @@ def test_exports_cover_scenario_and_dry_run(monkeypatch):
     assert "Execution Steps" in scenario_docx_content
     assert "Validation Steps" in scenario_docx_content
     assert "Payload" in scenario_docx_content
+    assert "POST /smartoffers/{{operation}}" in scenario_docx_content
+    assert "12_expected_evidence_manifest.json" in scenario_docx_content
 
     scenario_xlsx_response = client.get(f"/api/scenarios/{scenario['id']}/export/xlsx")
     assert scenario_xlsx_response.status_code == 200
@@ -97,6 +100,15 @@ def test_exports_cover_scenario_and_dry_run(monkeypatch):
         "Evidencias",
         "Warnings",
     ]
+    query_values = [
+        row[3]
+        for row in scenario_wb["Queries"].iter_rows(min_row=2, values_only=True)
+    ]
+    assert "POST /smartoffers/{{operation}}" in query_values
+    assert any(
+        value and "12_expected_evidence_manifest.json" in value
+        for value in query_values
+    )
 
     report_json_response = client.get(f"/api/dry-runs/{report['id']}/export/json")
     assert report_json_response.status_code == 200
@@ -142,3 +154,19 @@ def test_export_and_lookup_404s(monkeypatch):
     assert client.get("/api/dry-runs/nao-existe/export/json").status_code == 404
     assert client.get("/api/dry-runs/nao-existe").status_code == 404
     assert client.post("/api/scenarios/nao-existe/dry-run").status_code == 404
+
+
+def test_render_planned_content_handles_non_sql_items():
+    assert (
+        render_planned_content({"name": "api_contract", "request": "POST /smartoffers/{{operation}}"})
+        == "POST /smartoffers/{{operation}}"
+    )
+    assert render_planned_content(
+        {
+            "name": "expected_evidence_manifest",
+            "files": ["01_payload.json", "12_expected_evidence_manifest.json"],
+        }
+    ) == '["01_payload.json", "12_expected_evidence_manifest.json"]'
+    assert render_planned_content({"name": "custom", "custom_key": "custom_value"}) == (
+        '{"custom_key": "custom_value", "name": "custom"}'
+    )

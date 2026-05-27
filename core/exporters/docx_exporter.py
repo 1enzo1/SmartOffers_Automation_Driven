@@ -4,6 +4,7 @@ from io import BytesIO
 from docx import Document
 from docx.shared import Pt
 
+from .common import render_planned_content
 from .storage import persist_export_bytes
 
 
@@ -150,8 +151,7 @@ def _build_document(context):
             cells[0].text = str(item.get("name", ""))
             cells[1].text = str(item.get("kind", ""))
             cells[2].text = str(item.get("purpose", ""))
-            query_text = item.get("sql") or item.get("lookup") or ""
-            cells[3].text = str(query_text)
+            cells[3].text = render_planned_content(item)
 
     _add_list(document, "Checkpoints", context.get("checkpoints") or [])
     _add_list(document, "Evidencias esperadas", context.get("evidence_files") or [])

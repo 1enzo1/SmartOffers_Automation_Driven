@@ -4,7 +4,7 @@ from io import BytesIO
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
 
-from .common import flatten_json
+from .common import flatten_json, render_planned_content
 from .storage import persist_export_bytes
 
 
@@ -150,7 +150,7 @@ def _build_workbook(context):
                 item.get("name", ""),
                 item.get("kind", ""),
                 item.get("purpose", ""),
-                item.get("sql") or item.get("lookup") or "",
+                render_planned_content(item),
             ]
         )
     _write_table_sheet(ws, ["Name", "Kind", "Purpose", "Query"], query_rows)
