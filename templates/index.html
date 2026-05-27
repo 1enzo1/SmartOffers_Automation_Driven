@@ -1527,6 +1527,9 @@ pre {
 
                     <div class="result-actions">
                         <button class="secondary" type="button" onclick="copyScenarioJson()">Copiar JSON</button>
+                        <button class="secondary" id="scenarioExportDocx" type="button" onclick="exportScenarioArtifact('docx')" disabled>Exportar DOCX</button>
+                        <button class="secondary" id="scenarioExportXlsx" type="button" onclick="exportScenarioArtifact('xlsx')" disabled>Exportar XLSX</button>
+                        <button class="secondary" id="scenarioExportJson" type="button" onclick="exportScenarioArtifact('json')" disabled>Exportar JSON</button>
                         <button class="success" id="runDryRunButton" type="button" onclick="runDryRun()" disabled>Simular execu&ccedil;&atilde;o</button>
                         <button class="secondary" id="openSavedScenario" type="button" onclick="openSavedScenario()" disabled>Abrir salvo</button>
                         <button class="primary" type="button" onclick="showWorkspace('runner')">Ir para execucao</button>
@@ -1576,8 +1579,11 @@ pre {
                     </div>
                 </div>
 
-                <div class="result-actions" style="grid-template-columns:1fr;margin-top:16px;max-width:260px">
+                <div class="result-actions" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:16px;max-width:680px">
                     <button class="secondary" type="button" onclick="copyDryRunJson()">Copiar JSON do relat&oacute;rio</button>
+                    <button class="secondary" id="dryRunExportDocx" type="button" onclick="exportDryRunArtifact('docx')" disabled>Exportar DOCX</button>
+                    <button class="secondary" id="dryRunExportXlsx" type="button" onclick="exportDryRunArtifact('xlsx')" disabled>Exportar XLSX</button>
+                    <button class="secondary" id="dryRunExportJson" type="button" onclick="exportDryRunArtifact('json')" disabled>Exportar JSON</button>
                 </div>
 
                 <div class="subsection">
@@ -2150,6 +2156,7 @@ function renderScenario(scenario){
     document.getElementById("scenarioDetails").style.display = "block"
     document.getElementById("openSavedScenario").disabled = false
     document.getElementById("runDryRunButton").disabled = false
+    updateExportButtonsState()
     hideDryRunReport()
 
     document.getElementById("scenarioTitle").textContent = scenario.titulo
@@ -2285,6 +2292,7 @@ function renderDryRunReport(report){
     renderDryRunLogs(report.logs || [])
     renderDryRunWarnings(report.warnings || [])
     document.getElementById("dryRunJsonPreview").textContent = JSON.stringify(report, null, 2)
+    updateExportButtonsState()
 }
 
 function renderDryRunSteps(steps){
@@ -2357,6 +2365,7 @@ function hideDryRunReport(){
     currentDryRunReport = null
     document.getElementById("dryRunResultCard").style.display = "none"
     updateDryRunState(currentGeneratedScenario ? "ready" : "idle")
+    updateExportButtonsState()
 }
 
 function showResultTab(name){
@@ -2377,6 +2386,42 @@ async function copyScenarioJson(){
     }
 }
 
+function updateExportButtonsState(){
+    const hasScenario = Boolean(currentGeneratedScenario && currentGeneratedScenario.id)
+    const hasDryRun = Boolean(currentDryRunReport && currentDryRunReport.id)
+
+    ;["scenarioExportDocx", "scenarioExportXlsx", "scenarioExportJson"].forEach(id => {
+        const button = document.getElementById(id)
+        if(button) button.disabled = !hasScenario
+    })
+
+    ;["dryRunExportDocx", "dryRunExportXlsx", "dryRunExportJson"].forEach(id => {
+        const button = document.getElementById(id)
+        if(button) button.disabled = !hasDryRun
+    })
+}
+
+function triggerDownload(url){
+    const anchor = document.createElement("a")
+    anchor.href = url
+    anchor.download = ""
+    document.body.appendChild(anchor)
+    anchor.click()
+    anchor.remove()
+}
+
+function exportScenarioArtifact(format){
+    if(!currentGeneratedScenario || !currentGeneratedScenario.id) return
+    triggerDownload(`/api/scenarios/${currentGeneratedScenario.id}/export/${format}`)
+    setGeneratorMessage(`Export ${format.toUpperCase()} do cenario solicitado.`, "ok")
+}
+
+function exportDryRunArtifact(format){
+    if(!currentDryRunReport || !currentDryRunReport.id) return
+    triggerDownload(`/api/dry-runs/${currentDryRunReport.id}/export/${format}`)
+    setGeneratorMessage(`Export ${format.toUpperCase()} do dry-run solicitado.`, "ok")
+}
+
 function openSavedScenario(){
     if(!currentGeneratedScenario) return
     window.open(`/api/scenarios/${currentGeneratedScenario.id}`, "_blank")
@@ -2393,6 +2438,7 @@ function clearGenerator(){
     document.getElementById("openSavedScenario").disabled = true
     document.getElementById("runDryRunButton").disabled = true
     hideDryRunReport()
+    updateExportButtonsState()
     updateActiveScenarioStats(null)
     setGeneratorMessage("", "")
     updateConditionalFields()

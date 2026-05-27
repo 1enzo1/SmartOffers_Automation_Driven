@@ -4,7 +4,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from flask import Flask, Response, jsonify, render_template, request
+from flask import Flask, Response, jsonify, render_template, request, send_file
 
 from core.generation import (
     ScenarioValidationError,
@@ -13,6 +13,14 @@ from core.generation import (
     list_scenarios,
     load_scenario,
     save_scenario,
+)
+from core.exporters import (
+    ExportFormatError,
+    ExportSourceNotFoundError,
+    export_dry_run_artifact,
+    export_scenario_artifact,
+    get_export_mimetype,
+    load_dry_run_report_by_id,
 )
 from core.simulation import run_dry_run, save_dry_run_report
 
@@ -77,6 +85,45 @@ def api_dry_run_scenario(scenario_id):
     saved_path = save_dry_run_report(report)
 
     return jsonify({"report": report, "saved_path": saved_path}), 201
+
+
+@app.route("/api/dry-runs/<report_id>")
+def api_get_dry_run(report_id):
+    report = load_dry_run_report_by_id(report_id)
+
+    if not report:
+        return jsonify({"erro": "dry-run nao encontrado"}), 404
+
+    return jsonify({"report": report})
+
+
+def _send_export_file(path, export_format):
+    mimetype = get_export_mimetype(export_format) or "application/octet-stream"
+    return send_file(path, mimetype=mimetype, as_attachment=True, download_name=path.name)
+
+
+@app.route("/api/scenarios/<scenario_id>/export/<export_format>")
+def api_export_scenario(scenario_id, export_format):
+    try:
+        path = export_scenario_artifact(scenario_id, export_format)
+    except ExportSourceNotFoundError:
+        return jsonify({"erro": "cenario nao encontrado"}), 404
+    except ExportFormatError:
+        return jsonify({"erro": "formato de exportacao invalido"}), 400
+
+    return _send_export_file(path, export_format)
+
+
+@app.route("/api/dry-runs/<report_id>/export/<export_format>")
+def api_export_dry_run(report_id, export_format):
+    try:
+        path = export_dry_run_artifact(report_id, export_format)
+    except ExportSourceNotFoundError:
+        return jsonify({"erro": "dry-run nao encontrado"}), 404
+    except ExportFormatError:
+        return jsonify({"erro": "formato de exportacao invalido"}), 400
+
+    return _send_export_file(path, export_format)
 
 
 @app.route("/executar")
