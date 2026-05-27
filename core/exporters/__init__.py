@@ -7,7 +7,6 @@ from .service import (
     get_export_extension,
     get_export_mimetype,
     load_dry_run_report_by_id,
-    simulate_dry_run_report,
 )
 
 __all__ = [
@@ -20,5 +19,4 @@ __all__ = [
     "get_export_extension",
     "get_export_mimetype",
     "load_dry_run_report_by_id",
-    "simulate_dry_run_report",
 ]

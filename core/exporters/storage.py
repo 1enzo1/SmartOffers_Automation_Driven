@@ -34,17 +34,6 @@ def load_dry_run_report(report_id):
         return None
 
 
-def save_dry_run_report(report):
-    directory = get_dry_runs_dir()
-    directory.mkdir(parents=True, exist_ok=True)
-
-    path = directory / f"{report['id']}.json"
-    with path.open("w", encoding="utf-8") as handle:
-        json.dump(report, handle, indent=2, ensure_ascii=False)
-
-    return str(path)
-
-
 def persist_export_bytes(content_bytes, source_type, source_id, export_type, extension):
     directory = get_exports_dir()
     directory.mkdir(parents=True, exist_ok=True)
