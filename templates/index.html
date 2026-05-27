@@ -6,129 +6,312 @@
 <title>SmartOffers QA Dashboard</title>
 <style>
 :root {
-    --bg: #08111f;
-    --panel: #0f1b31;
-    --panel-2: #12213a;
-    --panel-3: #0a1426;
-    --text: #e5eefc;
-    --muted: #8aa0c6;
-    --line: rgba(255,255,255,.08);
-    --line-strong: rgba(255,255,255,.16);
-    --accent: #60a5fa;
-    --accent-2: #38bdf8;
-    --good: #22c55e;
+    --bg: #0b0e14;
+    --surface: #111520;
+    --surface-2: #161c2c;
+    --surface-3: #080b11;
+    --border: #1e2840;
+    --border-strong: #253050;
+    --text: #c9d4f0;
+    --text-strong: #ffffff;
+    --muted: #7a8bb5;
+    --muted-2: #4a5880;
+    --accent: #3b82f6;
+    --accent-soft: rgba(59,130,246,.16);
+    --good: #22d3a0;
+    --good-soft: rgba(34,211,160,.12);
     --warn: #f59e0b;
-    --bad: #ef4444;
-    --chip: #1d2b47;
+    --warn-soft: rgba(245,158,11,.12);
+    --bad: #f43f5e;
+    --bad-soft: rgba(244,63,94,.12);
+    --purple: #a78bfa;
+    --purple-soft: rgba(167,139,250,.12);
+    --mono: Consolas, "SFMono-Regular", Menlo, Monaco, monospace;
+    --sans: "Segoe UI", Arial, sans-serif;
 }
 
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    height: 100%;
+}
 
 body {
     margin: 0;
-    min-height: 100vh;
-    background:
-        radial-gradient(circle at top left, rgba(96,165,250,.16), transparent 30%),
-        radial-gradient(circle at top right, rgba(34,197,94,.10), transparent 26%),
-        linear-gradient(180deg, #07101d 0%, #08111f 100%);
+    background: var(--bg);
     color: var(--text);
-    font-family: Consolas, "SFMono-Regular", Menlo, Monaco, monospace;
+    font-family: var(--sans);
+    overflow: hidden;
 }
 
 header {
     display: flex;
+    align-items: center;
     justify-content: space-between;
-    gap: 16px;
-    align-items: flex-end;
-    padding: 24px 28px 12px;
+    height: 54px;
+    padding: 0 28px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky;
+    top: 0;
+    z-index: 10;
 }
 
-h1 {
-    margin: 0;
-    font-size: 24px;
-    letter-spacing: .4px;
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    color: var(--text-strong);
+    font-weight: 800;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.brand-mark {
+    width: 28px;
+    height: 28px;
+    display: grid;
+    place-items: center;
+    border-radius: 6px;
+    background: var(--accent);
+    color: #fff;
+    font-family: var(--mono);
+    font-size: 12px;
+}
+
+.brand span {
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.badge {
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    background: var(--surface-2);
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+}
+
+.badge.online {
+    border-color: var(--good);
+    color: var(--good);
+}
+
+.app {
+    display: grid;
+    grid-template-columns: 260px minmax(0, 1fr);
+    height: calc(100vh - 54px);
+    min-height: 0;
+}
+
+.app-sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 20px 16px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.workspace-main {
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.sidebar-section {
+    display: grid;
+    gap: 8px;
+}
+
+.section-label {
+    margin: 0 0 2px;
+    color: var(--muted-2);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
 }
 
 .subtitle {
-    margin-top: 8px;
+    margin: 0;
     color: var(--muted);
-    font-size: 13px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.5;
 }
 
 .workspace-tabs {
-    display: flex;
-    gap: 8px;
-    padding: 0 24px;
+    display: grid;
+    gap: 6px;
 }
 
 .tab-button,
 .small-button,
 button {
-    border: none;
-    border-radius: 12px;
-    padding: 12px 14px;
-    background: linear-gradient(135deg, #2563eb, #38bdf8);
-    color: white;
-    font-weight: 700;
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    padding: 9px 12px;
+    background: var(--surface-2);
+    color: var(--muted);
     cursor: pointer;
-    transition: transform .15s ease, opacity .15s ease, border-color .15s ease;
-    font-family: inherit;
+    font-family: var(--mono);
+    font-size: 11px;
+    transition: border-color .16s ease, color .16s ease, background .16s ease, opacity .16s ease;
 }
 
 button:hover,
 .tab-button:hover,
-.small-button:hover { transform: translateY(-1px); }
+.small-button:hover {
+    border-color: var(--accent);
+    color: var(--text);
+    background: var(--accent-soft);
+}
 
 button:disabled {
     cursor: not-allowed;
-    opacity: .52;
-    transform: none;
+    opacity: .48;
 }
 
 .tab-button {
-    width: auto;
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,.04);
-    color: var(--muted);
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    text-align: left;
 }
 
 .tab-button.active {
-    color: #fff;
-    border-color: rgba(96,165,250,.5);
-    background: rgba(96,165,250,.16);
+    color: var(--text-strong);
+    border-color: var(--accent);
+    background: var(--accent-soft);
 }
 
-.tab-panel { display: none; }
-.tab-panel.active { display: block; }
+.status-list {
+    display: grid;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+}
+
+.status-line {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    background: var(--surface-2);
+}
+
+.status-line strong {
+    color: var(--text);
+    font-weight: 500;
+}
+
+.status-line span {
+    color: var(--muted);
+}
+
+.stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1px;
+    background: var(--border);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+}
+
+.stat-cell {
+    background: var(--surface);
+    padding: 14px 20px;
+    min-width: 0;
+}
+
+.stat-value {
+    display: block;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1;
+    overflow-wrap: anywhere;
+}
+
+.stat-label {
+    display: block;
+    margin-top: 5px;
+    color: var(--muted-2);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+}
+
+.stat-cell.good .stat-value { color: var(--good); }
+.stat-cell.warn .stat-value { color: var(--warn); }
+.stat-cell.bad .stat-value { color: var(--bad); }
+
+.tab-panel {
+    display: none;
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.tab-panel.active {
+    display: block;
+}
 
 .shell,
 .generator-shell {
     display: grid;
-    grid-template-columns: 340px 1fr;
-    gap: 16px;
-    padding: 16px 24px 24px;
+    grid-template-columns: minmax(310px, 380px) minmax(0, 1fr);
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .generator-shell {
-    grid-template-columns: 380px 1fr;
+    grid-template-columns: minmax(330px, 400px) minmax(0, 1fr);
 }
 
 .panel {
-    background: linear-gradient(180deg, rgba(18,33,58,.96), rgba(12,22,40,.96));
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    min-width: 0;
 }
 
 .sidebar {
-    padding: 18px;
+    padding: 18px 16px;
+    overflow-y: auto;
 }
 
 .main {
-    padding: 18px;
     display: grid;
-    gap: 16px;
+    align-content: start;
+    gap: 12px;
     min-width: 0;
+    min-height: 0;
+    overflow-y: auto;
+    padding: 16px;
 }
 
 .field {
@@ -140,20 +323,22 @@ button:disabled {
 label,
 .field-label {
     color: var(--muted);
-    font-size: 12px;
+    font-family: var(--mono);
+    font-size: 11px;
 }
 
 select,
 textarea,
 input[type="text"] {
     width: 100%;
-    background: var(--panel-3);
-    border: 1px solid var(--line);
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
     color: var(--text);
-    border-radius: 12px;
+    border-radius: 7px;
     padding: 10px 12px;
     outline: none;
-    font-family: inherit;
+    font-family: var(--mono);
+    font-size: 12px;
 }
 
 textarea {
@@ -164,11 +349,11 @@ textarea {
 select:focus,
 textarea:focus,
 input[type="text"]:focus {
-    border-color: rgba(96,165,250,.65);
+    border-color: var(--accent);
 }
 
 select.runner-select {
-    min-height: 160px;
+    min-height: 190px;
 }
 
 .toggle,
@@ -185,27 +370,29 @@ select.runner-select {
 
 .check-grid {
     display: grid;
-    gap: 8px;
+    gap: 6px;
 }
 
 .check-option {
     padding: 9px 10px;
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border-strong);
+    border-radius: 7px;
+    background: var(--surface-2);
+    font-family: var(--mono);
+    font-size: 12px;
 }
 
 .wizard-rail {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(7, 1fr);
     gap: 6px;
-    margin-bottom: 16px;
+    margin-bottom: 18px;
 }
 
 .wizard-dot {
-    height: 6px;
-    border-radius: 999px;
-    background: rgba(255,255,255,.10);
+    height: 5px;
+    border-radius: 3px;
+    background: var(--border-strong);
 }
 
 .wizard-dot.active { background: var(--accent); }
@@ -216,8 +403,9 @@ select.runner-select {
 
 .question-title {
     margin: 0 0 14px;
-    font-size: 15px;
-    color: #d8e4fb;
+    color: var(--text-strong);
+    font-family: var(--mono);
+    font-size: 13px;
 }
 
 .question-actions,
@@ -229,28 +417,36 @@ select.runner-select {
 }
 
 .result-actions {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
+}
+
+.primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
 }
 
 .secondary {
-    background: rgba(255,255,255,.05);
-    border: 1px solid var(--line);
+    background: var(--surface-2);
+    border: 1px solid var(--border-strong);
     color: var(--text);
 }
 
 .success {
-    background: linear-gradient(135deg, #16a34a, #22c55e);
+    background: var(--good);
+    border-color: var(--good);
+    color: #06120f;
 }
 
 .danger {
-    background: rgba(239,68,68,.12);
-    border: 1px solid rgba(239,68,68,.35);
-    color: #fecaca;
+    background: var(--bad-soft);
+    border: 1px solid var(--bad);
+    color: #ffd6dc;
 }
 
 .field-error {
     display: none;
-    color: #fecaca;
+    color: #ffd6dc;
     font-size: 11px;
     line-height: 1.35;
 }
@@ -260,21 +456,21 @@ select.runner-select {
 .field.invalid select,
 .field.invalid textarea,
 .field.invalid .check-option {
-    border-color: rgba(239,68,68,.55);
+    border-color: var(--bad);
 }
 
 .progress-wrap {
     margin-top: 14px;
-    background: var(--panel-3);
-    border-radius: 999px;
+    background: var(--surface-2);
+    border-radius: 4px;
     overflow: hidden;
-    border: 1px solid var(--line);
+    border: 1px solid var(--border-strong);
 }
 
 .progress-bar {
-    height: 10px;
+    height: 6px;
     width: 0%;
-    background: linear-gradient(90deg, #22c55e, #60a5fa);
+    background: linear-gradient(90deg, var(--good), var(--accent));
     transition: width .2s ease;
 }
 
@@ -285,52 +481,78 @@ select.runner-select {
     margin-top: 14px;
 }
 
+.summary.dryrun-summary {
+    grid-template-columns: repeat(4, 1fr);
+}
+
 .metric {
-    background: var(--chip);
-    border: 1px solid var(--line);
-    border-radius: 14px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     padding: 12px;
     min-width: 0;
 }
 
-.metric .k { color: var(--muted); font-size: 11px; }
-.metric .v { margin-top: 6px; font-size: 18px; font-weight: 700; overflow-wrap: anywhere; }
+.metric .k {
+    color: var(--muted-2);
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.metric .v {
+    margin-top: 6px;
+    color: var(--text-strong);
+    font-family: var(--mono);
+    font-size: 18px;
+    font-weight: 700;
+    overflow-wrap: anywhere;
+}
 
 .card {
-    background: rgba(8,17,31,.55);
-    border: 1px solid var(--line);
-    border-radius: 16px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
     padding: 16px;
     min-width: 0;
 }
 
 .card h2 {
     margin: 0 0 12px;
-    font-size: 15px;
-    color: #d8e4fb;
+    color: var(--text-strong);
+    font-family: var(--mono);
+    font-size: 13px;
 }
 
 .card h3 {
     margin: 0 0 10px;
-    font-size: 13px;
-    color: #d8e4fb;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+}
+
+#dryRunResultCard {
+    gap: 14px;
 }
 
 .subsection {
-    border: 1px solid var(--line);
-    border-radius: 12px;
-    background: rgba(255,255,255,.025);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
     padding: 14px;
 }
 
 .subsection h3 {
     margin: 0 0 10px;
-    font-size: 13px;
-    color: #d8e4fb;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
 }
 
 .feed {
-    max-height: 340px;
+    min-height: 220px;
+    max-height: 460px;
     overflow: auto;
     display: grid;
     gap: 6px;
@@ -340,10 +562,12 @@ select.runner-select {
 .logline,
 .list-row {
     padding: 8px 10px;
-    border-radius: 10px;
-    background: rgba(255,255,255,.03);
-    border: 1px solid rgba(255,255,255,.04);
-    color: #dbe7ff;
+    border-radius: 6px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
 }
 
 .logline.step { border-left: 3px solid var(--accent); }
@@ -361,7 +585,7 @@ select.runner-select {
 .saved-list {
     display: grid;
     gap: 10px;
-    max-height: 360px;
+    max-height: 300px;
     overflow: auto;
     padding-right: 4px;
 }
@@ -370,16 +594,16 @@ select.runner-select {
     width: 100%;
     display: block;
     text-align: left;
-    border: 1px solid var(--line);
-    border-radius: 12px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
     padding: 12px;
-    background: rgba(255,255,255,.035);
+    background: var(--surface-2);
     color: var(--text);
 }
 
 .saved-scenario:hover {
-    border-color: rgba(96,165,250,.55);
-    transform: translateY(-1px);
+    border-color: var(--accent);
+    background: var(--accent-soft);
 }
 
 .saved-scenario strong {
@@ -397,13 +621,13 @@ select.runner-select {
 }
 
 .scenario {
-    border: 1px solid var(--line);
-    border-radius: 14px;
-    background: rgba(255,255,255,.03);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface-2);
     padding: 14px;
 }
 
-.scenario.active { outline: 1px solid rgba(96,165,250,.45); }
+.scenario.active { outline: 1px solid var(--accent); }
 
 .scenario-head,
 .result-head {
@@ -418,10 +642,11 @@ select.runner-select {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    padding: 5px 10px;
-    border-radius: 999px;
-    background: rgba(96,165,250,.12);
-    color: #bfdbfe;
+    padding: 4px 8px;
+    border-radius: 4px;
+    background: var(--accent-soft);
+    color: #bcd5ff;
+    font-family: var(--mono);
     font-size: 11px;
 }
 
@@ -442,16 +667,57 @@ select.runner-select {
 
 .step-item {
     padding: 8px 10px;
-    border-radius: 10px;
-    background: rgba(255,255,255,.03);
-    color: #dbe7ff;
+    border-radius: 6px;
+    background: var(--surface-3);
+    color: var(--text);
+    font-family: var(--mono);
     font-size: 12px;
+}
+
+.dryrun-step {
+    display: grid;
+    grid-template-columns: minmax(120px, 1fr) auto;
+    gap: 10px;
+    align-items: start;
+}
+
+.dryrun-step p {
+    grid-column: 1 / -1;
+    margin: 6px 0 0;
+}
+
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 76px;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.status-passed {
+    background: var(--good-soft);
+    color: var(--good);
+}
+
+.status-failed {
+    background: var(--bad-soft);
+    color: #ffd6dc;
+}
+
+.status-skipped {
+    background: var(--warn-soft);
+    color: #ffd891;
 }
 
 .analysis {
     white-space: pre-wrap;
     line-height: 1.5;
-    color: #dbe7ff;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
 }
 
 .result-tabs {
@@ -463,15 +729,15 @@ select.runner-select {
 .result-tab {
     width: auto;
     padding: 9px 11px;
-    border: 1px solid var(--line);
-    background: rgba(255,255,255,.04);
+    border: 1px solid var(--border-strong);
+    background: var(--surface-2);
     color: var(--muted);
 }
 
 .result-tab.active {
-    color: #fff;
-    border-color: rgba(96,165,250,.5);
-    background: rgba(96,165,250,.14);
+    color: var(--text-strong);
+    border-color: var(--accent);
+    background: var(--accent-soft);
 }
 
 .result-panel { display: none; }
@@ -482,10 +748,11 @@ pre {
     max-height: 520px;
     overflow: auto;
     padding: 14px;
-    border-radius: 12px;
-    border: 1px solid var(--line);
-    background: #050b14;
-    color: #dbe7ff;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--surface-3);
+    color: var(--text);
+    font-family: var(--mono);
     font-size: 12px;
     line-height: 1.55;
     white-space: pre-wrap;
@@ -498,30 +765,140 @@ pre {
     place-items: center;
     text-align: center;
     color: var(--muted);
-    border: 1px dashed var(--line-strong);
-    border-radius: 16px;
+    border: 1px dashed var(--border-strong);
+    border-radius: 8px;
     padding: 24px;
 }
 
 .message {
     margin-top: 12px;
     color: var(--muted);
+    font-family: var(--mono);
     font-size: 12px;
     min-height: 18px;
 }
 
-.message.ok { color: #bbf7d0; }
-.message.bad { color: #fecaca; }
+.message.ok { color: var(--good); }
+.message.bad { color: #ffd6dc; }
 .muted { color: var(--muted); }
 
+.runner-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+.runner-split {
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(300px, .85fr);
+    min-height: 0;
+    flex: 1;
+    overflow: hidden;
+}
+
+.terminal-card,
+.analysis-card {
+    border: 0;
+    border-radius: 0;
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    padding: 0;
+}
+
+.analysis-card {
+    border-right: 0;
+}
+
+.pane-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface-2);
+}
+
+.pane-title {
+    color: var(--muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: .05em;
+}
+
+.terminal-card .feed,
+.analysis-card .analysis {
+    flex: 1;
+    max-height: none;
+    min-height: 0;
+    overflow: auto;
+    padding: 14px 16px;
+    background: var(--surface-3);
+}
+
+.runner-scenarios {
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    flex-shrink: 0;
+    max-height: 230px;
+    overflow: auto;
+}
+
+.runner-scenarios .card {
+    border: 0;
+    border-radius: 0;
+}
+
 @media (max-width: 980px) {
-    header {
-        display: block;
+    body {
+        overflow: auto;
+    }
+
+    header,
+    .header-right {
+        height: auto;
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 8px;
+        padding: 12px 16px;
+    }
+
+    .app {
+        grid-template-columns: 1fr;
+        height: auto;
+    }
+
+    .app-sidebar {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
     }
 
     .shell,
     .generator-shell {
         grid-template-columns: 1fr;
+        height: auto;
+        overflow: visible;
+    }
+
+    .tab-panel {
+        overflow: visible;
+    }
+
+    .stats-bar,
+    .summary,
+    .summary.dryrun-summary,
+    .runner-split {
+        grid-template-columns: 1fr;
+    }
+
+    .terminal-card,
+    .analysis-card {
+        border-right: 0;
+        border-bottom: 1px solid var(--border);
     }
 
     .result-actions,
@@ -534,26 +911,91 @@ pre {
 <body>
 
 <header>
-    <div>
-        <h1>SmartOffers QA Dashboard</h1>
-        <div class="subtitle">Geração guiada de cenários e execução em tempo real no mesmo workspace.</div>
+    <div class="brand">
+        <div class="brand-mark">SO</div>
+        SmartOffers <span>/ automation</span>
+    </div>
+    <div class="header-right">
+        <span class="badge online">API ONLINE</span>
+        <span class="badge">DRY-RUN LOCAL</span>
+        <span class="badge" id="clock">00:00:00</span>
     </div>
 </header>
 
-<nav class="workspace-tabs" aria-label="Areas do dashboard">
-    <button class="tab-button active" id="tab-generator" type="button" onclick="showWorkspace('generator')">Gerador</button>
-    <button class="tab-button" id="tab-runner" type="button" onclick="showWorkspace('runner')">Execução</button>
-</nav>
+<div class="app">
+    <aside class="app-sidebar">
+        <section class="sidebar-section">
+            <div class="section-label">Workspace</div>
+            <nav class="workspace-tabs" aria-label="Areas do dashboard">
+                <button class="tab-button active" id="tab-generator" type="button" onclick="showWorkspace('generator')">
+                    <span>Gerador</span>
+                    <span>01</span>
+                </button>
+                <button class="tab-button" id="tab-runner" type="button" onclick="showWorkspace('runner')">
+                    <span>Execucao</span>
+                    <span>02</span>
+                </button>
+            </nav>
+        </section>
+
+        <section class="sidebar-section">
+            <div class="section-label">Estado</div>
+            <div class="status-list">
+                <div class="status-line">
+                    <strong>Cenarios salvos</strong>
+                    <span id="savedScenarioMetric">0</span>
+                </div>
+                <div class="status-line">
+                    <strong>Cenario ativo</strong>
+                    <span id="activeScenarioMetric">-</span>
+                </div>
+                <div class="status-line">
+                    <strong>Dry-run</strong>
+                    <span id="sidebarDryRunStatus">idle</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="sidebar-section">
+            <div class="section-label">Rotas</div>
+            <div class="status-list">
+                <div class="status-line"><strong>/api/questions</strong><span>ok</span></div>
+                <div class="status-line"><strong>/api/scenarios</strong><span>ok</span></div>
+                <div class="status-line"><strong>/executar</strong><span>SSE</span></div>
+            </div>
+        </section>
+    </aside>
+
+    <main class="workspace-main">
+        <div class="stats-bar">
+            <div class="stat-cell">
+                <span class="stat-value" id="stat-saved">0</span>
+                <span class="stat-label">Salvos</span>
+            </div>
+            <div class="stat-cell good">
+                <span class="stat-value" id="stat-execution">0</span>
+                <span class="stat-label">Exec steps</span>
+            </div>
+            <div class="stat-cell warn">
+                <span class="stat-value" id="stat-validation">0</span>
+                <span class="stat-label">Validacoes</span>
+            </div>
+            <div class="stat-cell">
+                <span class="stat-value" id="stat-dryrun">idle</span>
+                <span class="stat-label">Dry-run</span>
+            </div>
+        </div>
 
 <section id="panel-generator" class="tab-panel active">
     <div class="generator-shell">
         <aside class="panel sidebar">
+            <div class="section-label">Gerador de cenarios</div>
             <div class="wizard-rail" id="wizardRail" aria-hidden="true"></div>
             <form id="questionForm"></form>
 
             <div class="question-actions">
                 <button class="secondary" id="prevQuestion" type="button" onclick="previousQuestionStep()">Anterior</button>
-                <button id="nextQuestion" type="button" onclick="nextQuestionStep()">Proximo</button>
+                <button class="primary" id="nextQuestion" type="button" onclick="nextQuestionStep()">Proximo</button>
                 <button class="success" id="generateScenario" type="button" onclick="submitScenario()">Gerar cenario</button>
                 <button class="danger" type="button" onclick="clearGenerator()">Limpar</button>
             </div>
@@ -606,8 +1048,9 @@ pre {
 
                     <div class="result-actions">
                         <button class="secondary" type="button" onclick="copyScenarioJson()">Copiar JSON</button>
+                        <button class="success" id="runDryRunButton" type="button" onclick="runDryRun()" disabled>Simular execu&ccedil;&atilde;o</button>
                         <button class="secondary" id="openSavedScenario" type="button" onclick="openSavedScenario()" disabled>Abrir salvo</button>
-                        <button type="button" onclick="showWorkspace('runner')">Ir para execução</button>
+                        <button class="primary" type="button" onclick="showWorkspace('runner')">Ir para execucao</button>
                     </div>
                 </div>
             </section>
@@ -625,6 +1068,59 @@ pre {
                 <div class="result-panel" id="result-payload"><pre id="payloadPreview"></pre></div>
                 <div class="result-panel" id="result-json"><pre id="jsonPreview"></pre></div>
             </section>
+
+            <section class="card" id="dryRunResultCard" style="display:none">
+                <div class="result-head">
+                    <div>
+                        <h2>Resultado da simula&ccedil;&atilde;o</h2>
+                        <div class="result-summary" id="dryRunSummaryText"></div>
+                    </div>
+                    <span class="pill" id="dryRunReportId">-</span>
+                </div>
+
+                <div class="summary dryrun-summary">
+                    <div class="metric">
+                        <div class="k">Status</div>
+                        <div class="v" id="dryRunStatus">-</div>
+                    </div>
+                    <div class="metric">
+                        <div class="k">Passed</div>
+                        <div class="v" id="dryRunPassed">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="k">Failed</div>
+                        <div class="v" id="dryRunFailed">0</div>
+                    </div>
+                    <div class="metric">
+                        <div class="k">Skipped</div>
+                        <div class="v" id="dryRunSkipped">0</div>
+                    </div>
+                </div>
+
+                <div class="result-actions" style="grid-template-columns:1fr;margin-top:16px;max-width:260px">
+                    <button class="secondary" type="button" onclick="copyDryRunJson()">Copiar JSON do relat&oacute;rio</button>
+                </div>
+
+                <div class="subsection">
+                    <h3>Steps</h3>
+                    <div id="dryRunSteps" class="structured-list"></div>
+                </div>
+
+                <div class="subsection">
+                    <h3>Logs simulados</h3>
+                    <div id="dryRunLogs" class="feed"></div>
+                </div>
+
+                <div class="subsection" id="dryRunWarningsBlock" style="display:none">
+                    <h3>Warnings</h3>
+                    <pre id="dryRunWarnings"></pre>
+                </div>
+
+                <div class="subsection">
+                    <h3>JSON do relat&oacute;rio</h3>
+                    <pre id="dryRunJsonPreview"></pre>
+                </div>
+            </section>
         </main>
     </div>
 </section>
@@ -632,6 +1128,7 @@ pre {
 <section id="panel-runner" class="tab-panel">
     <div class="shell">
         <aside class="panel sidebar">
+            <div class="section-label">Execucao legada</div>
             <div class="field">
                 <label for="filtro">Filtrar variantes</label>
                 <input type="text" id="filtro" placeholder="padrao, variante, copy..." onkeyup="filtrar()">
@@ -648,10 +1145,10 @@ pre {
 
             <label class="toggle">
                 <input type="checkbox" id="analisar">
-                Mostrar análise ao vivo
+                Mostrar analise ao vivo
             </label>
 
-            <button onclick="executar()">Executar</button>
+            <button class="primary" onclick="executar()">Executar</button>
 
             <div class="progress-wrap">
                 <div id="progress" class="progress-bar"></div>
@@ -673,24 +1170,35 @@ pre {
             </div>
         </aside>
 
-        <main class="main">
-            <section class="card">
-                <h2>Fluxo ao vivo</h2>
-                <div id="terminal" class="feed"></div>
-            </section>
+        <main class="main runner-main">
+            <div class="runner-split">
+                <section class="card terminal-card">
+                    <div class="pane-header">
+                        <div class="pane-title">terminal / output em tempo real</div>
+                    </div>
+                    <div id="terminal" class="feed"></div>
+                </section>
 
-            <section class="card">
-                <h2>Cenários executados</h2>
-                <div id="scenarios" class="scenarios"></div>
-            </section>
+                <section class="card analysis-card">
+                    <div class="pane-header">
+                        <div class="pane-title">analise / por cenario</div>
+                    </div>
+                    <div id="analysis" class="analysis muted">Nenhuma analise ainda.</div>
+                </section>
+            </div>
 
-            <section class="card">
-                <h2>Análise</h2>
-                <div id="analysis" class="analysis muted">Nenhuma análise ainda.</div>
+            <section class="runner-scenarios">
+                <section class="card">
+                    <h2>Cenarios executados</h2>
+                    <div id="scenarios" class="scenarios"></div>
+                </section>
             </section>
         </main>
     </div>
 </section>
+
+</main>
+</div>
 
 <script>
 let currentScenario = null
@@ -699,6 +1207,41 @@ let totalErrors = 0
 let questions = []
 let currentQuestionStep = 0
 let currentGeneratedScenario = null
+let currentDryRunReport = null
+
+function setTextContent(id, value){
+    const element = document.getElementById(id)
+    if(element) element.textContent = value
+}
+
+function updateClock(){
+    const now = new Date()
+    const time = [
+        String(now.getHours()).padStart(2, "0"),
+        String(now.getMinutes()).padStart(2, "0"),
+        String(now.getSeconds()).padStart(2, "0")
+    ].join(":")
+    setTextContent("clock", time)
+}
+
+function updateSavedScenarioCount(count){
+    setTextContent("savedScenarioMetric", count)
+    setTextContent("stat-saved", count)
+}
+
+function updateActiveScenarioStats(scenario){
+    setTextContent("activeScenarioMetric", scenario ? scenario.id : "-")
+    setTextContent("stat-execution", scenario ? scenario.execution_steps.length : "0")
+    setTextContent("stat-validation", scenario ? scenario.validation_steps.length : "0")
+}
+
+function updateDryRunState(state){
+    setTextContent("sidebarDryRunStatus", state)
+    setTextContent("stat-dryrun", state)
+}
+
+setInterval(updateClock, 1000)
+updateClock()
 
 function showWorkspace(name){
     document.querySelectorAll(".tab-panel").forEach(panel => panel.classList.remove("active"))
@@ -736,6 +1279,7 @@ async function loadSavedScenarios(){
 function renderSavedScenarios(scenarios){
     const list = document.getElementById("savedScenarios")
     list.innerHTML = ""
+    updateSavedScenarioCount(scenarios.length)
 
     if(!scenarios.length){
         list.innerHTML = `<div class="muted">Nenhum cenario salvo ainda.</div>`
@@ -811,7 +1355,13 @@ function renderQuestionFlow(){
     reviewDot.className = "wizard-dot"
     rail.appendChild(reviewDot)
 
+    form.querySelectorAll("input, select, textarea").forEach(input => {
+        input.addEventListener("change", updateConditionalFields)
+        input.addEventListener("input", updateConditionalFields)
+    })
+
     currentQuestionStep = 0
+    updateConditionalFields()
     updateQuestionStep()
 }
 
@@ -821,6 +1371,7 @@ function createField(field){
     wrapper.dataset.field = field.name
     wrapper.dataset.required = field.required ? "true" : "false"
     wrapper.dataset.type = field.type
+    wrapper._fieldConfig = field
 
     const label = document.createElement("label")
     label.textContent = field.label
@@ -844,10 +1395,12 @@ function createField(field){
         empty.textContent = "Selecione"
         select.appendChild(empty)
 
-        ;(field.options || []).forEach(option => {
+        ;(field.options || []).forEach((option, optionIndex) => {
             const item = document.createElement("option")
             item.value = option.value
             item.textContent = option.label
+            item.dataset.optionIndex = optionIndex
+            item._optionConfig = option
             select.appendChild(item)
         })
 
@@ -858,9 +1411,11 @@ function createField(field){
         group.className = "check-grid"
         group.id = field.name
 
-        ;(field.options || []).forEach(option => {
+        ;(field.options || []).forEach((option, optionIndex) => {
             const item = document.createElement("label")
             item.className = "check-option"
+            item.dataset.optionIndex = optionIndex
+            item._optionConfig = option
             item.innerHTML = `<input type="checkbox" name="${field.name}" value="${option.value}"> <span>${option.label}</span>`
             group.appendChild(item)
         })
@@ -882,6 +1437,69 @@ function createField(field){
     wrapper.appendChild(error)
 
     return wrapper
+}
+
+function updateConditionalFields(){
+    document.querySelectorAll(".field").forEach(field => {
+        const config = field._fieldConfig || {}
+        const visible = conditionMatches(config.visible_when)
+        field.style.display = visible ? "" : "none"
+        field.dataset.hidden = visible ? "false" : "true"
+
+        field.querySelectorAll("input, select, textarea").forEach(input => {
+            input.disabled = !visible
+        })
+
+        updateConditionalOptions(field, visible)
+    })
+}
+
+function updateConditionalOptions(field, fieldVisible){
+    const select = field.querySelector("select")
+    if(select){
+        Array.from(select.options).forEach(option => {
+            if(!option.value) return
+            const optionVisible = fieldVisible && conditionMatches(option._optionConfig?.visible_when)
+            option.hidden = !optionVisible
+            option.disabled = !optionVisible
+            if(option.disabled && option.selected) select.value = ""
+        })
+    }
+
+    field.querySelectorAll(".check-option").forEach(option => {
+        const optionVisible = fieldVisible && conditionMatches(option._optionConfig?.visible_when)
+        option.style.display = optionVisible ? "" : "none"
+        const input = option.querySelector("input")
+        if(input){
+            input.disabled = !optionVisible
+            if(!optionVisible) input.checked = false
+        }
+    })
+}
+
+function conditionMatches(condition){
+    if(!condition) return true
+
+    return Object.entries(condition).every(([fieldName, expected]) => {
+        const current = getCurrentValue(fieldName)
+
+        if(Array.isArray(expected)){
+            return expected.includes(current)
+        }
+
+        return current === expected
+    })
+}
+
+function getCurrentValue(fieldName){
+    const inputs = Array.from(document.querySelectorAll(`[name="${fieldName}"]`))
+    if(!inputs.length) return ""
+
+    if(inputs[0].type === "checkbox"){
+        return inputs.filter(input => input.checked).map(input => input.value)
+    }
+
+    return inputs[0].value
 }
 
 function updateQuestionStep(){
@@ -923,6 +1541,7 @@ function validateCurrentStep(){
 
     step.querySelectorAll(".field").forEach(field => {
         field.classList.remove("invalid")
+        if(field.dataset.hidden === "true") return
         if(field.dataset.required !== "true") return
 
         const type = field.dataset.type
@@ -974,9 +1593,20 @@ function collectAnswers(){
     const answers = {}
 
     questions.flatMap(step => step.fields).forEach(field => {
+        const fieldElement = form.querySelector(`.field[data-field="${field.name}"]`)
+        const hidden = fieldElement && fieldElement.dataset.hidden === "true"
+
         if(field.type === "checkbox_group"){
+            if(hidden){
+                answers[field.name] = []
+                return
+            }
             answers[field.name] = Array.from(form.querySelectorAll(`input[name="${field.name}"]:checked`)).map(item => item.value)
         } else {
+            if(hidden){
+                answers[field.name] = ""
+                return
+            }
             const input = form.querySelector(`[name="${field.name}"]`)
             answers[field.name] = input ? input.value.trim() : ""
         }
@@ -991,6 +1621,9 @@ function renderReview(){
     review.innerHTML = ""
 
     questions.flatMap(step => step.fields).forEach(field => {
+        const fieldElement = document.querySelector(`.field[data-field="${field.name}"]`)
+        if(fieldElement && fieldElement.dataset.hidden === "true") return
+
         const row = document.createElement("div")
         row.className = "list-row"
 
@@ -1044,6 +1677,8 @@ function renderScenario(scenario){
     document.getElementById("scenarioResult").style.display = "block"
     document.getElementById("scenarioDetails").style.display = "block"
     document.getElementById("openSavedScenario").disabled = false
+    document.getElementById("runDryRunButton").disabled = false
+    hideDryRunReport()
 
     document.getElementById("scenarioTitle").textContent = scenario.titulo
     document.getElementById("scenarioSummary").textContent = scenario.resumo
@@ -1051,6 +1686,8 @@ function renderScenario(scenario){
     document.getElementById("executionMetric").textContent = scenario.execution_steps.length
     document.getElementById("validationMetric").textContent = scenario.validation_steps.length
     document.getElementById("evidenceMetric").textContent = scenario.evidence_files.length
+    updateActiveScenarioStats(scenario)
+    updateDryRunState("ready")
 
     renderExecutionPanel(scenario)
     renderValidationPanel(scenario)
@@ -1074,6 +1711,7 @@ function fillFormFromScenario(scenario){
         if(input) input.value = answers[field.name] || ""
     })
 
+    updateConditionalFields()
     currentQuestionStep = questions.length
     updateQuestionStep()
 }
@@ -1130,6 +1768,125 @@ function renderValidationPanel(scenario){
     }
 }
 
+async function runDryRun(){
+    if(!currentGeneratedScenario) return
+
+    const button = document.getElementById("runDryRunButton")
+    button.disabled = true
+    setGeneratorMessage("Simulando execucao local...", "")
+    updateDryRunState("running")
+
+    try {
+        const response = await fetch(`/api/scenarios/${currentGeneratedScenario.id}/dry-run`, {
+            method: "POST"
+        })
+        const data = await response.json()
+
+        if(!response.ok){
+            setGeneratorMessage(data.erro || "Nao foi possivel simular o cenario.", "bad")
+            updateDryRunState("erro")
+            return
+        }
+
+        currentDryRunReport = data.report
+        renderDryRunReport(currentDryRunReport)
+        setGeneratorMessage(`Dry-run salvo em ${data.saved_path}`, "ok")
+    } catch (error) {
+        setGeneratorMessage("Erro ao chamar API de dry-run.", "bad")
+        updateDryRunState("erro")
+    } finally {
+        button.disabled = false
+    }
+}
+
+function renderDryRunReport(report){
+    document.getElementById("dryRunResultCard").style.display = "grid"
+    document.getElementById("dryRunReportId").textContent = report.id
+    document.getElementById("dryRunStatus").textContent = report.status
+    document.getElementById("dryRunSummaryText").textContent = `${report.summary.total} steps em ${report.duration_ms}ms`
+    document.getElementById("dryRunPassed").textContent = report.summary.passed
+    document.getElementById("dryRunFailed").textContent = report.summary.failed
+    document.getElementById("dryRunSkipped").textContent = report.summary.skipped
+    updateDryRunState(report.status)
+
+    renderDryRunSteps(report.steps || [])
+    renderDryRunLogs(report.logs || [])
+    renderDryRunWarnings(report.warnings || [])
+    document.getElementById("dryRunJsonPreview").textContent = JSON.stringify(report, null, 2)
+}
+
+function renderDryRunSteps(steps){
+    const list = document.getElementById("dryRunSteps")
+    list.innerHTML = ""
+
+    if(!steps.length){
+        list.innerHTML = `<div class="muted">Nenhum step simulado.</div>`
+        return
+    }
+
+    steps.forEach(step => {
+        const row = document.createElement("div")
+        row.className = "list-row dryrun-step"
+
+        const title = document.createElement("strong")
+        title.textContent = `${step.type}: ${step.name}`
+
+        const badge = document.createElement("span")
+        badge.className = `status-badge status-${step.status}`
+        badge.textContent = step.status
+
+        const message = document.createElement("p")
+        message.textContent = `${step.message} (${step.duration_ms}ms)`
+
+        row.appendChild(title)
+        row.appendChild(badge)
+        row.appendChild(message)
+        list.appendChild(row)
+    })
+}
+
+function renderDryRunLogs(logs){
+    const list = document.getElementById("dryRunLogs")
+    list.innerHTML = ""
+
+    if(!logs.length){
+        list.innerHTML = `<div class="muted">Nenhum log gerado.</div>`
+        return
+    }
+
+    logs.forEach(log => {
+        const row = document.createElement("div")
+        row.className = "logline"
+        if(log.includes("|failed|")) row.classList.add("bad")
+        else if(log.includes("|skipped|")) row.classList.add("warn")
+        else if(log.includes("|passed|") || log.includes("|END|passed")) row.classList.add("ok")
+        row.textContent = log
+        list.appendChild(row)
+    })
+}
+
+function renderDryRunWarnings(warnings){
+    const block = document.getElementById("dryRunWarningsBlock")
+    block.style.display = warnings.length ? "block" : "none"
+    document.getElementById("dryRunWarnings").textContent = warnings.join("\n")
+}
+
+async function copyDryRunJson(){
+    if(!currentDryRunReport) return
+    try {
+        await navigator.clipboard.writeText(JSON.stringify(currentDryRunReport, null, 2))
+        setGeneratorMessage("JSON do dry-run copiado.", "ok")
+    } catch (error) {
+        setGeneratorMessage("Nao foi possivel copiar o JSON do dry-run.", "bad")
+    }
+}
+
+function hideDryRunReport(){
+    currentDryRunReport = null
+    document.getElementById("dryRunResultCard").style.display = "none"
+    updateDryRunState(currentGeneratedScenario ? "ready" : "idle")
+}
+
 function showResultTab(name){
     document.querySelectorAll(".result-tab").forEach(tab => {
         tab.classList.toggle("active", tab.dataset.tab === name)
@@ -1162,7 +1919,11 @@ function clearGenerator(){
     document.getElementById("scenarioResult").style.display = "none"
     document.getElementById("scenarioDetails").style.display = "none"
     document.getElementById("openSavedScenario").disabled = true
+    document.getElementById("runDryRunButton").disabled = true
+    hideDryRunReport()
+    updateActiveScenarioStats(null)
     setGeneratorMessage("", "")
+    updateConditionalFields()
     updateQuestionStep()
 }
 
