@@ -1924,7 +1924,7 @@ async function selectTemplate(templateId){
 
         selectedTemplate = data.template
         selectedTemplateId = data.template.id
-        setFormAnswers(mergeTemplateAnswers(data.template.default_answers || {}))
+        setFormAnswers(mergeTemplateAnswers(data.template))
         currentQuestionStep = 0
         updateQuestionStep()
         renderSelectedTemplate(data.template)
@@ -2323,15 +2323,28 @@ function hasAnswerValue(value){
     return value !== undefined && value !== null && String(value).trim() !== ""
 }
 
-function mergeTemplateAnswers(defaultAnswers){
+function mergeTemplateAnswers(template){
     const merged = collectAnswers()
     delete merged.template_id
+
+    const defaultAnswers = template?.default_answers || {}
 
     Object.entries(defaultAnswers || {}).forEach(([key, value]) => {
         if(!hasAnswerValue(merged[key])){
             merged[key] = value
         }
     })
+
+    const supportedEvents = template?.eventos_suportados || []
+    const supportedCustomers = template?.tipos_cliente_suportados || []
+
+    if(hasAnswerValue(merged.event_type) && supportedEvents.length && !supportedEvents.includes(merged.event_type)){
+        merged.event_type = defaultAnswers.event_type || merged.event_type
+    }
+
+    if(hasAnswerValue(merged.customer_type) && supportedCustomers.length && !supportedCustomers.includes(merged.customer_type)){
+        merged.customer_type = defaultAnswers.customer_type || merged.customer_type
+    }
 
     return merged
 }

@@ -534,6 +534,10 @@ def apply_template_defaults(raw_answers):
         if key in {"template", "template_id"}:
             continue
         if has_value(value):
+            if key == "event_type" and not template_supports_event(template, value):
+                continue
+            if key == "customer_type" and not template_supports_customer_type(template, value):
+                continue
             merged[key] = value
 
     merged["template_id"] = template_id
@@ -555,6 +559,14 @@ def canonicalize_alias_overrides(raw_answers):
             normalized[canonical] = normalized[alias]
 
     return normalized
+
+
+def template_supports_event(template, event_type):
+    return clean_value(event_type) in set(template.get("eventos_suportados") or [])
+
+
+def template_supports_customer_type(template, customer_type):
+    return clean_value(customer_type) in set(template.get("tipos_cliente_suportados") or [])
 
 
 def template_reference(template):

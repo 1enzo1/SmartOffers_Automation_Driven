@@ -201,25 +201,62 @@ def test_template_canonical_fields_override_defaults(monkeypatch):
 
 def test_template_ui_merge_logic_preserves_entered_campaign_fields():
     html = Path("templates/index.html").read_text(encoding="utf-8")
-    assert "setFormAnswers(mergeTemplateAnswers(data.template.default_answers || {}))" in html
+    assert "setFormAnswers(mergeTemplateAnswers(data.template))" in html
+    assert "template.eventos_suportados" in html
+    assert "template.tipos_cliente_suportados" in html
 
     current_answers = {
         "campaign_name": "Campanha digitada antes do template",
         "campaign_id": "777",
         "event_type": "",
     }
-    template_defaults = {
-        "event_type": "recarga",
-        "customer_type": "pre",
-    }
+    template_defaults = {"event_type": "recarga", "customer_type": "pre"}
+    template_support = {"eventos_suportados": ["recarga"], "tipos_cliente_suportados": ["pre"]}
 
     merged = dict(current_answers)
     for key, value in template_defaults.items():
         if not _has_answer_value(merged.get(key)):
             merged[key] = value
 
+    if merged["event_type"] not in template_support["eventos_suportados"]:
+        merged["event_type"] = template_defaults["event_type"]
+    if merged["customer_type"] not in template_support["tipos_cliente_suportados"]:
+        merged["customer_type"] = template_defaults["customer_type"]
+
     assert merged["campaign_name"] == "Campanha digitada antes do template"
     assert merged["campaign_id"] == "777"
+    assert merged["event_type"] == "recarga"
+    assert merged["customer_type"] == "pre"
+
+
+def test_template_merge_rejects_incompatible_event_and_customer_overrides():
+    template = {
+        "default_answers": {
+            "event_type": "recarga",
+            "customer_type": "pre",
+            "deadline_rule": "d0",
+        },
+        "eventos_suportados": ["recarga"],
+        "tipos_cliente_suportados": ["pre"],
+    }
+
+    merged = {
+        "campaign_name": "Campanha com override",
+        "campaign_id": "800",
+        "event_type": "upsell",
+        "customer_type": "pos",
+        "deadline_rule": "",
+    }
+
+    for key, value in template["default_answers"].items():
+        if not _has_answer_value(merged.get(key)):
+            merged[key] = value
+
+    if merged["event_type"] not in template["eventos_suportados"]:
+        merged["event_type"] = template["default_answers"]["event_type"]
+    if merged["customer_type"] not in template["tipos_cliente_suportados"]:
+        merged["customer_type"] = template["default_answers"]["customer_type"]
+
     assert merged["event_type"] == "recarga"
     assert merged["customer_type"] == "pre"
 
