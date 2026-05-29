@@ -113,6 +113,123 @@ def test_generate_endpoint_uses_selected_template_defaults(monkeypatch):
     assert (base / "cenarios" / f"{scenario['id']}.json").exists()
 
 
+def test_generate_without_template_id_keeps_existing_contract(monkeypatch):
+    client, _ = make_client(monkeypatch)
+
+    response = client.post(
+        "/api/scenarios/generate",
+        json={
+            "campaign_name": "Squad Sem Template",
+            "campaign_id": "607",
+            "system": "SmartOffers",
+            "objective": "Validar contrato antigo sem template",
+            "customer_type": "pos",
+            "document_type": "PF",
+            "event_type": "upsell",
+            "validations": ["api", "database", "audit"],
+            "deadline_rule": "d1",
+        },
+    )
+
+    assert response.status_code == 201
+    scenario = response.get_json()["scenario"]
+    assert "template" not in scenario
+    assert scenario["source_answers"]["event_type"] == "upsell"
+    assert scenario["source_answers"]["customer_type"] == "pos"
+
+
+def test_template_alias_event_type_overrides_default_event(monkeypatch):
+    client, _ = make_client(monkeypatch)
+
+    response = client.post(
+        "/api/scenarios/generate",
+        json={
+            "template_id": "opt-in-habilitacao-auditavel",
+            "campaign_name": "Squad Alias Mailing",
+            "campaign_id": "608",
+            "tipo_evento": "mailing",
+        },
+    )
+
+    assert response.status_code == 201
+    scenario = response.get_json()["scenario"]
+    assert scenario["template"]["id"] == "opt-in-habilitacao-auditavel"
+    assert scenario["source_answers"]["event_type"] == "mailing"
+    assert scenario["payload"]["eventType"] == "mailing"
+    assert scenario["payload"]["operation"] == "processMailing"
+
+
+def test_template_alias_customer_type_overrides_default_customer(monkeypatch):
+    client, _ = make_client(monkeypatch)
+
+    response = client.post(
+        "/api/scenarios/generate",
+        json={
+            "template_id": "opt-in-habilitacao-auditavel",
+            "campaign_name": "Squad Alias Pre",
+            "campaign_id": "609",
+            "tipo_cliente": "pre",
+        },
+    )
+
+    assert response.status_code == 201
+    scenario = response.get_json()["scenario"]
+    assert scenario["source_answers"]["customer_type"] == "pre"
+    assert scenario["payload"]["attributes"]["customerSegment"] == "PRE"
+
+
+def test_template_canonical_fields_override_defaults(monkeypatch):
+    client, _ = make_client(monkeypatch)
+
+    response = client.post(
+        "/api/scenarios/generate",
+        json={
+            "template_id": "opt-in-habilitacao-auditavel",
+            "campaign_name": "Squad Canonical Mailing Pre",
+            "campaign_id": "610",
+            "event_type": "mailing",
+            "customer_type": "pre",
+        },
+    )
+
+    assert response.status_code == 201
+    scenario = response.get_json()["scenario"]
+    assert scenario["source_answers"]["event_type"] == "mailing"
+    assert scenario["source_answers"]["customer_type"] == "pre"
+    assert scenario["payload"]["operation"] == "processMailing"
+
+
+def test_template_ui_merge_logic_preserves_entered_campaign_fields():
+    html = Path("templates/index.html").read_text(encoding="utf-8")
+    assert "setFormAnswers(mergeTemplateAnswers(data.template.default_answers || {}))" in html
+
+    current_answers = {
+        "campaign_name": "Campanha digitada antes do template",
+        "campaign_id": "777",
+        "event_type": "",
+    }
+    template_defaults = {
+        "event_type": "recarga",
+        "customer_type": "pre",
+    }
+
+    merged = dict(current_answers)
+    for key, value in template_defaults.items():
+        if not _has_answer_value(merged.get(key)):
+            merged[key] = value
+
+    assert merged["campaign_name"] == "Campanha digitada antes do template"
+    assert merged["campaign_id"] == "777"
+    assert merged["event_type"] == "recarga"
+    assert merged["customer_type"] == "pre"
+
+
+def _has_answer_value(value):
+    if isinstance(value, list):
+        return bool(value)
+    return value is not None and str(value).strip() != ""
+
+
 def test_existing_routes_still_respond_with_template_api(monkeypatch):
     client, _ = make_client(monkeypatch)
 

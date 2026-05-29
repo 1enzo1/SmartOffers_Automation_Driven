@@ -452,6 +452,20 @@ TEMPLATE_LIBRARY = [
 
 _TEMPLATES_BY_ID = {template["id"]: template for template in TEMPLATE_LIBRARY}
 
+CANONICAL_FIELD_ALIASES = {
+    "campanha": "campaign_name",
+    "campaign_number": "campaign_id",
+    "sistema": "system",
+    "objetivo": "objective",
+    "tipo_cliente": "customer_type",
+    "documento": "document_type",
+    "tipo_evento": "event_type",
+    "oferta_atual": "current_offer",
+    "oferta_alvo": "target_offer",
+    "validacoes": "validations",
+    "prazo": "deadline_rule",
+}
+
 
 class TemplateNotFoundError(ValueError):
     def __init__(self, template_id):
@@ -510,6 +524,7 @@ def apply_template_defaults(raw_answers):
     if not template_id:
         return deepcopy(raw_answers), None
 
+    raw_answers = canonicalize_alias_overrides(raw_answers)
     template = _TEMPLATES_BY_ID.get(template_id)
     if not template:
         raise TemplateNotFoundError(template_id)
@@ -523,6 +538,23 @@ def apply_template_defaults(raw_answers):
 
     merged["template_id"] = template_id
     return merged, public_template(template, include_defaults=False)
+
+
+def canonicalize_alias_overrides(raw_answers):
+    normalized = deepcopy(raw_answers)
+
+    campaign = normalized.get("campaign")
+    if isinstance(campaign, dict):
+        if not has_value(normalized.get("campaign_name")) and has_value(campaign.get("name")):
+            normalized["campaign_name"] = campaign["name"]
+        if not has_value(normalized.get("campaign_id")) and has_value(campaign.get("id")):
+            normalized["campaign_id"] = campaign["id"]
+
+    for alias, canonical in CANONICAL_FIELD_ALIASES.items():
+        if has_value(normalized.get(alias)) and not has_value(normalized.get(canonical)):
+            normalized[canonical] = normalized[alias]
+
+    return normalized
 
 
 def template_reference(template):

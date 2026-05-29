@@ -1924,7 +1924,7 @@ async function selectTemplate(templateId){
 
         selectedTemplate = data.template
         selectedTemplateId = data.template.id
-        setFormAnswers(data.template.default_answers || {})
+        setFormAnswers(mergeTemplateAnswers(data.template.default_answers || {}))
         currentQuestionStep = 0
         updateQuestionStep()
         renderSelectedTemplate(data.template)
@@ -2318,6 +2318,24 @@ function collectAnswers(){
     return answers
 }
 
+function hasAnswerValue(value){
+    if(Array.isArray(value)) return value.length > 0
+    return value !== undefined && value !== null && String(value).trim() !== ""
+}
+
+function mergeTemplateAnswers(defaultAnswers){
+    const merged = collectAnswers()
+    delete merged.template_id
+
+    Object.entries(defaultAnswers || {}).forEach(([key, value]) => {
+        if(!hasAnswerValue(merged[key])){
+            merged[key] = value
+        }
+    })
+
+    return merged
+}
+
 function renderReview(){
     const answers = collectAnswers()
     const review = document.getElementById("reviewContent")
@@ -2403,8 +2421,9 @@ function renderScenario(scenario){
 function setFormAnswers(answers){
     questions.flatMap(step => step.fields).forEach(field => {
         if(field.type === "checkbox_group"){
+            const selectedValues = Array.isArray(answers[field.name]) ? answers[field.name] : []
             document.querySelectorAll(`input[name="${field.name}"]`).forEach(input => {
-                input.checked = (answers[field.name] || []).includes(input.value)
+                input.checked = selectedValues.includes(input.value)
             })
             return
         }
