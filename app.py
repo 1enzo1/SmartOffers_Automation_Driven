@@ -23,6 +23,7 @@ from core.exporters import (
     load_dry_run_report_by_id,
 )
 from core.simulation import run_dry_run, save_dry_run_report
+from core.templates import get_template, list_template_categories, list_templates
 
 
 app = Flask(__name__)
@@ -44,6 +45,32 @@ def index():
 @app.route("/api/questions")
 def api_questions():
     return jsonify({"questions": get_questions()})
+
+
+@app.route("/api/templates")
+def api_list_templates():
+    templates = list_templates(
+        category=request.args.get("category"),
+        event_type=request.args.get("event_type"),
+        customer_type=request.args.get("customer_type"),
+    )
+    return jsonify(
+        {
+            "templates": templates,
+            "categories": list_template_categories(),
+            "total": len(templates),
+        }
+    )
+
+
+@app.route("/api/templates/<template_id>")
+def api_get_template(template_id):
+    template = get_template(template_id)
+
+    if not template:
+        return jsonify({"erro": "template nao encontrado"}), 404
+
+    return jsonify({"template": template})
 
 
 @app.route("/api/scenarios/generate", methods=["POST"])
