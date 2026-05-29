@@ -1,6 +1,8 @@
 import uuid
 from pathlib import Path
 
+import pytest
+
 import app as app_module
 
 
@@ -157,6 +159,68 @@ def test_template_alias_event_type_overrides_default_event(monkeypatch):
     assert scenario["source_answers"]["event_type"] == "mailing"
     assert scenario["payload"]["eventType"] == "mailing"
     assert scenario["payload"]["operation"] == "processMailing"
+
+
+@pytest.mark.parametrize("tipo_evento", ["Mailing", "MAILING", "mailing"])
+def test_template_alias_event_type_normalizes_case_before_support_check(monkeypatch, tipo_evento):
+    client, _ = make_client(monkeypatch)
+
+    response = client.post(
+        "/api/scenarios/generate",
+        json={
+            "template_id": "opt-in-habilitacao-auditavel",
+            "campaign_name": f"Squad Alias {tipo_evento}",
+            "campaign_id": "611",
+            "tipo_evento": tipo_evento,
+        },
+    )
+
+    assert response.status_code == 201
+    scenario = response.get_json()["scenario"]
+    assert scenario["source_answers"]["event_type"] == "mailing"
+    assert scenario["payload"]["eventType"] == "mailing"
+    assert scenario["payload"]["operation"] == "processMailing"
+
+
+def test_template_alias_event_type_normalizes_accented_value(monkeypatch):
+    client, _ = make_client(monkeypatch)
+
+    response = client.post(
+        "/api/scenarios/generate",
+        json={
+            "template_id": "agendamento-d7-alteracao-perfil",
+            "campaign_name": "Squad Alteracao Perfil",
+            "campaign_id": "612",
+            "tipo_evento": "alteração de perfil",
+        },
+    )
+
+    assert response.status_code == 201
+    scenario = response.get_json()["scenario"]
+    assert scenario["source_answers"]["event_type"] == "alteracao_perfil"
+    assert scenario["payload"]["eventType"] == "alteracao_perfil"
+
+
+def test_template_incompatible_event_override_is_ignored_after_normalization(monkeypatch):
+    client, _ = make_client(monkeypatch)
+
+    response = client.post(
+        "/api/scenarios/generate",
+        json={
+            "template_id": "recarga-pre-bonus-d0",
+            "campaign_name": "Squad Override Incompativel",
+            "campaign_id": "613",
+            "tipo_evento": "UPSELL",
+            "tipo_cliente": "POS",
+        },
+    )
+
+    assert response.status_code == 201
+    scenario = response.get_json()["scenario"]
+    assert scenario["source_answers"]["event_type"] == "recarga"
+    assert scenario["source_answers"]["customer_type"] == "pre"
+    assert scenario["payload"]["eventType"] == "recarga"
+    assert scenario["payload"]["attributes"]["customerSegment"] == "PRE"
 
 
 def test_template_alias_customer_type_overrides_default_customer(monkeypatch):

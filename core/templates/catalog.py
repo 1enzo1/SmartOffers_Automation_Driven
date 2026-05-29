@@ -1,4 +1,6 @@
 from copy import deepcopy
+import re
+import unicodedata
 
 
 CATEGORY_LABELS = {
@@ -466,6 +468,50 @@ CANONICAL_FIELD_ALIASES = {
     "prazo": "deadline_rule",
 }
 
+EVENT_VALUE_ALIASES = {
+    "alteracao_de_perfil": "alteracao_perfil",
+    "alteracao_perfil": "alteracao_perfil",
+    "downgrade": "downgrade",
+    "habilitacao": "habilitacao",
+    "mailing": "mailing",
+    "recarga": "recarga",
+    "reabilitacao": "rehab",
+    "rehab": "rehab",
+    "upgrade": "upsell",
+    "upsell": "upsell",
+}
+
+CUSTOMER_TYPE_VALUE_ALIASES = {
+    "controle": "controle",
+    "pos": "pos",
+    "pos_pago": "pos",
+    "pospago": "pos",
+    "pre": "pre",
+    "pre_pago": "pre",
+    "prepago": "pre",
+}
+
+DEADLINE_VALUE_ALIASES = {
+    "0": "d0",
+    "1": "d1",
+    "3": "d3",
+    "5": "d5",
+    "7": "d7",
+    "agendamento_futuro": "future",
+    "d_0": "d0",
+    "d_1": "d1",
+    "d_3": "d3",
+    "d_5": "d5",
+    "d_7": "d7",
+    "d0": "d0",
+    "d1": "d1",
+    "d3": "d3",
+    "d5": "d5",
+    "d7": "d7",
+    "future": "future",
+    "futuro": "future",
+}
+
 
 class TemplateNotFoundError(ValueError):
     def __init__(self, template_id):
@@ -558,15 +604,48 @@ def canonicalize_alias_overrides(raw_answers):
         if has_value(normalized.get(alias)) and not has_value(normalized.get(canonical)):
             normalized[canonical] = normalized[alias]
 
+    if has_value(normalized.get("event_type")):
+        normalized["event_type"] = normalize_event_value(normalized["event_type"])
+    if has_value(normalized.get("customer_type")):
+        normalized["customer_type"] = normalize_customer_type_value(normalized["customer_type"])
+    if has_value(normalized.get("deadline_rule")):
+        normalized["deadline_rule"] = normalize_deadline_value(normalized["deadline_rule"])
+
     return normalized
 
 
 def template_supports_event(template, event_type):
-    return clean_value(event_type) in set(template.get("eventos_suportados") or [])
+    return normalize_event_value(event_type) in set(template.get("eventos_suportados") or [])
 
 
 def template_supports_customer_type(template, customer_type):
-    return clean_value(customer_type) in set(template.get("tipos_cliente_suportados") or [])
+    return normalize_customer_type_value(customer_type) in set(
+        template.get("tipos_cliente_suportados") or []
+    )
+
+
+def normalize_event_value(value):
+    return normalize_lookup_value(value, EVENT_VALUE_ALIASES)
+
+
+def normalize_customer_type_value(value):
+    return normalize_lookup_value(value, CUSTOMER_TYPE_VALUE_ALIASES)
+
+
+def normalize_deadline_value(value):
+    return normalize_lookup_value(value, DEADLINE_VALUE_ALIASES)
+
+
+def normalize_lookup_value(value, aliases):
+    normalized = slug_value(value)
+    return aliases.get(normalized, normalized)
+
+
+def slug_value(value):
+    value = clean_value(value).lower()
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^a-z0-9]+", "_", value)
+    return value.strip("_")
 
 
 def template_reference(template):
