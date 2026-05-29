@@ -2,24 +2,8 @@ from core.generation import generate_scenario
 from core.simulation import run_dry_run
 
 
-def base_answers(**overrides):
-    answers = {
-        "campaign_name": "Squad162 Upsell",
-        "campaign_id": "162",
-        "system": "SmartOffers",
-        "objective": "Validar bonificacao apenas para upgrade",
-        "customer_type": "pos",
-        "document_type": "PF",
-        "event_type": "upsell",
-        "validations": ["api", "database", "audit"],
-        "deadline_rule": "d1",
-    }
-    answers.update(overrides)
-    return answers
-
-
-def test_dry_run_accepts_scenario_json_and_keeps_required_contract():
-    scenario = generate_scenario(base_answers())
+def test_dry_run_accepts_scenario_json_and_keeps_required_contract(valid_payload):
+    scenario = generate_scenario(valid_payload())
 
     report = run_dry_run(scenario)
 
@@ -43,8 +27,8 @@ def test_dry_run_accepts_scenario_json_and_keeps_required_contract():
     assert any("LOCAL_ONLY" in log for log in report["logs"])
 
 
-def test_dry_run_with_all_steps_passed():
-    scenario = generate_scenario(base_answers())
+def test_dry_run_with_all_steps_passed(valid_payload):
+    scenario = generate_scenario(valid_payload())
 
     report = run_dry_run(scenario)
 
@@ -54,8 +38,8 @@ def test_dry_run_with_all_steps_passed():
     assert all(step["status"] == "passed" for step in report["steps"])
 
 
-def test_dry_run_with_failed_step():
-    scenario = generate_scenario(base_answers())
+def test_dry_run_with_failed_step(valid_payload):
+    scenario = generate_scenario(valid_payload())
     scenario["execution_steps"][0]["dry_run"] = {
         "status": "failed",
         "message": "Payload invalido no mock.",
@@ -69,8 +53,8 @@ def test_dry_run_with_failed_step():
     assert report["steps"][0]["message"] == "Payload invalido no mock."
 
 
-def test_dry_run_with_skipped_step():
-    scenario = generate_scenario(base_answers())
+def test_dry_run_with_skipped_step(valid_payload):
+    scenario = generate_scenario(valid_payload())
     scenario["validation_steps"][0]["dry_run_status"] = "skipped"
 
     report = run_dry_run(scenario)

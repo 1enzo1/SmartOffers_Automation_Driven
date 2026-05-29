@@ -1,39 +1,8 @@
-import app as app_module
-
-import uuid
 from pathlib import Path
 
 
-GENERATED_TEST_DIR = Path(".test_output") / "cenarios"
-
-
-def valid_payload(**overrides):
-    payload = {
-        "campaign_name": "Squad162 Upsell",
-        "campaign_id": "162",
-        "system": "SmartOffers",
-        "objective": "Validar bonificacao apenas para upgrade",
-        "customer_type": "pos",
-        "document_type": "PF",
-        "event_type": "upsell",
-        "validations": ["api", "database", "audit"],
-        "deadline_rule": "d1",
-    }
-    payload.update(overrides)
-    return payload
-
-
-def make_client(monkeypatch):
-    test_dir = GENERATED_TEST_DIR / uuid.uuid4().hex
-    dryrun_dir = Path(".test_output") / "dryruns" / uuid.uuid4().hex
-    monkeypatch.setenv("CENARIOS_GERADOS_PATH", str(test_dir))
-    monkeypatch.setenv("DRYRUNS_GERADOS_PATH", str(dryrun_dir))
-    app_module.app.config.update(TESTING=True)
-    return app_module.app.test_client(), test_dir
-
-
-def test_questions_endpoint_returns_guided_flow(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_questions_endpoint_returns_guided_flow(app_client_factory):
+    client, _ = app_client_factory("api")
 
     response = client.get("/api/questions")
 
@@ -52,8 +21,9 @@ def test_questions_endpoint_returns_guided_flow(monkeypatch):
     assert {"d1", "d3", "d5", "d7"}.issubset(deadline_values)
 
 
-def test_generate_endpoint_saves_and_reads_scenario(monkeypatch):
-    client, test_dir = make_client(monkeypatch)
+def test_generate_endpoint_saves_and_reads_scenario(app_client_factory, valid_payload):
+    client, base = app_client_factory("api")
+    test_dir = base / "cenarios"
 
     response = client.post("/api/scenarios/generate", json=valid_payload())
 
@@ -69,8 +39,8 @@ def test_generate_endpoint_saves_and_reads_scenario(monkeypatch):
     assert read_response.get_json()["scenario"]["id"] == scenario["id"]
 
 
-def test_list_scenarios_endpoint_returns_saved_summaries(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_list_scenarios_endpoint_returns_saved_summaries(app_client_factory, valid_payload):
+    client, _ = app_client_factory("api")
 
     first = client.post("/api/scenarios/generate", json=valid_payload())
     second = client.post(
@@ -96,8 +66,8 @@ def test_list_scenarios_endpoint_returns_saved_summaries(monkeypatch):
     assert all("validation_count" in scenario for scenario in scenarios)
 
 
-def test_generate_endpoint_returns_validation_errors(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_generate_endpoint_returns_validation_errors(app_client_factory):
+    client, _ = app_client_factory("api")
 
     response = client.post("/api/scenarios/generate", json={"campaign_name": "Falho"})
 
@@ -107,8 +77,8 @@ def test_generate_endpoint_returns_validation_errors(monkeypatch):
     assert "campaign_id" in data["details"]
 
 
-def test_dry_run_endpoint_simulates_saved_scenario(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_dry_run_endpoint_simulates_saved_scenario(app_client_factory, valid_payload):
+    client, _ = app_client_factory("api")
     generate_response = client.post("/api/scenarios/generate", json=valid_payload())
     scenario = generate_response.get_json()["scenario"]
 
@@ -140,8 +110,8 @@ def test_dry_run_endpoint_simulates_saved_scenario(monkeypatch):
     assert any("LOCAL_ONLY" in log for log in report["logs"])
 
 
-def test_dry_run_endpoint_returns_error_when_scenario_does_not_exist(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_dry_run_endpoint_returns_error_when_scenario_does_not_exist(app_client_factory):
+    client, _ = app_client_factory("api")
 
     response = client.post("/api/scenarios/cenario-inexistente/dry-run")
 
@@ -149,8 +119,8 @@ def test_dry_run_endpoint_returns_error_when_scenario_does_not_exist(monkeypatch
     assert response.get_json()["erro"] == "cenario nao encontrado"
 
 
-def test_existing_routes_still_respond(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_existing_routes_still_respond(app_client_factory):
+    client, _ = app_client_factory("api")
 
     assert client.get("/").status_code == 200
     assert client.get("/listar_testes").status_code == 200

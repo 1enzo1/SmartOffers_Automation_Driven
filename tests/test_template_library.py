@@ -1,9 +1,6 @@
-import uuid
 from pathlib import Path
 
 import pytest
-
-import app as app_module
 
 
 REQUIRED_TEMPLATE_KEYS = {
@@ -35,17 +32,8 @@ REQUIRED_CATEGORIES = {
 }
 
 
-def make_client(monkeypatch):
-    base = Path(".test_output") / "templates" / uuid.uuid4().hex
-    monkeypatch.setenv("CENARIOS_GERADOS_PATH", str(base / "cenarios"))
-    monkeypatch.setenv("DRYRUNS_GERADOS_PATH", str(base / "dryruns"))
-    monkeypatch.setenv("EXPORTS_GERADOS_PATH", str(base / "exports"))
-    app_module.app.config.update(TESTING=True)
-    return app_module.app.test_client(), base
-
-
-def test_templates_endpoint_lists_catalog_with_metadata(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_templates_endpoint_lists_catalog_with_metadata(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     response = client.get("/api/templates")
 
@@ -61,8 +49,8 @@ def test_templates_endpoint_lists_catalog_with_metadata(monkeypatch):
     assert "default_answers" not in templates[0]
 
 
-def test_template_detail_endpoint_returns_defaults(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_template_detail_endpoint_returns_defaults(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     response = client.get("/api/templates/recarga-pre-bonus-d0")
 
@@ -75,8 +63,8 @@ def test_template_detail_endpoint_returns_defaults(monkeypatch):
     assert template["default_answers"]["recharge_scenario"] == "with_recharge"
 
 
-def test_template_detail_returns_404_for_unknown_template(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_template_detail_returns_404_for_unknown_template(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     response = client.get("/api/templates/template-inexistente")
 
@@ -84,8 +72,8 @@ def test_template_detail_returns_404_for_unknown_template(monkeypatch):
     assert response.get_json()["erro"] == "template nao encontrado"
 
 
-def test_generate_endpoint_uses_selected_template_defaults(monkeypatch):
-    client, base = make_client(monkeypatch)
+def test_generate_endpoint_uses_selected_template_defaults(app_client_factory):
+    client, base = app_client_factory("templates")
 
     response = client.post(
         "/api/scenarios/generate",
@@ -115,8 +103,8 @@ def test_generate_endpoint_uses_selected_template_defaults(monkeypatch):
     assert (base / "cenarios" / f"{scenario['id']}.json").exists()
 
 
-def test_generate_without_template_id_keeps_existing_contract(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_generate_without_template_id_keeps_existing_contract(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     response = client.post(
         "/api/scenarios/generate",
@@ -140,8 +128,8 @@ def test_generate_without_template_id_keeps_existing_contract(monkeypatch):
     assert scenario["source_answers"]["customer_type"] == "pos"
 
 
-def test_template_alias_event_type_overrides_default_event(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_template_alias_event_type_overrides_default_event(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     response = client.post(
         "/api/scenarios/generate",
@@ -162,8 +150,10 @@ def test_template_alias_event_type_overrides_default_event(monkeypatch):
 
 
 @pytest.mark.parametrize("tipo_evento", ["Mailing", "MAILING", "mailing"])
-def test_template_alias_event_type_normalizes_case_before_support_check(monkeypatch, tipo_evento):
-    client, _ = make_client(monkeypatch)
+def test_template_alias_event_type_normalizes_case_before_support_check(
+    app_client_factory, tipo_evento
+):
+    client, _ = app_client_factory("templates")
 
     response = client.post(
         "/api/scenarios/generate",
@@ -182,8 +172,8 @@ def test_template_alias_event_type_normalizes_case_before_support_check(monkeypa
     assert scenario["payload"]["operation"] == "processMailing"
 
 
-def test_template_alias_event_type_normalizes_accented_value(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_template_alias_event_type_normalizes_accented_value(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     response = client.post(
         "/api/scenarios/generate",
@@ -201,8 +191,8 @@ def test_template_alias_event_type_normalizes_accented_value(monkeypatch):
     assert scenario["payload"]["eventType"] == "alteracao_perfil"
 
 
-def test_template_incompatible_event_override_is_ignored_after_normalization(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_template_incompatible_event_override_is_ignored_after_normalization(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     response = client.post(
         "/api/scenarios/generate",
@@ -223,8 +213,8 @@ def test_template_incompatible_event_override_is_ignored_after_normalization(mon
     assert scenario["payload"]["attributes"]["customerSegment"] == "PRE"
 
 
-def test_template_alias_customer_type_overrides_default_customer(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_template_alias_customer_type_overrides_default_customer(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     response = client.post(
         "/api/scenarios/generate",
@@ -242,8 +232,8 @@ def test_template_alias_customer_type_overrides_default_customer(monkeypatch):
     assert scenario["payload"]["attributes"]["customerSegment"] == "PRE"
 
 
-def test_template_canonical_fields_override_defaults(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_template_canonical_fields_override_defaults(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     response = client.post(
         "/api/scenarios/generate",
@@ -331,8 +321,8 @@ def _has_answer_value(value):
     return value is not None and str(value).strip() != ""
 
 
-def test_existing_routes_still_respond_with_template_api(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_existing_routes_still_respond_with_template_api(app_client_factory):
+    client, _ = app_client_factory("templates")
 
     assert client.get("/").status_code == 200
     assert client.get("/api/questions").status_code == 200

@@ -1,39 +1,8 @@
 import json
-import uuid
-from pathlib import Path
 
-import app as app_module
 from core.exporters.common import render_planned_content
 from docx import Document
 from openpyxl import load_workbook
-
-
-ROOT = Path(".test_output") / "exports"
-
-
-def valid_payload(**overrides):
-    payload = {
-        "campaign_name": "Squad162 Upsell",
-        "campaign_id": "162",
-        "system": "SmartOffers",
-        "objective": "Validar bonificacao apenas para upgrade",
-        "customer_type": "pos",
-        "document_type": "PF",
-        "event_type": "upsell",
-        "validations": ["api", "database", "audit"],
-        "deadline_rule": "d1",
-    }
-    payload.update(overrides)
-    return payload
-
-
-def make_client(monkeypatch):
-    base = ROOT / uuid.uuid4().hex
-    monkeypatch.setenv("CENARIOS_GERADOS_PATH", str(base / "cenarios"))
-    monkeypatch.setenv("DRYRUNS_GERADOS_PATH", str(base / "dryruns"))
-    monkeypatch.setenv("EXPORTS_GERADOS_PATH", str(base / "exports"))
-    app_module.app.config.update(TESTING=True)
-    return app_module.app.test_client(), base
 
 
 def latest_file(directory, suffix):
@@ -52,8 +21,8 @@ def docx_text(path):
     return "\n".join(chunks)
 
 
-def test_exports_cover_scenario_and_dry_run(monkeypatch):
-    client, base = make_client(monkeypatch)
+def test_exports_cover_scenario_and_dry_run(app_client_factory, valid_payload):
+    client, base = app_client_factory("exports")
 
     scenario_response = client.post("/api/scenarios/generate", json=valid_payload())
     assert scenario_response.status_code == 201
@@ -147,8 +116,8 @@ def test_exports_cover_scenario_and_dry_run(monkeypatch):
     ]
 
 
-def test_export_and_lookup_404s(monkeypatch):
-    client, _ = make_client(monkeypatch)
+def test_export_and_lookup_404s(app_client_factory):
+    client, _ = app_client_factory("exports")
 
     assert client.get("/api/scenarios/nao-existe/export/docx").status_code == 404
     assert client.get("/api/dry-runs/nao-existe/export/json").status_code == 404

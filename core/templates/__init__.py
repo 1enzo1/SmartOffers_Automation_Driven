@@ -1,4 +1,4 @@
-from .catalog import (
+from .service import (
     TemplateNotFoundError,
     apply_template_defaults,
     get_template,

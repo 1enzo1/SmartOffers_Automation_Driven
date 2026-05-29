@@ -1,11 +1,11 @@
-import re
-import unicodedata
-
-from .constants import (
-    DEADLINE_ALIASES,
-    EVENT_ALIASES,
-    VALIDATION_ALIASES,
-    VALIDATION_ORDER,
+from core.common.normalization import (
+    clean_text,
+    escape_sql,
+    normalize_customer_type,
+    normalize_deadline,
+    normalize_event_type,
+    normalize_validations,
+    slug,
 )
 
 
@@ -13,9 +13,10 @@ def normalize_answers(raw_answers):
     raw_answers = raw_answers or {}
     campaign = raw_answers.get("campaign") or {}
 
-    customer_type = slug(raw_answers.get("customer_type") or raw_answers.get("tipo_cliente"))
-    event_type = slug(raw_answers.get("event_type") or raw_answers.get("tipo_evento"))
-    event_type = EVENT_ALIASES.get(event_type, event_type)
+    customer_type = normalize_customer_type(
+        raw_answers.get("customer_type") or raw_answers.get("tipo_cliente")
+    )
+    event_type = normalize_event_type(raw_answers.get("event_type") or raw_answers.get("tipo_evento"))
     deadline_rule = normalize_deadline(raw_answers.get("deadline_rule") or raw_answers.get("prazo"))
     document_type = (raw_answers.get("document_type") or raw_answers.get("documento") or "").upper()
 
@@ -45,46 +46,3 @@ def normalize_answers(raw_answers):
         "validations": normalize_validations(raw_answers.get("validations") or raw_answers.get("validacoes")),
         "deadline_rule": deadline_rule,
     }
-
-
-def normalize_deadline(value):
-    normalized = slug(value)
-    return DEADLINE_ALIASES.get(normalized, normalized)
-
-
-def normalize_validations(value):
-    if value is None:
-        return []
-
-    if isinstance(value, str):
-        raw_values = [item.strip() for item in value.split(",")]
-    else:
-        raw_values = list(value)
-
-    normalized = set()
-    for item in raw_values:
-        key = slug(item)
-        if key:
-            normalized.add(VALIDATION_ALIASES.get(key, key))
-
-    return [item for item in VALIDATION_ORDER if item in normalized] + sorted(
-        item for item in normalized if item not in VALIDATION_ORDER
-    )
-
-
-def clean_text(value):
-    if value is None:
-        return ""
-    return str(value).strip()
-
-
-def slug(value):
-    value = clean_text(value).lower()
-    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
-    value = value.replace("+", "")
-    value = re.sub(r"[^a-z0-9]+", "_", value)
-    return value.strip("_")
-
-
-def escape_sql(value):
-    return clean_text(value).replace("'", "''")

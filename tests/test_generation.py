@@ -5,22 +5,6 @@ import pytest
 from core.generation import ScenarioValidationError, generate_scenario
 
 
-def base_answers(**overrides):
-    answers = {
-        "campaign_name": "Squad162 Upsell",
-        "campaign_id": "162",
-        "system": "SmartOffers",
-        "objective": "Validar bonificacao apenas para upgrade",
-        "customer_type": "pos",
-        "document_type": "PF",
-        "event_type": "upsell",
-        "validations": ["api", "database", "audit", "campaign_attributes"],
-        "deadline_rule": "d1",
-    }
-    answers.update(overrides)
-    return answers
-
-
 @pytest.mark.parametrize(
     ("customer_type", "event_type", "ext_event_id", "operation"),
     [
@@ -31,10 +15,10 @@ def base_answers(**overrides):
     ],
 )
 def test_generates_expected_payload_by_customer_and_event(
-    customer_type, event_type, ext_event_id, operation
+    generation_answers, customer_type, event_type, ext_event_id, operation
 ):
     scenario = generate_scenario(
-        base_answers(customer_type=customer_type, event_type=event_type)
+        generation_answers(customer_type=customer_type, event_type=event_type)
     )
 
     assert scenario["payload"]["extEventId"] == ext_event_id
@@ -45,9 +29,9 @@ def test_generates_expected_payload_by_customer_and_event(
     assert scenario["validation_steps"]
 
 
-def test_prepaid_recharge_generates_recharge_plan():
+def test_prepaid_recharge_generates_recharge_plan(generation_answers):
     scenario = generate_scenario(
-        base_answers(
+        generation_answers(
             campaign_name="Squad Pre Recarga",
             customer_type="pre",
             event_type="recarga",
@@ -78,9 +62,11 @@ def test_prepaid_recharge_generates_recharge_plan():
         ("downgrade", "104376082", "122429157", "downgrade"),
     ],
 )
-def test_postpaid_offer_change_templates(event_type, initial_offer, target_offer, expected_text):
+def test_postpaid_offer_change_templates(
+    generation_answers, event_type, initial_offer, target_offer, expected_text
+):
     scenario = generate_scenario(
-        base_answers(
+        generation_answers(
             customer_type="pos",
             event_type=event_type,
             validations=["api", "database", "campaign_attributes", "audit"],
@@ -98,9 +84,9 @@ def test_postpaid_offer_change_templates(event_type, initial_offer, target_offer
     assert expected_text in execution_text
 
 
-def test_mailing_generates_import_blocks_payload_and_queries():
+def test_mailing_generates_import_blocks_payload_and_queries(generation_answers):
     scenario = generate_scenario(
-        base_answers(
+        generation_answers(
             campaign_name="Squad Mailing",
             customer_type="pre",
             event_type="mailing",
@@ -119,9 +105,18 @@ def test_mailing_generates_import_blocks_payload_and_queries():
     assert "campaign_contract" in query_names
 
 
+def test_customer_type_aliases_are_normalized_without_template(generation_answers):
+    scenario = generate_scenario(
+        generation_answers(customer_type="pós-pago", event_type="upsell")
+    )
+
+    assert scenario["source_answers"]["customer_type"] == "pos"
+    assert scenario["payload"]["attributes"]["customerSegment"] == "POS"
+
+
 @pytest.mark.parametrize("deadline_rule", ["d1", "d3"])
-def test_scheduled_deadlines_add_schedule_checkpoint(deadline_rule):
-    scenario = generate_scenario(base_answers(deadline_rule=deadline_rule))
+def test_scheduled_deadlines_add_schedule_checkpoint(generation_answers, deadline_rule):
+    scenario = generate_scenario(generation_answers(deadline_rule=deadline_rule))
 
     query_names = {query["name"] for query in scenario["queries"]}
     validations = [step["validation"] for step in scenario["validation_steps"]]
@@ -132,17 +127,17 @@ def test_scheduled_deadlines_add_schedule_checkpoint(deadline_rule):
     assert "11_schedule_checkpoint.json" in scenario["evidence_files"]
 
 
-def test_generation_is_deterministic_for_same_answers():
-    first = generate_scenario(base_answers(validations=["database", "api", "audit"]))
-    second = generate_scenario(base_answers(validations=["audit", "api", "database"]))
+def test_generation_is_deterministic_for_same_answers(generation_answers):
+    first = generate_scenario(generation_answers(validations=["database", "api", "audit"]))
+    second = generate_scenario(generation_answers(validations=["audit", "api", "database"]))
 
     assert first["id"] == second["id"]
     assert json.dumps(first, sort_keys=True) == json.dumps(second, sort_keys=True)
 
 
-def test_includes_queries_checkpoints_and_evidence_files():
+def test_includes_queries_checkpoints_and_evidence_files(generation_answers):
     scenario = generate_scenario(
-        base_answers(
+        generation_answers(
             validations=[
                 "api",
                 "database",
@@ -167,9 +162,9 @@ def test_includes_queries_checkpoints_and_evidence_files():
     assert "12_expected_evidence_manifest.json" in scenario["evidence_files"]
 
 
-def test_multiple_validations_expand_into_coherent_blocks():
+def test_multiple_validations_expand_into_coherent_blocks(generation_answers):
     scenario = generate_scenario(
-        base_answers(validations=["database", "campaign_attributes", "audit", "sms"])
+        generation_answers(validations=["database", "campaign_attributes", "audit", "sms"])
     )
 
     validations = [step["validation"] for step in scenario["validation_steps"]]
@@ -192,8 +187,8 @@ def test_invalid_answers_raise_structured_error():
     assert "validations" in exc.value.errors
 
 
-def test_recharge_requires_prepaid_customer():
+def test_recharge_requires_prepaid_customer(generation_answers):
     with pytest.raises(ScenarioValidationError) as exc:
-        generate_scenario(base_answers(customer_type="pos", event_type="recarga"))
+        generate_scenario(generation_answers(customer_type="pos", event_type="recarga"))
 
     assert "event_type" in exc.value.errors

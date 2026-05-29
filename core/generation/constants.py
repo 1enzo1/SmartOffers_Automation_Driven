@@ -1,3 +1,11 @@
+from core.common.normalization import (
+    DEADLINE_ALIASES,
+    EVENT_ALIASES,
+    VALIDATION_ALIASES,
+    VALIDATION_ORDER,
+)
+
+
 CUSTOMER_LABELS = {
     "pos": "Pos-pago",
     "pre": "Pre-pago",
@@ -19,20 +27,6 @@ EVENT_LABELS = {
     "downgrade": "Downgrade",
 }
 
-EVENT_ALIASES = {
-    "upgrade": "upsell",
-    "upsell": "upsell",
-    "downgrade": "downgrade",
-    "rehab": "rehab",
-    "reabilitacao": "rehab",
-    "mailing": "mailing",
-    "recarga": "recarga",
-    "recharge": "recarga",
-    "habilitacao": "habilitacao",
-    "alteracao_perfil": "alteracao_perfil",
-    "alteracao_de_perfil": "alteracao_perfil",
-}
-
 VALIDATION_LABELS = {
     "database": "Banco de dados",
     "api": "API",
@@ -45,29 +39,6 @@ VALIDATION_LABELS = {
     "evidence": "Evidencias esperadas",
 }
 
-VALIDATION_ALIASES = {
-    "db": "database",
-    "banco": "database",
-    "banco_de_dados": "database",
-    "api": "api",
-    "campaign_attributes": "campaign_attributes",
-    "attributes": "campaign_attributes",
-    "auditoria": "audit",
-    "audit": "audit",
-    "sms": "sms",
-    "mensagem": "sms",
-    "mensageria": "sms",
-    "received_events": "received_events",
-    "eventos_recebidos": "received_events",
-    "kafka": "kafka",
-    "agendamento": "schedule",
-    "schedule": "schedule",
-    "evidencias": "evidence",
-    "evidence": "evidence",
-}
-
-VALIDATION_ORDER = list(VALIDATION_LABELS.keys())
-
 DEADLINE_LABELS = {
     "d0": "D+0",
     "d1": "D+1",
@@ -75,27 +46,6 @@ DEADLINE_LABELS = {
     "d5": "D+5",
     "d7": "D+7",
     "future": "Agendamento futuro",
-}
-
-DEADLINE_ALIASES = {
-    "d0": "d0",
-    "d_0": "d0",
-    "0": "d0",
-    "d1": "d1",
-    "d_1": "d1",
-    "1": "d1",
-    "d3": "d3",
-    "d_3": "d3",
-    "3": "d3",
-    "d5": "d5",
-    "d_5": "d5",
-    "5": "d5",
-    "d7": "d7",
-    "d_7": "d7",
-    "7": "d7",
-    "future": "future",
-    "futuro": "future",
-    "agendamento_futuro": "future",
 }
 
 SCHEDULED_DEADLINES = {"d1", "d3", "d5", "d7", "future"}
