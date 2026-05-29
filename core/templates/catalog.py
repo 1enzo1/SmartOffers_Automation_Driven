@@ -1,0 +1,689 @@
+from copy import deepcopy
+import re
+import unicodedata
+
+
+CATEGORY_LABELS = {
+    "upsell": "Upsell",
+    "downgrade": "Downgrade",
+    "rehab": "Reabilitacao",
+    "recarga": "Recarga",
+    "mailing": "Mailing",
+    "habilitacao": "Habilitacao",
+    "alteracao_perfil": "Alteracao de perfil",
+    "opt_in": "Opt-in",
+    "bonus": "Bonus",
+    "agendamento": "Agendamento",
+    "blacklist": "Blacklist",
+    "segmentacao": "Segmentacao",
+}
+
+CATEGORY_ORDER = list(CATEGORY_LABELS)
+
+TEMPLATE_LIBRARY = [
+    {
+        "id": "upsell-pos-bonus-d1",
+        "nome": "Upsell pos-pago com bonus D+1",
+        "descricao": "Base para campanha que bonifica apenas upgrade real de oferta no pos-pago.",
+        "categoria": "upsell",
+        "eventos_suportados": ["upsell"],
+        "tipos_cliente_suportados": ["pos"],
+        "validacoes_recomendadas": ["api", "database", "campaign_attributes", "audit", "sms"],
+        "steps_gerados": [
+            "Preparar massa de cliente pos-pago",
+            "Preparar upgrade de oferta",
+            "Aplicar regra de bonificacao por upgrade",
+            "Planejar checkpoint de agendamento",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Confirme que a oferta alvo possui rank maior que a oferta atual."],
+        "restricoes": ["Nao executa API real nem valida fila de SMS real no dry-run."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Bonificar apenas cliente pos-pago que fez upgrade real de oferta.",
+            "customer_type": "pos",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "upsell",
+            "current_offer": "122429157",
+            "target_offer": "104376082",
+            "validations": ["api", "database", "campaign_attributes", "audit", "sms"],
+            "deadline_rule": "d1",
+        },
+    },
+    {
+        "id": "downgrade-pos-sem-bonus",
+        "nome": "Downgrade pos-pago sem bonus",
+        "descricao": "Prova negativa para garantir que downgrade nao dispare bonificacao indevida.",
+        "categoria": "downgrade",
+        "eventos_suportados": ["downgrade"],
+        "tipos_cliente_suportados": ["pos"],
+        "validacoes_recomendadas": ["api", "database", "campaign_attributes", "audit"],
+        "steps_gerados": [
+            "Preparar massa de cliente pos-pago",
+            "Preparar downgrade de oferta",
+            "Bloquear bonificacao indevida",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Use oferta alvo com rank menor para manter a prova negativa coerente."],
+        "restricoes": ["Nao consulta oferta real para calcular rank; os codigos sao dados planejados."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar que downgrade nao gera bonus de upgrade.",
+            "customer_type": "pos",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "downgrade",
+            "current_offer": "104376082",
+            "target_offer": "122429157",
+            "validations": ["api", "database", "campaign_attributes", "audit"],
+            "deadline_rule": "d0",
+        },
+    },
+    {
+        "id": "rehab-linha-reabilitada",
+        "nome": "Reabilitacao sem troca de oferta",
+        "descricao": "Base para validar retorno de linha ao estado ativo sem upgrade ou downgrade indevido.",
+        "categoria": "rehab",
+        "eventos_suportados": ["rehab"],
+        "tipos_cliente_suportados": ["pre", "pos"],
+        "validacoes_recomendadas": ["api", "database", "campaign_attributes", "audit"],
+        "steps_gerados": [
+            "Preparar massa de cliente",
+            "Preparar cliente para reabilitacao",
+            "Processar reabilitacao sem troca de oferta",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Preserve oferta atual e alvo iguais quando a regra nao exigir troca."],
+        "restricoes": ["Nao altera status real da linha; apenas documenta o plano de teste."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar reabilitacao mantendo a oferta original.",
+            "customer_type": "pre",
+            "document_type": "PF",
+            "customer_status": "reabilitado",
+            "event_type": "rehab",
+            "current_offer": "122429157",
+            "target_offer": "122429157",
+            "validations": ["api", "database", "campaign_attributes", "audit"],
+            "deadline_rule": "d0",
+        },
+    },
+    {
+        "id": "recarga-pre-bonus-d0",
+        "nome": "Recarga pre-paga com bonus D+0",
+        "descricao": "Base para campanha acionada por recarga valida no pre-pago.",
+        "categoria": "recarga",
+        "eventos_suportados": ["recarga"],
+        "tipos_cliente_suportados": ["pre"],
+        "validacoes_recomendadas": ["api", "database", "campaign_attributes", "sms"],
+        "steps_gerados": [
+            "Configurar contexto de recarga pre-paga",
+            "Preparar evento de recarga",
+            "Avaliar regra de campanha por recarga",
+            "Planejar mensagem de bonus",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Template usa recarga valida; a limitacao conhecida de recarga none permanece fora do MVP."],
+        "restricoes": ["Nao chama gateway de recarga real nem fila real de mensagens."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Bonificar cliente pre-pago apos recarga valida.",
+            "customer_type": "pre",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "recarga",
+            "recharge_scenario": "with_recharge",
+            "recharge_amount": "30.00",
+            "recharge_channel": "APP",
+            "validations": ["api", "database", "campaign_attributes", "sms"],
+            "deadline_rule": "d0",
+        },
+    },
+    {
+        "id": "mailing-upload-manual",
+        "nome": "Mailing por upload manual",
+        "descricao": "Base para importacao planejada de mailing com validacao de contrato e discovery.",
+        "categoria": "mailing",
+        "eventos_suportados": ["mailing"],
+        "tipos_cliente_suportados": ["pre", "pos", "controle"],
+        "validacoes_recomendadas": ["api", "database", "audit"],
+        "steps_gerados": [
+            "Preparar arquivo/lista de mailing",
+            "Validar campos minimos do mailing",
+            "Processar mailing sem integracao real",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Inclua banco de dados para provar elegibilidade importada."],
+        "restricoes": ["Nao faz upload real de arquivo nem dispara processador externo."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar elegibilidade por mailing importado manualmente.",
+            "customer_type": "pre",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "mailing",
+            "mailing_source": "upload_manual",
+            "validations": ["api", "database", "audit"],
+            "deadline_rule": "d0",
+        },
+    },
+    {
+        "id": "habilitacao-pos-primeira-avaliacao",
+        "nome": "Habilitacao pos-pago primeira avaliacao",
+        "descricao": "Base para validar entrada inicial de cliente habilitado em campanha SmartOffers.",
+        "categoria": "habilitacao",
+        "eventos_suportados": ["habilitacao"],
+        "tipos_cliente_suportados": ["pos"],
+        "validacoes_recomendadas": ["api", "database", "campaign_attributes"],
+        "steps_gerados": [
+            "Preparar massa de cliente pos-pago",
+            "Simular habilitacao do cliente",
+            "Confirmar vinculo inicial da campanha",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Use quando o foco for entrada inicial, nao alteracao de perfil."],
+        "restricoes": ["Nao habilita linha real; apenas gera payload e evidencias planejadas."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar que cliente habilitado entra elegivel na campanha.",
+            "customer_type": "pos",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "habilitacao",
+            "validations": ["api", "database", "campaign_attributes"],
+            "deadline_rule": "d0",
+        },
+    },
+    {
+        "id": "alteracao-perfil-pos-recalculo",
+        "nome": "Alteracao de perfil com recalculo de elegibilidade",
+        "descricao": "Base para mudanca planejada de oferta/perfil e recalculo de atributos.",
+        "categoria": "alteracao_perfil",
+        "eventos_suportados": ["alteracao_perfil"],
+        "tipos_cliente_suportados": ["pos"],
+        "validacoes_recomendadas": ["api", "database", "campaign_attributes", "audit"],
+        "steps_gerados": [
+            "Preparar alteracao de perfil",
+            "Reprocessar elegibilidade apos alteracao",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Confirme se a campanha espera manter ou recalcular atributos existentes."],
+        "restricoes": ["Nao altera perfil real; dados sao usados como plano deterministico."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar recalculo de elegibilidade apos alteracao de perfil.",
+            "customer_type": "pos",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "alteracao_perfil",
+            "current_offer": "122429157",
+            "target_offer": "122429137",
+            "validations": ["api", "database", "campaign_attributes", "audit"],
+            "deadline_rule": "d0",
+        },
+    },
+    {
+        "id": "opt-in-habilitacao-auditavel",
+        "nome": "Opt-in auditavel na habilitacao",
+        "descricao": "Base para documentar consentimento/opt-in como pre-condicao de elegibilidade.",
+        "categoria": "opt_in",
+        "eventos_suportados": ["habilitacao", "mailing"],
+        "tipos_cliente_suportados": ["pre", "pos"],
+        "validacoes_recomendadas": ["api", "database", "audit", "evidence"],
+        "steps_gerados": [
+            "Preparar massa de cliente com pre-condicao de opt-in",
+            "Simular habilitacao do cliente",
+            "Validar auditoria",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Opt-in ainda e metadata de teste; nao ha adapter real de consentimento neste MVP."],
+        "restricoes": ["Nao consulta base real de opt-in ou consentimento."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar campanha somente para cliente com opt-in documentado.",
+            "customer_type": "pos",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "habilitacao",
+            "validations": ["api", "database", "audit", "evidence"],
+            "deadline_rule": "d0",
+        },
+    },
+    {
+        "id": "bonus-upsell-controle-sms",
+        "nome": "Bonus por upsell com controle de mensagem",
+        "descricao": "Base para validar bonus esperado e evidencia de SMS/mensagem planejada.",
+        "categoria": "bonus",
+        "eventos_suportados": ["upsell", "recarga"],
+        "tipos_cliente_suportados": ["pre", "pos"],
+        "validacoes_recomendadas": ["api", "database", "campaign_attributes", "sms", "audit"],
+        "steps_gerados": [
+            "Preparar massa de cliente",
+            "Aplicar regra de bonificacao por upgrade",
+            "Validar SMS/mensagem",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Use categoria bonus quando a mensagem/beneficio for parte central da prova."],
+        "restricoes": ["Nao envia SMS real nem provisiona bonus real."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar bonus e mensagem somente quando a regra for atendida.",
+            "customer_type": "pos",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "upsell",
+            "current_offer": "122429157",
+            "target_offer": "104376082",
+            "validations": ["api", "database", "campaign_attributes", "sms", "audit"],
+            "deadline_rule": "d0",
+        },
+    },
+    {
+        "id": "agendamento-d1-upsell",
+        "nome": "Agendamento D+1 para upsell",
+        "descricao": "Base para validar checkpoint futuro D+1 sem execucao real de agendamento.",
+        "categoria": "agendamento",
+        "eventos_suportados": ["upsell"],
+        "tipos_cliente_suportados": ["pos"],
+        "validacoes_recomendadas": ["api", "database", "schedule", "evidence"],
+        "steps_gerados": [
+            "Preparar upgrade de oferta",
+            "Planejar checkpoint de agendamento",
+            "Validar agendamento futuro",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Cenario so deve ser concluido depois do marco D+1 planejado."],
+        "restricoes": ["Nao agenda job real; gera apenas checkpoint e query planejada."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar regra de upsell com checkpoint D+1.",
+            "customer_type": "pos",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "upsell",
+            "current_offer": "122429157",
+            "target_offer": "104376082",
+            "validations": ["api", "database", "schedule", "evidence"],
+            "deadline_rule": "d1",
+        },
+    },
+    {
+        "id": "agendamento-d3-mailing",
+        "nome": "Agendamento D+3 para mailing",
+        "descricao": "Base para mailing com checkpoint D+3 e prova de importacao planejada.",
+        "categoria": "agendamento",
+        "eventos_suportados": ["mailing"],
+        "tipos_cliente_suportados": ["pre", "pos"],
+        "validacoes_recomendadas": ["api", "database", "schedule", "evidence"],
+        "steps_gerados": [
+            "Processar mailing sem integracao real",
+            "Planejar checkpoint de agendamento",
+            "Validar agendamento futuro",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["D+3 adiciona validacao de schedule automaticamente ao cenario gerado."],
+        "restricoes": ["Nao dispara processamento real de mailing ou scheduler."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar mailing com regra de agendamento D+3.",
+            "customer_type": "pre",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "mailing",
+            "mailing_source": "base_segmentada",
+            "validations": ["api", "database", "schedule", "evidence"],
+            "deadline_rule": "d3",
+        },
+    },
+    {
+        "id": "agendamento-d5-rehab",
+        "nome": "Agendamento D+5 para rehab",
+        "descricao": "Base para reabilitacao com marco futuro D+5.",
+        "categoria": "agendamento",
+        "eventos_suportados": ["rehab"],
+        "tipos_cliente_suportados": ["pre"],
+        "validacoes_recomendadas": ["api", "database", "schedule", "audit"],
+        "steps_gerados": [
+            "Preparar cliente para reabilitacao",
+            "Processar reabilitacao sem troca de oferta",
+            "Planejar checkpoint de agendamento",
+            "Validar auditoria",
+        ],
+        "warnings": ["Preserve status inicial coerente com reabilitacao."],
+        "restricoes": ["Nao altera status real da linha nem agenda job real."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar reabilitacao com conferencia D+5.",
+            "customer_type": "pre",
+            "document_type": "PF",
+            "customer_status": "reabilitado",
+            "event_type": "rehab",
+            "current_offer": "122429157",
+            "target_offer": "122429157",
+            "validations": ["api", "database", "schedule", "audit"],
+            "deadline_rule": "d5",
+        },
+    },
+    {
+        "id": "agendamento-d7-alteracao-perfil",
+        "nome": "Agendamento D+7 para alteracao de perfil",
+        "descricao": "Base para alteracao de perfil com checkpoint D+7.",
+        "categoria": "agendamento",
+        "eventos_suportados": ["alteracao_perfil"],
+        "tipos_cliente_suportados": ["pos"],
+        "validacoes_recomendadas": ["api", "database", "campaign_attributes", "schedule"],
+        "steps_gerados": [
+            "Preparar alteracao de perfil",
+            "Reprocessar elegibilidade apos alteracao",
+            "Planejar checkpoint de agendamento",
+            "Validar Campaign Attributes obrigatorios",
+        ],
+        "warnings": ["D+7 exige controle manual do checkpoint antes de encerrar teste."],
+        "restricoes": ["Nao agenda job real; checkpoint fica documentado no JSON."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar alteracao de perfil com conferencia D+7.",
+            "customer_type": "pos",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "alteracao_perfil",
+            "current_offer": "122429157",
+            "target_offer": "122429137",
+            "validations": ["api", "database", "campaign_attributes", "schedule"],
+            "deadline_rule": "d7",
+        },
+    },
+    {
+        "id": "blacklist-controle-mailing",
+        "nome": "Blacklist como prova negativa de mailing",
+        "descricao": "Base para documentar cliente de controle/blacklist que nao deve receber beneficio.",
+        "categoria": "blacklist",
+        "eventos_suportados": ["mailing"],
+        "tipos_cliente_suportados": ["controle"],
+        "validacoes_recomendadas": ["database", "audit", "evidence"],
+        "steps_gerados": [
+            "Preparar arquivo/lista de mailing",
+            "Validar campos minimos do mailing",
+            "Validar auditoria",
+            "Registrar evidencias esperadas",
+        ],
+        "warnings": ["Blacklist e tratada como expectativa de teste; o gerador nao bloqueia regra real."],
+        "restricoes": ["Nao consulta blacklist real nem remove cliente de base externa."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar que cliente em blacklist/controle nao recebe beneficio indevido.",
+            "customer_type": "controle",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "mailing",
+            "mailing_source": "lista_controle",
+            "validations": ["database", "audit", "evidence"],
+            "deadline_rule": "d0",
+        },
+    },
+    {
+        "id": "segmentacao-mailing-base",
+        "nome": "Segmentacao por base de mailing",
+        "descricao": "Base para campanha dirigida por segmento importado em mailing.",
+        "categoria": "segmentacao",
+        "eventos_suportados": ["mailing"],
+        "tipos_cliente_suportados": ["pre", "pos"],
+        "validacoes_recomendadas": ["api", "database", "campaign_attributes", "received_events"],
+        "steps_gerados": [
+            "Preparar arquivo/lista de mailing",
+            "Validar campos minimos do mailing",
+            "Processar mailing sem integracao real",
+            "Validar eventos recebidos",
+        ],
+        "warnings": ["Documente o segmento no objetivo da campanha para facilitar auditoria."],
+        "restricoes": ["Nao consulta motor real de segmentacao."],
+        "default_answers": {
+            "system": "SmartOffers",
+            "objective": "Validar campanha para base segmentada de mailing.",
+            "customer_type": "pre",
+            "document_type": "PF",
+            "customer_status": "ativo",
+            "event_type": "mailing",
+            "mailing_source": "base_segmentada",
+            "validations": ["api", "database", "campaign_attributes", "received_events"],
+            "deadline_rule": "d0",
+        },
+    },
+]
+
+_TEMPLATES_BY_ID = {template["id"]: template for template in TEMPLATE_LIBRARY}
+
+CANONICAL_FIELD_ALIASES = {
+    "campanha": "campaign_name",
+    "campaign_number": "campaign_id",
+    "sistema": "system",
+    "objetivo": "objective",
+    "tipo_cliente": "customer_type",
+    "documento": "document_type",
+    "tipo_evento": "event_type",
+    "oferta_atual": "current_offer",
+    "oferta_alvo": "target_offer",
+    "validacoes": "validations",
+    "prazo": "deadline_rule",
+}
+
+EVENT_VALUE_ALIASES = {
+    "alteracao_de_perfil": "alteracao_perfil",
+    "alteracao_perfil": "alteracao_perfil",
+    "downgrade": "downgrade",
+    "habilitacao": "habilitacao",
+    "mailing": "mailing",
+    "recarga": "recarga",
+    "reabilitacao": "rehab",
+    "rehab": "rehab",
+    "upgrade": "upsell",
+    "upsell": "upsell",
+}
+
+CUSTOMER_TYPE_VALUE_ALIASES = {
+    "controle": "controle",
+    "pos": "pos",
+    "pos_pago": "pos",
+    "pospago": "pos",
+    "pre": "pre",
+    "pre_pago": "pre",
+    "prepago": "pre",
+}
+
+DEADLINE_VALUE_ALIASES = {
+    "0": "d0",
+    "1": "d1",
+    "3": "d3",
+    "5": "d5",
+    "7": "d7",
+    "agendamento_futuro": "future",
+    "d_0": "d0",
+    "d_1": "d1",
+    "d_3": "d3",
+    "d_5": "d5",
+    "d_7": "d7",
+    "d0": "d0",
+    "d1": "d1",
+    "d3": "d3",
+    "d5": "d5",
+    "d7": "d7",
+    "future": "future",
+    "futuro": "future",
+}
+
+
+class TemplateNotFoundError(ValueError):
+    def __init__(self, template_id):
+        self.template_id = template_id
+        super().__init__(f"Template nao encontrado: {template_id}")
+
+
+def list_templates(category=None, event_type=None, customer_type=None):
+    category = clean_value(category)
+    event_type = clean_value(event_type)
+    customer_type = clean_value(customer_type)
+
+    templates = []
+    for template in TEMPLATE_LIBRARY:
+        if category and template["categoria"] != category:
+            continue
+        if event_type and event_type not in template["eventos_suportados"]:
+            continue
+        if customer_type and customer_type not in template["tipos_cliente_suportados"]:
+            continue
+        templates.append(public_template(template, include_defaults=False))
+
+    return templates
+
+
+def list_template_categories():
+    counts = {category: 0 for category in CATEGORY_ORDER}
+    for template in TEMPLATE_LIBRARY:
+        counts[template["categoria"]] = counts.get(template["categoria"], 0) + 1
+
+    return [
+        {
+            "id": category,
+            "nome": CATEGORY_LABELS.get(category, category),
+            "template_count": counts[category],
+        }
+        for category in CATEGORY_ORDER
+        if counts.get(category)
+    ]
+
+
+def get_template(template_id):
+    template = _TEMPLATES_BY_ID.get(clean_value(template_id))
+    if not template:
+        return None
+    return public_template(template, include_defaults=True)
+
+
+def apply_template_defaults(raw_answers):
+    raw_answers = raw_answers or {}
+    template_value = raw_answers.get("template_id") or raw_answers.get("template")
+    if isinstance(template_value, dict):
+        template_value = template_value.get("id")
+    template_id = clean_value(template_value)
+
+    if not template_id:
+        return deepcopy(raw_answers), None
+
+    raw_answers = canonicalize_alias_overrides(raw_answers)
+    template = _TEMPLATES_BY_ID.get(template_id)
+    if not template:
+        raise TemplateNotFoundError(template_id)
+
+    merged = deepcopy(template.get("default_answers", {}))
+    for key, value in raw_answers.items():
+        if key in {"template", "template_id"}:
+            continue
+        if has_value(value):
+            if key == "event_type" and not template_supports_event(template, value):
+                continue
+            if key == "customer_type" and not template_supports_customer_type(template, value):
+                continue
+            merged[key] = value
+
+    merged["template_id"] = template_id
+    return merged, public_template(template, include_defaults=False)
+
+
+def canonicalize_alias_overrides(raw_answers):
+    normalized = deepcopy(raw_answers)
+
+    campaign = normalized.get("campaign")
+    if isinstance(campaign, dict):
+        if not has_value(normalized.get("campaign_name")) and has_value(campaign.get("name")):
+            normalized["campaign_name"] = campaign["name"]
+        if not has_value(normalized.get("campaign_id")) and has_value(campaign.get("id")):
+            normalized["campaign_id"] = campaign["id"]
+
+    for alias, canonical in CANONICAL_FIELD_ALIASES.items():
+        if has_value(normalized.get(alias)) and not has_value(normalized.get(canonical)):
+            normalized[canonical] = normalized[alias]
+
+    if has_value(normalized.get("event_type")):
+        normalized["event_type"] = normalize_event_value(normalized["event_type"])
+    if has_value(normalized.get("customer_type")):
+        normalized["customer_type"] = normalize_customer_type_value(normalized["customer_type"])
+    if has_value(normalized.get("deadline_rule")):
+        normalized["deadline_rule"] = normalize_deadline_value(normalized["deadline_rule"])
+
+    return normalized
+
+
+def template_supports_event(template, event_type):
+    return normalize_event_value(event_type) in set(template.get("eventos_suportados") or [])
+
+
+def template_supports_customer_type(template, customer_type):
+    return normalize_customer_type_value(customer_type) in set(
+        template.get("tipos_cliente_suportados") or []
+    )
+
+
+def normalize_event_value(value):
+    return normalize_lookup_value(value, EVENT_VALUE_ALIASES)
+
+
+def normalize_customer_type_value(value):
+    return normalize_lookup_value(value, CUSTOMER_TYPE_VALUE_ALIASES)
+
+
+def normalize_deadline_value(value):
+    return normalize_lookup_value(value, DEADLINE_VALUE_ALIASES)
+
+
+def normalize_lookup_value(value, aliases):
+    normalized = slug_value(value)
+    return aliases.get(normalized, normalized)
+
+
+def slug_value(value):
+    value = clean_value(value).lower()
+    value = unicodedata.normalize("NFKD", value).encode("ascii", "ignore").decode("ascii")
+    value = re.sub(r"[^a-z0-9]+", "_", value)
+    return value.strip("_")
+
+
+def template_reference(template):
+    if not template:
+        return None
+
+    return {
+        "id": template["id"],
+        "nome": template["nome"],
+        "descricao": template["descricao"],
+        "categoria": template["categoria"],
+        "eventos_suportados": list(template["eventos_suportados"]),
+        "tipos_cliente_suportados": list(template["tipos_cliente_suportados"]),
+        "validacoes_recomendadas": list(template["validacoes_recomendadas"]),
+        "steps_gerados": list(template["steps_gerados"]),
+        "warnings": list(template["warnings"]),
+        "restricoes": list(template["restricoes"]),
+    }
+
+
+def public_template(template, include_defaults):
+    data = template_reference(template)
+    if include_defaults:
+        data["default_answers"] = deepcopy(template.get("default_answers", {}))
+    return data
+
+
+def has_value(value):
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    if isinstance(value, (list, tuple, set, dict)):
+        return bool(value)
+    return True
+
+
+def clean_value(value):
+    if value is None:
+        return ""
+    return str(value).strip()

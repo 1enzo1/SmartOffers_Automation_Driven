@@ -915,6 +915,84 @@ select.runner-select {
     line-height: 1.4;
 }
 
+.template-library {
+    display: grid;
+    gap: 10px;
+}
+
+.template-list {
+    display: grid;
+    gap: 8px;
+    max-height: 260px;
+    overflow: auto;
+    padding-right: 4px;
+}
+
+.template-card {
+    width: 100%;
+    display: block;
+    text-align: left;
+    border: 1px solid var(--border-soft);
+    border-left: 3px solid var(--border-strong);
+    border-radius: 7px;
+    padding: 11px;
+    background: rgba(7,10,16,.38);
+    color: var(--text);
+}
+
+.template-card:hover,
+.template-card.active {
+    border-color: var(--accent-line);
+    border-left-color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.template-card strong,
+.template-selected strong {
+    display: block;
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.template-card span,
+.template-selected span {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.template-selected {
+    border: 1px solid rgba(40,214,163,.24);
+    border-radius: 7px;
+    padding: 10px;
+    background: var(--good-soft);
+    color: var(--text);
+}
+
+.template-selected.muted {
+    border-color: var(--border-soft);
+    background: rgba(7,10,16,.34);
+}
+
+.template-chip-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 8px;
+}
+
+.template-chip {
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    padding: 3px 7px;
+    color: var(--muted);
+    background: rgba(20,31,49,.68);
+    font-family: var(--mono);
+    font-size: 10px;
+}
+
 .scenario {
     border: 1px solid var(--border-soft);
     border-radius: 8px;
@@ -1440,6 +1518,7 @@ pre {
             <div class="status-list">
                 <div class="status-line"><strong>/api/questions</strong><span>ok</span></div>
                 <div class="status-line"><strong>/api/scenarios</strong><span>ok</span></div>
+                <div class="status-line"><strong>/api/templates</strong><span>ok</span></div>
                 <div class="status-line"><strong>/executar</strong><span>SSE</span></div>
             </div>
         </section>
@@ -1469,6 +1548,23 @@ pre {
     <div class="generator-shell">
         <aside class="panel sidebar">
             <div class="section-label">Gerador de cenarios</div>
+            <section class="subsection template-library">
+                <div class="scenario-head">
+                    <h3>Biblioteca de Templates</h3>
+                    <button class="secondary" type="button" style="width:auto;padding:7px 10px" onclick="loadTemplates()">Atualizar</button>
+                </div>
+                <select id="templateCategoryFilter" onchange="renderTemplatesForCurrentFilter()" aria-label="Filtrar templates por categoria">
+                    <option value="">Todas categorias</option>
+                </select>
+                <div id="selectedTemplateSummary" class="template-selected muted">
+                    <strong>Nenhum template selecionado.</strong>
+                    <span>Selecione um template para preencher o fluxo guiado sem perder a edicao manual.</span>
+                </div>
+                <div id="templateLibrary" class="template-list">
+                    <div class="muted">Templates ainda nao carregados.</div>
+                </div>
+            </section>
+
             <div class="wizard-rail" id="wizardRail" aria-hidden="true"></div>
             <form id="questionForm"></form>
 
@@ -1655,6 +1751,10 @@ let currentEventSource = null
 let executionPaused = false
 let lastExecutionConfig = null
 let currentScenarioFilter = "all"
+let templates = []
+let templateCategories = []
+let selectedTemplate = null
+let selectedTemplateId = ""
 
 function setTextContent(id, value){
     const element = document.getElementById(id)
@@ -1738,6 +1838,127 @@ async function loadQuestions(){
     } catch (error) {
         setGeneratorMessage("Nao foi possivel carregar as perguntas.", "bad")
     }
+}
+
+async function loadTemplates(){
+    const list = document.getElementById("templateLibrary")
+    if(list) list.innerHTML = `<div class="muted">Carregando templates...</div>`
+
+    try {
+        const response = await fetch("/api/templates")
+        const data = await response.json()
+        templates = data.templates || []
+        templateCategories = data.categories || []
+        renderTemplateCategoryFilter()
+        renderTemplatesForCurrentFilter()
+    } catch (error) {
+        if(list) list.innerHTML = `<div class="muted">Nao foi possivel carregar os templates.</div>`
+    }
+}
+
+function renderTemplateCategoryFilter(){
+    const select = document.getElementById("templateCategoryFilter")
+    if(!select) return
+
+    const previous = select.value
+    select.innerHTML = `<option value="">Todas categorias</option>`
+
+    templateCategories.forEach(category => {
+        const option = document.createElement("option")
+        option.value = category.id
+        option.textContent = `${category.nome} (${category.template_count})`
+        select.appendChild(option)
+    })
+
+    if(Array.from(select.options).some(option => option.value === previous)){
+        select.value = previous
+    }
+}
+
+function renderTemplatesForCurrentFilter(){
+    const select = document.getElementById("templateCategoryFilter")
+    const category = select ? select.value : ""
+    const filtered = category ? templates.filter(template => template.categoria === category) : templates
+    renderTemplates(filtered)
+}
+
+function renderTemplates(items){
+    const list = document.getElementById("templateLibrary")
+    if(!list) return
+
+    list.innerHTML = ""
+
+    if(!items.length){
+        list.innerHTML = `<div class="muted">Nenhum template para o filtro atual.</div>`
+        return
+    }
+
+    items.forEach(template => {
+        const button = document.createElement("button")
+        button.type = "button"
+        button.className = `template-card ${selectedTemplateId === template.id ? "active" : ""}`.trim()
+        button.onclick = () => selectTemplate(template.id)
+
+        const validations = (template.validacoes_recomendadas || []).join(", ")
+        button.innerHTML = `
+            <strong>${escapeHtml(template.nome)}</strong>
+            <span>${escapeHtml(template.categoria)} | eventos: ${escapeHtml((template.eventos_suportados || []).join(", "))}</span>
+            <span>clientes: ${escapeHtml((template.tipos_cliente_suportados || []).join(", "))}</span>
+            <span>validacoes: ${escapeHtml(validations || "-")}</span>
+        `
+        list.appendChild(button)
+    })
+}
+
+async function selectTemplate(templateId){
+    setGeneratorMessage("Carregando template...", "")
+
+    try {
+        const response = await fetch(`/api/templates/${templateId}`)
+        const data = await response.json()
+
+        if(!response.ok){
+            setGeneratorMessage(data.erro || "Template nao encontrado.", "bad")
+            return
+        }
+
+        selectedTemplate = data.template
+        selectedTemplateId = data.template.id
+        setFormAnswers(mergeTemplateAnswers(data.template))
+        currentQuestionStep = 0
+        updateQuestionStep()
+        renderSelectedTemplate(data.template)
+        renderTemplatesForCurrentFilter()
+        setGeneratorMessage(`Template aplicado: ${data.template.nome}`, "ok")
+    } catch (error) {
+        setGeneratorMessage("Nao foi possivel aplicar o template.", "bad")
+    }
+}
+
+function renderSelectedTemplate(template){
+    const block = document.getElementById("selectedTemplateSummary")
+    if(!block) return
+
+    if(!template){
+        block.className = "template-selected muted"
+        block.innerHTML = `
+            <strong>Nenhum template selecionado.</strong>
+            <span>Selecione um template para preencher o fluxo guiado sem perder a edicao manual.</span>
+        `
+        return
+    }
+
+    const validations = (template.validacoes_recomendadas || []).slice(0, 5)
+    block.className = "template-selected"
+    block.innerHTML = `
+        <strong>${escapeHtml(template.nome)}</strong>
+        <span>${escapeHtml(template.descricao || "")}</span>
+        <span>Categoria: ${escapeHtml(template.categoria)} | ID: ${escapeHtml(template.id)}</span>
+        <div class="template-chip-row">
+            ${(template.eventos_suportados || []).map(item => `<span class="template-chip">${escapeHtml(item)}</span>`).join("")}
+            ${validations.map(item => `<span class="template-chip">${escapeHtml(item)}</span>`).join("")}
+        </div>
+    `
 }
 
 async function loadSavedScenarios(){
@@ -2090,7 +2311,42 @@ function collectAnswers(){
         }
     })
 
+    if(selectedTemplateId){
+        answers.template_id = selectedTemplateId
+    }
+
     return answers
+}
+
+function hasAnswerValue(value){
+    if(Array.isArray(value)) return value.length > 0
+    return value !== undefined && value !== null && String(value).trim() !== ""
+}
+
+function mergeTemplateAnswers(template){
+    const merged = collectAnswers()
+    delete merged.template_id
+
+    const defaultAnswers = template?.default_answers || {}
+
+    Object.entries(defaultAnswers || {}).forEach(([key, value]) => {
+        if(!hasAnswerValue(merged[key])){
+            merged[key] = value
+        }
+    })
+
+    const supportedEvents = template?.eventos_suportados || []
+    const supportedCustomers = template?.tipos_cliente_suportados || []
+
+    if(hasAnswerValue(merged.event_type) && supportedEvents.length && !supportedEvents.includes(merged.event_type)){
+        merged.event_type = defaultAnswers.event_type || merged.event_type
+    }
+
+    if(hasAnswerValue(merged.customer_type) && supportedCustomers.length && !supportedCustomers.includes(merged.customer_type)){
+        merged.customer_type = defaultAnswers.customer_type || merged.customer_type
+    }
+
+    return merged
 }
 
 function renderReview(){
@@ -2175,13 +2431,12 @@ function renderScenario(scenario){
     showResultTab("execution")
 }
 
-function fillFormFromScenario(scenario){
-    const answers = scenario.source_answers || {}
-
+function setFormAnswers(answers){
     questions.flatMap(step => step.fields).forEach(field => {
         if(field.type === "checkbox_group"){
+            const selectedValues = Array.isArray(answers[field.name]) ? answers[field.name] : []
             document.querySelectorAll(`input[name="${field.name}"]`).forEach(input => {
-                input.checked = (answers[field.name] || []).includes(input.value)
+                input.checked = selectedValues.includes(input.value)
             })
             return
         }
@@ -2191,6 +2446,17 @@ function fillFormFromScenario(scenario){
     })
 
     updateConditionalFields()
+}
+
+function fillFormFromScenario(scenario){
+    const answers = scenario.source_answers || {}
+    setFormAnswers(answers)
+
+    selectedTemplateId = scenario.template?.id || answers.template_id || ""
+    selectedTemplate = scenario.template || null
+    renderSelectedTemplate(selectedTemplate || (selectedTemplateId ? {id: selectedTemplateId, nome: selectedTemplateId, categoria: "-", descricao: "Template usado no cenario salvo."} : null))
+    renderTemplatesForCurrentFilter()
+
     currentQuestionStep = questions.length
     updateQuestionStep()
 }
@@ -2432,6 +2698,8 @@ function clearGenerator(){
     document.querySelectorAll(".field").forEach(field => field.classList.remove("invalid"))
     currentQuestionStep = 0
     currentGeneratedScenario = null
+    selectedTemplate = null
+    selectedTemplateId = ""
     document.getElementById("emptyScenario").style.display = "grid"
     document.getElementById("scenarioResult").style.display = "none"
     document.getElementById("scenarioDetails").style.display = "none"
@@ -2440,6 +2708,8 @@ function clearGenerator(){
     hideDryRunReport()
     updateExportButtonsState()
     updateActiveScenarioStats(null)
+    renderSelectedTemplate(null)
+    renderTemplatesForCurrentFilter()
     setGeneratorMessage("", "")
     updateConditionalFields()
     updateQuestionStep()
@@ -2844,6 +3114,7 @@ applySidebarPreference()
 setExecutionControlState("idle")
 updateRunnerEmptyState()
 loadQuestions()
+loadTemplates()
 loadSavedScenarios()
 </script>
 
