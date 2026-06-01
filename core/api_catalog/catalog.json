@@ -4759,9 +4759,7 @@
       "host_placeholders": [
         "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     },
     {
       "api_id": "post-sincronismo-e8537bd912",
@@ -5057,9 +5055,7 @@
       "host_placeholders": [
         "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     },
     {
       "api_id": "post-credito-prod-2c1ba16679",
@@ -5084,9 +5080,7 @@
       "host_placeholders": [
         "<HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     },
     {
       "api_id": "get-ftm-channeleffecteletronicrechargev01-marcel-b9f893bcd4",
@@ -5113,9 +5107,7 @@
       "host_placeholders": [
         "<QA4_HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     },
     {
       "api_id": "post-pacote-fe39fc113a",
@@ -5139,9 +5131,7 @@
       "host_placeholders": [
         "<UIF_HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     },
     {
       "api_id": "post-pacote-prod-3d24dd9d04",
@@ -5166,9 +5156,7 @@
       "host_placeholders": [
         "<HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     },
     {
       "api_id": "post-pacote-prod-frase-58cf99b3df",
@@ -5193,9 +5181,7 @@
       "host_placeholders": [
         "<HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     },
     {
       "api_id": "post-promocao-copy-5b24885fea",
@@ -5220,9 +5206,7 @@
       "host_placeholders": [
         "<HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     },
     {
       "api_id": "post-promocao-copy-2-06839be152",
@@ -5247,9 +5231,7 @@
       "host_placeholders": [
         "<HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     },
     {
       "api_id": "get-teste-interno-84b2d31d7d",
@@ -5274,9 +5256,7 @@
       "host_placeholders": [
         "<HOST>"
       ],
-      "payload_base": {
-        "raw": "<STRING>"
-      }
+      "payload_base": {}
     }
   ],
   "source": {

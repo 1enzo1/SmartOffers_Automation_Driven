@@ -193,6 +193,26 @@ get {
     assert "abc" not in serialized
 
 
+def test_parser_does_not_invent_payload_for_bodyless_requests():
+    raw = """
+meta {
+  name: Consulta sem corpo
+  type: http
+}
+
+get {
+  url: {{SMART_OFFERS_INT}}/customers
+}
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Consulta QA4.bru", raw)
+    data = entry.to_dict()
+
+    assert data["method"] == "GET"
+    assert data["path"] == "/customers"
+    assert data["payload_base"] == {}
+
+
 def test_versioned_catalog_does_not_expose_sensitive_values():
     data = {"apis": load_api_catalog()}
     serialized = json.dumps(data, ensure_ascii=False)

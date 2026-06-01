@@ -321,7 +321,10 @@ def _extract_headers(raw_text):
 
 def _extract_json_payload(raw_text):
     marker = re.search(r"(?is)(body:json\s*\{|data:\s*\|[-+]?)", raw_text)
-    start_at = marker.end() if marker else 0
+    if not marker:
+        return {}
+
+    start_at = marker.end()
     json_start = raw_text.find("{", start_at)
     if json_start < 0:
         return {}
