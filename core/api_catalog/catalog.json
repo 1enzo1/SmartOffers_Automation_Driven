@@ -1484,7 +1484,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Ativação de IAD.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -1535,7 +1540,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Ativação de TD.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -1688,7 +1698,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Chamada de Dados.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [],
       "host_placeholder": "",
       "host_placeholders": [],
@@ -1725,7 +1740,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Chamada de Voz.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -1926,7 +1946,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Consulta de Saldo.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2027,7 +2052,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Criação-Remoção de Agente de Cobrança CCA.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2103,7 +2133,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento SVA.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2204,7 +2239,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento Vivo Turbo.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2280,7 +2320,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento de Recarga---.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2366,7 +2411,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento de alarme.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2422,7 +2472,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento de alarme RM.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2473,7 +2528,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2609,7 +2669,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente ---.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2749,7 +2814,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente --- Copy.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -2889,7 +2959,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente --- Copy_1.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -3029,7 +3104,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente --- Emergencial pre.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -3169,7 +3249,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente --- PORT IN CONTROLE.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -3309,7 +3394,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente ---_1.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -3449,7 +3539,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente Copy.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -3585,7 +3680,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente Copy 2.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -3721,7 +3821,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente Copy_1.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -3857,7 +3962,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente Copy_2.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -3993,7 +4103,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente TESTE.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -4185,7 +4300,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Migração de tipo de Pefil - Profile.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -4261,7 +4381,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Migração de tipo do cliente Controle - Pré.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -4367,7 +4492,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Migração de tipo do cliente Pré - Controle.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -4473,7 +4603,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Mudança de estado ---.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -4554,7 +4689,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/RM - Habilitação de cliente.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -4779,7 +4919,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Sincronismo.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],
@@ -4912,7 +5057,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Transição de campanha.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [],
       "host_placeholder": "<HOST>",
       "host_placeholders": [
@@ -4976,7 +5126,12 @@
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Transição de estado de serviço --- ACEITE.bru",
-      "headers_expected": [],
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
       "environment_variables": [
         "SMART_OFFERS_INT"
       ],

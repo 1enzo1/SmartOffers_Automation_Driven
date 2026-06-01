@@ -199,6 +199,31 @@ http:
     assert "def456" not in serialized
 
 
+def test_parser_only_extracts_name_value_pairs_inside_headers_block():
+    raw = """
+info:
+  name: "Parametro nao header"
+  type: http
+http:
+  method: get
+  url: {{SMART_OFFERS_INT}}/customers
+  headers:
+    - name: Content-Type
+      value: application/json
+  params:
+    - name: msisdn
+      value: 11999999999
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Parametro QA4.yml", raw)
+    headers = entry.to_dict()["headers_expected"]
+    serialized = json.dumps(headers, ensure_ascii=False)
+
+    assert headers == [{"name": "Content-Type", "value": "application/json"}]
+    assert "msisdn" not in serialized
+    assert "11999999999" not in serialized
+
+
 def test_parser_strips_query_from_templated_paths():
     raw = """
 meta {
@@ -239,6 +264,32 @@ get {
     assert data["method"] == "GET"
     assert data["path"] == "/customers"
     assert data["payload_base"] == {}
+
+
+def test_parser_preserves_json_array_payload_shape():
+    raw = """
+meta {
+  name: Payload em lista
+  type: http
+}
+
+post {
+  url: {{SMART_OFFERS_INT}}/batch
+  body: json
+}
+
+body:json {
+  [
+    {"operation": "processEvent", "extEventId": 123}
+  ]
+}
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Payload lista QA4.bru", raw)
+    payload = entry.to_dict()["payload_base"]
+
+    assert isinstance(payload, list)
+    assert payload == [{"operation": "processEvent", "extEventId": "<NUMBER>"}]
 
 
 def test_versioned_catalog_does_not_expose_sensitive_values():

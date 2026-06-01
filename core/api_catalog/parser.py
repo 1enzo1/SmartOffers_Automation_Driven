@@ -298,7 +298,51 @@ def _extract_first(pattern, text):
 def _extract_headers(raw_text):
     headers = []
     current_name = None
+    in_headers = False
+    headers_indent = 0
+    headers_brace_block = False
+
     for line in raw_text.splitlines():
+        if not line.strip():
+            continue
+
+        indent = len(line) - len(line.lstrip())
+        if in_headers:
+            if headers_brace_block and re.match(r"\s*}\s*$", line):
+                in_headers = False
+                headers_brace_block = False
+                current_name = None
+                continue
+            if (
+                not headers_brace_block
+                and indent <= headers_indent
+                and not re.match(r"\s*headers\s*:\s*$", line, flags=re.I)
+            ):
+                in_headers = False
+                current_name = None
+
+        if not in_headers:
+            headers_match = re.match(r"\s*headers\s*(:|\{)\s*$", line, flags=re.I)
+            if headers_match:
+                in_headers = True
+                headers_indent = indent
+                headers_brace_block = headers_match.group(1) == "{"
+            continue
+
+        direct_match = re.match(r"\s*([A-Za-z0-9_-]+)\s*:\s*(.+?)\s*$", line)
+        if direct_match and not re.match(r"\s*(name|value)\s*:", line, flags=re.I):
+            headers.append(
+                {
+                    "name": _strip_quotes(direct_match.group(1).strip()),
+                    "value": _sanitize_header_value(
+                        direct_match.group(1).strip(),
+                        direct_match.group(2).strip(),
+                    ),
+                }
+            )
+            current_name = None
+            continue
+
         name_match = re.match(r"\s*-\s*name:\s*(.+?)\s*$", line) or re.match(
             r"\s*name:\s*(.+?)\s*$", line
         )
@@ -325,11 +369,11 @@ def _extract_json_payload(raw_text):
         return {}
 
     start_at = marker.end()
-    json_start = raw_text.find("{", start_at)
+    json_start = _find_json_start(raw_text, start_at)
     if json_start < 0:
         return {}
 
-    json_text = _balanced_object(raw_text, json_start)
+    json_text = _balanced_json_value(raw_text, json_start)
     if not json_text:
         return {}
 
@@ -339,8 +383,16 @@ def _extract_json_payload(raw_text):
         return {"raw": "<UNPARSED_JSON_BODY>"}
 
 
-def _balanced_object(text, start):
-    depth = 0
+def _find_json_start(text, start):
+    match = re.search(r"[\{\[]", text[start:])
+    if not match:
+        return -1
+    return start + match.start()
+
+
+def _balanced_json_value(text, start):
+    pairs = {"{": "}", "[": "]"}
+    expected = []
     in_string = False
     escape = False
     for index in range(start, len(text)):
@@ -356,11 +408,13 @@ def _balanced_object(text, start):
 
         if char == '"':
             in_string = True
-        elif char == "{":
-            depth += 1
-        elif char == "}":
-            depth -= 1
-            if depth == 0:
+        elif char in pairs:
+            expected.append(pairs[char])
+        elif char in pairs.values():
+            if not expected or char != expected[-1]:
+                return ""
+            expected.pop()
+            if not expected:
                 return text[start : index + 1]
     return ""
 
