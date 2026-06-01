@@ -20,9 +20,13 @@ SENSITIVE_HEADER_NAMES = {
     "access-token",
     "client-secret",
     "client_secret",
+    "cookie",
     "password",
+    "session",
+    "set-cookie",
     "senha",
     "secret",
+    "x-session-id",
 }
 
 IP_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")

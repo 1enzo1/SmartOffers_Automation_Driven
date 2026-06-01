@@ -142,6 +142,35 @@ body:json {
     assert payload["attributeDetails"]["70060213"]["name"] == "DOCUMENT_TYPE"
 
 
+def test_parser_redacts_cookie_headers():
+    raw = """
+info:
+  name: "Cookie header"
+  type: http
+http:
+  method: get
+  url: {{SMART_OFFERS_INT}}/customers
+  headers:
+    - name: Cookie
+      value: JSESSIONID=abc123
+    - name: Set-Cookie
+      value: SESSION=def456
+    - name: Content-Type
+      value: application/json
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Cookie QA4.yml", raw)
+    headers = entry.to_dict()["headers_expected"]
+    serialized = json.dumps(headers, ensure_ascii=False)
+
+    assert {"name": "Cookie", "value": "<REDACTED>"} in headers
+    assert {"name": "Set-Cookie", "value": "<REDACTED>"} in headers
+    assert {"name": "Content-Type", "value": "application/json"} in headers
+    assert "JSESSIONID" not in serialized
+    assert "abc123" not in serialized
+    assert "def456" not in serialized
+
+
 def test_parser_strips_query_from_templated_paths():
     raw = """
 meta {
