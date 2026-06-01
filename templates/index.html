@@ -803,8 +803,76 @@ select.runner-select {
     font-size: 12px;
 }
 
-#dryRunResultCard {
+#dryRunResultCard,
+#adapterPanelCard {
     gap: 14px;
+}
+
+.adapter-panel-body,
+.adapter-result-body {
+    display: grid;
+    gap: 12px;
+}
+
+.adapter-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: end;
+}
+
+.adapter-toolbar .field {
+    min-width: 180px;
+    margin-bottom: 0;
+}
+
+.adapter-toolbar button {
+    width: auto;
+    min-height: 38px;
+}
+
+.adapter-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(260px, .65fr);
+    gap: 12px;
+}
+
+.adapter-card {
+    border-left: 3px solid var(--border-strong);
+}
+
+.adapter-card strong,
+.adapter-health-row strong {
+    display: block;
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.35;
+}
+
+.adapter-card > span,
+.adapter-health-row > span {
+    display: block;
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.4;
+}
+
+.adapter-health-row {
+    border-left: 3px solid var(--good);
+}
+
+.adapter-health-row[data-status="failed"] {
+    border-left-color: var(--bad);
+}
+
+.adapter-result-summary {
+    grid-template-columns: repeat(3, 1fr);
+}
+
+.adapter-log-feed {
+    min-height: 120px;
+    max-height: 280px;
 }
 
 .subsection {
@@ -1368,6 +1436,8 @@ pre {
     .stats-bar,
     .summary,
     .summary.dryrun-summary,
+    .summary.adapter-result-summary,
+    .adapter-grid,
     .runner-split {
         grid-template-columns: 1fr;
     }
@@ -1510,6 +1580,10 @@ pre {
                     <strong>Dry-run</strong>
                     <span id="sidebarDryRunStatus">idle</span>
                 </div>
+                <div class="status-line">
+                    <strong>Adapters</strong>
+                    <span id="sidebarAdaptersStatus">idle</span>
+                </div>
             </div>
         </section>
 
@@ -1519,6 +1593,7 @@ pre {
                 <div class="status-line"><strong>/api/questions</strong><span>ok</span></div>
                 <div class="status-line"><strong>/api/scenarios</strong><span>ok</span></div>
                 <div class="status-line"><strong>/api/templates</strong><span>ok</span></div>
+                <div class="status-line"><strong>/api/adapters</strong><span>mock</span></div>
                 <div class="status-line"><strong>/executar</strong><span>SSE</span></div>
             </div>
         </section>
@@ -1647,6 +1722,90 @@ pre {
                 <div class="result-panel" id="result-json"><pre id="jsonPreview"></pre></div>
             </section>
 
+            <section class="card" id="adapterPanelCard">
+                <div class="result-head">
+                    <div>
+                        <h2>Adapters / Execu&ccedil;&atilde;o Controlada</h2>
+                        <div class="result-summary" id="adapterScenarioState">Selecione ou gere um cen&aacute;rio salvo para executar adapters mockados.</div>
+                    </div>
+                    <span class="pill" id="adapterHealthStatus">health: idle</span>
+                </div>
+
+                <div class="adapter-panel-body">
+                    <div class="adapter-toolbar">
+                        <div class="field">
+                            <label for="adapterRunMode">Modo</label>
+                            <select id="adapterRunMode" aria-label="Modo do adapter-run">
+                                <option value="mock">mock local</option>
+                                <option value="real">real bloqueado</option>
+                            </select>
+                        </div>
+                        <button class="success" id="runAdapterButton" type="button" onclick="runAdapterRun()" disabled>Executar adapter-run</button>
+                        <button class="secondary" type="button" onclick="refreshAdapters()">Atualizar adapters</button>
+                    </div>
+                    <div id="adapterMessage" class="message"></div>
+
+                    <div class="adapter-grid">
+                        <div class="subsection">
+                            <div class="scenario-head">
+                                <h3>Adapters mockados</h3>
+                                <span class="pill" id="adapterTotal">0</span>
+                            </div>
+                            <div id="adapterList" class="structured-list">
+                                <div class="muted">Adapters ainda nao carregados.</div>
+                            </div>
+                        </div>
+
+                        <div class="subsection">
+                            <h3>Health local</h3>
+                            <div id="adapterHealthList" class="structured-list">
+                                <div class="muted">Health ainda nao carregado.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="adapter-result-body" id="adapterRunResult" style="display:none">
+                    <div class="result-head">
+                        <div>
+                            <h3>Resultado do adapter-run</h3>
+                            <div class="result-summary" id="adapterRunSummaryText"></div>
+                        </div>
+                        <span class="pill" id="adapterRunId">-</span>
+                    </div>
+
+                    <div class="summary adapter-result-summary">
+                        <div class="metric">
+                            <div class="k">Status</div>
+                            <div class="v" id="adapterRunStatus">-</div>
+                        </div>
+                        <div class="metric">
+                            <div class="k">Mode</div>
+                            <div class="v" id="adapterRunModeValue">-</div>
+                        </div>
+                        <div class="metric">
+                            <div class="k">Adapters</div>
+                            <div class="v" id="adapterRunTotal">0</div>
+                        </div>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Adapter results</h3>
+                        <div id="adapterRunResults" class="structured-list"></div>
+                    </div>
+
+                    <div class="subsection">
+                        <h3>Logs</h3>
+                        <div id="adapterRunLogs" class="feed adapter-log-feed"></div>
+                    </div>
+
+                    <div class="subsection" id="adapterRunWarningsBlock" style="display:none">
+                        <h3>Warnings</h3>
+                        <pre id="adapterRunWarnings"></pre>
+                    </div>
+                </div>
+            </section>
+
             <section class="card" id="dryRunResultCard" style="display:none">
                 <div class="result-head">
                     <div>
@@ -1755,6 +1914,9 @@ let templates = []
 let templateCategories = []
 let selectedTemplate = null
 let selectedTemplateId = ""
+let adapters = []
+let adapterHealth = null
+let currentAdapterRunReport = null
 
 function setTextContent(id, value){
     const element = document.getElementById(id)
@@ -1785,6 +1947,10 @@ function updateActiveScenarioStats(scenario){
 function updateDryRunState(state){
     setTextContent("sidebarDryRunStatus", state)
     setTextContent("stat-dryrun", state)
+}
+
+function updateAdaptersState(state){
+    setTextContent("sidebarAdaptersStatus", state)
 }
 
 setInterval(updateClock, 1000)
@@ -1973,6 +2139,125 @@ async function loadSavedScenarios(){
     } catch (error) {
         list.innerHTML = `<div class="muted">Nao foi possivel carregar os cenarios salvos.</div>`
     }
+}
+
+async function refreshAdapters(){
+    await Promise.all([loadAdapters(), loadAdapterHealth()])
+}
+
+async function loadAdapters(){
+    const list = document.getElementById("adapterList")
+    if(list) list.innerHTML = `<div class="muted">Carregando adapters...</div>`
+    updateAdaptersState("loading")
+
+    try {
+        const response = await fetch("/api/adapters")
+        const data = await response.json()
+
+        if(!response.ok){
+            throw new Error(data.erro || "Nao foi possivel carregar adapters.")
+        }
+
+        adapters = data.adapters || []
+        renderAdapters(adapters, data.total)
+        updateAdaptersState("ready")
+    } catch (error) {
+        adapters = []
+        if(list) list.innerHTML = `<div class="muted">Nao foi possivel carregar adapters mockados.</div>`
+        setTextContent("adapterTotal", "0")
+        updateAdaptersState("erro")
+    }
+}
+
+async function loadAdapterHealth(){
+    const list = document.getElementById("adapterHealthList")
+    if(list) list.innerHTML = `<div class="muted">Consultando health local...</div>`
+
+    try {
+        const response = await fetch("/api/adapters/health")
+        const data = await response.json()
+
+        if(!response.ok){
+            throw new Error(data.erro || "Nao foi possivel consultar health.")
+        }
+
+        adapterHealth = data
+        renderAdapterHealth(data)
+    } catch (error) {
+        adapterHealth = null
+        setTextContent("adapterHealthStatus", "health: erro")
+        if(list) list.innerHTML = `<div class="muted">Nao foi possivel consultar health dos adapters.</div>`
+    }
+}
+
+function renderAdapters(items, total){
+    const list = document.getElementById("adapterList")
+    list.innerHTML = ""
+    setTextContent("adapterTotal", String(total ?? items.length))
+
+    if(!items.length){
+        list.innerHTML = `<div class="muted">Nenhum adapter mockado registrado.</div>`
+        return
+    }
+
+    items.forEach(adapter => {
+        const row = document.createElement("div")
+        row.className = "list-row adapter-card"
+        row.innerHTML = `
+            <strong>${escapeHtml(adapter.name || adapter.adapter_id)}</strong>
+            <span>${escapeHtml(adapter.adapter_id)}</span>
+            <span>step types: ${escapeHtml((adapter.supported_step_types || []).join(", ") || "-")}</span>
+        `
+        list.appendChild(row)
+    })
+}
+
+function renderAdapterHealth(data){
+    const list = document.getElementById("adapterHealthList")
+    const checks = data.adapters || []
+    list.innerHTML = ""
+    setTextContent("adapterHealthStatus", `health: ${data.status || "-"}`)
+
+    if(!checks.length){
+        list.innerHTML = `<div class="muted">Nenhum healthcheck retornado.</div>`
+        return
+    }
+
+    checks.forEach(check => {
+        const row = document.createElement("div")
+        row.className = "list-row adapter-health-row"
+        row.dataset.status = check.status || "unknown"
+        const externalCalls = check.details?.external_calls === false ? "sem chamadas externas" : "verificar detalhes"
+        row.innerHTML = `
+            <strong>${escapeHtml(check.adapter_name || check.adapter_id)} <span class="status-badge status-${escapeHtml(check.status || "skipped")}">${escapeHtml(check.status || "-")}</span></strong>
+            <span>${escapeHtml(check.adapter_id || "-")} | ${escapeHtml(externalCalls)}</span>
+        `
+        list.appendChild(row)
+    })
+}
+
+function updateAdapterPanelForScenario(){
+    const hasScenario = Boolean(currentGeneratedScenario && currentGeneratedScenario.id)
+    const button = document.getElementById("runAdapterButton")
+    if(button) button.disabled = !hasScenario
+
+    setTextContent(
+        "adapterScenarioState",
+        hasScenario
+            ? `Cenario selecionado: ${currentGeneratedScenario.id}`
+            : "Selecione ou gere um cenario salvo para executar adapters mockados."
+    )
+
+    if(!hasScenario){
+        setAdapterMessage("Nenhum cenario selecionado para adapter-run.", "")
+    }
+}
+
+function setAdapterMessage(text, kind){
+    const message = document.getElementById("adapterMessage")
+    if(!message) return
+    message.textContent = text
+    message.className = `message ${kind || ""}`.trim()
 }
 
 function renderSavedScenarios(scenarios){
@@ -2414,6 +2699,10 @@ function renderScenario(scenario){
     document.getElementById("runDryRunButton").disabled = false
     updateExportButtonsState()
     hideDryRunReport()
+    currentAdapterRunReport = null
+    hideAdapterRunReport()
+    setAdapterMessage("", "")
+    updateAdapterPanelForScenario()
 
     document.getElementById("scenarioTitle").textContent = scenario.titulo
     document.getElementById("scenarioSummary").textContent = scenario.resumo
@@ -2617,6 +2906,123 @@ function renderDryRunWarnings(warnings){
     document.getElementById("dryRunWarnings").textContent = warnings.join("\n")
 }
 
+async function runAdapterRun(){
+    if(!currentGeneratedScenario || !currentGeneratedScenario.id){
+        setAdapterMessage("Selecione ou gere um cenario salvo antes de executar adapter-run.", "bad")
+        updateAdapterPanelForScenario()
+        return
+    }
+
+    const button = document.getElementById("runAdapterButton")
+    const mode = document.getElementById("adapterRunMode").value || "mock"
+    button.disabled = true
+    setAdapterMessage(`Executando adapter-run em mode=${mode}...`, "")
+    updateAdaptersState("running")
+
+    try {
+        const response = await fetch(`/api/scenarios/${currentGeneratedScenario.id}/adapter-run`, {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({mode})
+        })
+        const data = await response.json()
+
+        if(!response.ok){
+            currentAdapterRunReport = null
+            hideAdapterRunReport()
+            setAdapterMessage(data.erro || "Adapter-run bloqueado de forma controlada.", "bad")
+            updateAdaptersState("blocked")
+            return
+        }
+
+        currentAdapterRunReport = data.report
+        renderAdapterRunReport(currentAdapterRunReport)
+        setAdapterMessage("Adapter-run mockado concluido localmente.", "ok")
+        updateAdaptersState(currentAdapterRunReport.status || "ready")
+    } catch (error) {
+        currentAdapterRunReport = null
+        hideAdapterRunReport()
+        setAdapterMessage("Erro ao chamar API de adapter-run.", "bad")
+        updateAdaptersState("erro")
+    } finally {
+        button.disabled = !(currentGeneratedScenario && currentGeneratedScenario.id)
+    }
+}
+
+function renderAdapterRunReport(report){
+    document.getElementById("adapterRunResult").style.display = "grid"
+    document.getElementById("adapterRunId").textContent = report.run_id || "-"
+    document.getElementById("adapterRunStatus").textContent = report.status || "-"
+    document.getElementById("adapterRunModeValue").textContent = report.mode || "-"
+    document.getElementById("adapterRunTotal").textContent = String((report.adapter_results || []).length)
+    document.getElementById("adapterRunSummaryText").textContent = `${report.summary?.total || 0} adapters em ${report.duration_ms || 0}ms`
+
+    renderAdapterRunResults(report.adapter_results || [])
+    renderAdapterRunLogs(report.logs || [])
+    renderAdapterRunWarnings(report.warnings || [])
+}
+
+function renderAdapterRunResults(results){
+    const list = document.getElementById("adapterRunResults")
+    list.innerHTML = ""
+
+    if(!results.length){
+        list.innerHTML = `<div class="muted">Nenhum resultado de adapter retornado.</div>`
+        return
+    }
+
+    results.forEach(result => {
+        const row = document.createElement("div")
+        row.className = "list-row dryrun-step"
+
+        const title = document.createElement("strong")
+        title.textContent = `${result.adapter_id}: ${result.step_name}`
+
+        const badge = document.createElement("span")
+        badge.className = `status-badge status-${result.status}`
+        badge.textContent = result.status
+
+        const message = document.createElement("p")
+        message.textContent = `${result.step_type} | ${result.message} (${result.duration_ms}ms)`
+
+        row.appendChild(title)
+        row.appendChild(badge)
+        row.appendChild(message)
+        list.appendChild(row)
+    })
+}
+
+function renderAdapterRunLogs(logs){
+    const list = document.getElementById("adapterRunLogs")
+    list.innerHTML = ""
+
+    if(!logs.length){
+        list.innerHTML = `<div class="muted">Nenhum log gerado.</div>`
+        return
+    }
+
+    logs.forEach(log => {
+        const row = document.createElement("div")
+        row.className = "logline"
+        if(log.includes("|failed|") || log.includes("|END|failed")) row.classList.add("bad")
+        else if(log.includes("|skipped|") || log.includes("|WARN|")) row.classList.add("warn")
+        else if(log.includes("|passed|") || log.includes("|END|passed")) row.classList.add("ok")
+        row.textContent = log
+        list.appendChild(row)
+    })
+}
+
+function renderAdapterRunWarnings(warnings){
+    const block = document.getElementById("adapterRunWarningsBlock")
+    block.style.display = warnings.length ? "block" : "none"
+    document.getElementById("adapterRunWarnings").textContent = warnings.join("\n")
+}
+
+function hideAdapterRunReport(){
+    document.getElementById("adapterRunResult").style.display = "none"
+    renderAdapterRunWarnings([])
+}
+
 async function copyDryRunJson(){
     if(!currentDryRunReport) return
     try {
@@ -2706,6 +3112,9 @@ function clearGenerator(){
     document.getElementById("openSavedScenario").disabled = true
     document.getElementById("runDryRunButton").disabled = true
     hideDryRunReport()
+    currentAdapterRunReport = null
+    hideAdapterRunReport()
+    updateAdapterPanelForScenario()
     updateExportButtonsState()
     updateActiveScenarioStats(null)
     renderSelectedTemplate(null)
@@ -3113,9 +3522,11 @@ function executar(options = {}){
 applySidebarPreference()
 setExecutionControlState("idle")
 updateRunnerEmptyState()
+updateAdapterPanelForScenario()
 loadQuestions()
 loadTemplates()
 loadSavedScenarios()
+refreshAdapters()
 </script>
 
 </body>
