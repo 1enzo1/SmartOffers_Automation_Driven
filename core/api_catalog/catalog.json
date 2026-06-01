@@ -7,7 +7,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -24,6 +23,11 @@
           "name": "content-type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -147,7 +151,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -164,6 +167,11 @@
           "name": "Content-Type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -297,7 +305,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -314,6 +321,11 @@
           "name": "content-type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -402,7 +414,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -419,6 +430,11 @@
           "name": "content-type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -507,7 +523,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -524,6 +539,11 @@
           "name": "content-type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -612,7 +632,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -629,6 +648,11 @@
           "name": "content-type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -721,7 +745,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -738,6 +761,11 @@
           "name": "content-type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -861,7 +889,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -878,6 +905,11 @@
           "name": "content-type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -1011,7 +1043,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -1028,6 +1059,11 @@
           "name": "content-type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -1151,7 +1187,6 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>",
         "QA4",
         "<QA4_HOST>"
       ],
@@ -1168,6 +1203,11 @@
           "name": "content-type",
           "value": "application/json"
         }
+      ],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
       ],
       "payload_base": {
         "operation": "processEvent",
@@ -1291,15 +1331,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Alteração de situação de portabilidade -.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1342,15 +1392,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Alteração serviço CCA - Ativação de VT.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1413,15 +1473,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Ativação de IAD.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1454,15 +1524,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Ativação de TD.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1495,15 +1575,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Ativação de campanha por API.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1536,15 +1626,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Cadeastro  de promoção.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1576,11 +1676,11 @@
       }
     },
     {
-      "api_id": "post-chamada-de-dados-c08c3fa0a0",
+      "api_id": "post-chamada-de-dados-c96ed31f09",
       "name": "Chamada de Dados",
       "category": "voz_dados",
       "method": "POST",
-      "path": "//",
+      "path": "/",
       "environment_refs": [],
       "supported_environments": [],
       "execution_status": "blocked",
@@ -1589,6 +1689,9 @@
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Chamada de Dados.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "",
+      "host_placeholders": [],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1611,15 +1714,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Chamada de Voz.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1802,15 +1915,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Consulta de Saldo.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1893,15 +2016,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Criação-Remoção de Agente de Cobrança CCA.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -1959,15 +2092,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento SVA.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2050,15 +2193,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento Vivo Turbo.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2116,15 +2269,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento de Recarga---.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2192,15 +2355,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento de alarme.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2238,15 +2411,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Evento de alarme RM.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2279,15 +2462,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2405,15 +2598,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente ---.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2535,15 +2738,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente --- Copy.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2665,15 +2878,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente --- Copy_1.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2795,15 +3018,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente --- Emergencial pre.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -2925,15 +3158,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente --- PORT IN CONTROLE.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -3055,15 +3298,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente ---_1.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -3185,15 +3438,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente Copy.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -3311,15 +3574,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente Copy 2.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -3437,15 +3710,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente Copy_1.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -3563,15 +3846,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente Copy_2.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -3689,15 +3982,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Habilitação de cliente TESTE.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -3815,15 +4118,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Limiar de saldo.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -3861,15 +4174,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Migração de tipo de Pefil - Profile.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -3927,15 +4250,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Migração de tipo do cliente Controle - Pré.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -4023,15 +4356,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Migração de tipo do cliente Pré - Controle.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -4119,15 +4462,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Mudança de estado ---.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -4190,15 +4543,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/RM - Habilitação de cliente.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -4316,15 +4679,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Retorno LA.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -4367,15 +4740,25 @@
       "method": "POST",
       "path": "/generic-service/genericAdapter",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Retorno LA xml.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4387,15 +4770,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Sincronismo.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -4522,6 +4915,11 @@
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Transição de campanha.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<HOST>",
+      "host_placeholders": [
+        "<HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -4569,15 +4967,25 @@
       "method": "POST",
       "path": "/ws/integration/online/process",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/Transição de estado de serviço --- ACEITE.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "operation": "processEvent",
         "extEventId": "<NUMBER>",
@@ -4630,15 +5038,25 @@
       "method": "POST",
       "path": "/generic-service/genericAdapter",
       "environment_refs": [
-        "<HOST>"
+        "QA4",
+        "<QA4_SMART_OFFERS_INT_HOST>"
       ],
-      "supported_environments": [],
+      "supported_environments": [
+        "QA4"
+      ],
       "execution_status": "blocked",
       "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
       "safe_for_real_execution": false,
       "source_collection": "SmartOffers Copy",
       "source_file": "SmartOffers Copy/XML Retorno de LA.bru",
       "headers_expected": [],
+      "environment_variables": [
+        "SMART_OFFERS_INT"
+      ],
+      "host_placeholder": "<QA4_SMART_OFFERS_INT_HOST>",
+      "host_placeholders": [
+        "<QA4_SMART_OFFERS_INT_HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4661,6 +5079,11 @@
       "source_collection": "UIF PROD Copy",
       "source_file": "UIF PROD Copy/Credito PROD.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<HOST>",
+      "host_placeholders": [
+        "<HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4685,6 +5108,11 @@
       "source_collection": "UIF PROD Copy",
       "source_file": "UIF PROD Copy/FTM - channelEffectEletronicRechargeV01 Marcelo ---- FTM WL -QA4.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_HOST>",
+      "host_placeholders": [
+        "<QA4_HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4697,7 +5125,7 @@
       "path": "/generic_http_xml_interface",
       "environment_refs": [
         "PROD_REFERENCE_ONLY",
-        "<HOST>"
+        "<UIF_HOST>"
       ],
       "supported_environments": [],
       "execution_status": "blocked",
@@ -4706,6 +5134,11 @@
       "source_collection": "UIF PROD Copy",
       "source_file": "UIF PROD Copy/Pacote.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<UIF_HOST>",
+      "host_placeholders": [
+        "<UIF_HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4728,6 +5161,11 @@
       "source_collection": "UIF PROD Copy",
       "source_file": "UIF PROD Copy/Pacote PROD.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<HOST>",
+      "host_placeholders": [
+        "<HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4750,6 +5188,11 @@
       "source_collection": "UIF PROD Copy",
       "source_file": "UIF PROD Copy/Pacote PROD frase.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<HOST>",
+      "host_placeholders": [
+        "<HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4772,6 +5215,11 @@
       "source_collection": "UIF PROD Copy",
       "source_file": "UIF PROD Copy/Promoção Copy.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<HOST>",
+      "host_placeholders": [
+        "<HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4794,6 +5242,11 @@
       "source_collection": "UIF PROD Copy",
       "source_file": "UIF PROD Copy/Promoção Copy 2.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<HOST>",
+      "host_placeholders": [
+        "<HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4816,6 +5269,11 @@
       "source_collection": "UIF PROD Copy",
       "source_file": "UIF PROD Copy/TESTE interno.bru",
       "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<HOST>",
+      "host_placeholders": [
+        "<HOST>"
+      ],
       "payload_base": {
         "raw": "<STRING>"
       }
@@ -4823,6 +5281,18 @@
   ],
   "source": {
     "name": "APIsUtilizaveis.zip",
+    "environment_inputs": [
+      "QA4_Copy.json"
+    ],
+    "qa4_environment_variables": [
+      "SMART_OFFERS_INT",
+      "GATEWAY",
+      "BAE",
+      "EDM",
+      "BIAS",
+      "GATEWAY2",
+      "FTM_ENGINE"
+    ],
     "sensitive_values": "masked",
     "real_execution": false
   }

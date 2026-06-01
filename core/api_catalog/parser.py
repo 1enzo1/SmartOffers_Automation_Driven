@@ -3,7 +3,6 @@ import json
 import re
 import unicodedata
 import zipfile
-from dataclasses import replace
 from pathlib import Path
 from urllib.parse import urlparse
 
@@ -34,40 +33,73 @@ SECRET_HINT_RE = re.compile(
 )
 
 
-def parse_api_catalog_zip(zip_path):
+def parse_api_catalog_zip(zip_path, environment_json_paths=None):
     entries = []
-    collection_environments = {}
+    source_files = []
+    collection_environment_refs = {}
+    collection_environment_variables = {}
+    global_environment_variables = {}
+
     with zipfile.ZipFile(zip_path) as archive:
         for info in archive.infolist():
             if info.is_dir() or not _is_supported_file(info.filename):
                 continue
 
             raw = archive.read(info).decode("utf-8", errors="replace")
-            if Path(info.filename).suffix.lower() in {".yml", ".yaml"} and _looks_like_environment_yml(raw):
+            source_files.append((info.filename, raw))
+            environment = _parse_environment_definition(info.filename, raw)
+            if environment:
                 collection = _source_collection(info.filename)
-                collection_environments.setdefault(collection, set()).update(
-                    _environment_refs(info.filename, raw, "")
+                collection_environment_refs.setdefault(collection, []).extend(
+                    environment["environment_refs"]
+                )
+                collection_environment_variables.setdefault(collection, {}).update(
+                    environment["environment_variables"]
                 )
                 continue
 
-            parsed = parse_catalog_file(info.filename, raw)
-            if parsed:
-                entries.append(parsed)
+    for environment_path in environment_json_paths or []:
+        raw = Path(environment_path).read_text(encoding="utf-8")
+        environment = _parse_environment_definition(str(environment_path), raw)
+        if environment:
+            global_environment_variables.update(environment["environment_variables"])
 
-    entries = [_with_collection_environments(entry, collection_environments) for entry in entries]
+    for source_file, raw in source_files:
+        if _parse_environment_definition(source_file, raw):
+            continue
+
+        collection = _source_collection(source_file)
+        environment_variables = {
+            **global_environment_variables,
+            **collection_environment_variables.get(collection, {}),
+        }
+        parsed = parse_catalog_file(
+            source_file,
+            raw,
+            environment_variables=environment_variables,
+            inherited_environment_refs=collection_environment_refs.get(collection, []),
+        )
+        if parsed:
+            entries.append(parsed)
+
     return sorted(entries, key=lambda item: (item.source_collection, item.name, item.api_id))
 
 
-def parse_catalog_file(source_file, raw_text):
+def parse_catalog_file(
+    source_file,
+    raw_text,
+    environment_variables=None,
+    inherited_environment_refs=None,
+):
     suffix = Path(source_file).suffix.lower()
     if suffix == ".bru":
-        return _parse_bru(source_file, raw_text)
+        return _parse_bru(source_file, raw_text, environment_variables, inherited_environment_refs)
     if suffix in {".yml", ".yaml"}:
-        return _parse_yml(source_file, raw_text)
+        return _parse_yml(source_file, raw_text, environment_variables, inherited_environment_refs)
     return None
 
 
-def _parse_bru(source_file, raw_text):
+def _parse_bru(source_file, raw_text, environment_variables=None, inherited_environment_refs=None):
     method = _extract_bru_method(raw_text)
     if not method:
         return None
@@ -85,10 +117,12 @@ def _parse_bru(source_file, raw_text):
         url=url,
         headers=headers,
         payload=payload,
+        environment_variables=environment_variables,
+        inherited_environment_refs=inherited_environment_refs,
     )
 
 
-def _parse_yml(source_file, raw_text):
+def _parse_yml(source_file, raw_text, environment_variables=None, inherited_environment_refs=None):
     if _looks_like_environment_yml(raw_text):
         return None
 
@@ -112,12 +146,42 @@ def _parse_yml(source_file, raw_text):
         url=url,
         headers=headers,
         payload=payload,
+        environment_variables=environment_variables,
+        inherited_environment_refs=inherited_environment_refs,
     )
 
 
-def _build_entry(source_file, raw_text, name, method, url, headers, payload):
+def _build_entry(
+    source_file,
+    raw_text,
+    name,
+    method,
+    url,
+    headers,
+    payload,
+    environment_variables=None,
+    inherited_environment_refs=None,
+):
     collection = _source_collection(source_file)
-    environment_refs = _environment_refs(source_file, raw_text, url)
+    environment_variables = environment_variables or {}
+    inherited_environment_refs = inherited_environment_refs or []
+    url_variables = _url_variables(url)
+    base_environment_refs = _base_environment_refs(
+        source_file,
+        raw_text,
+        url,
+        environment_variables,
+        inherited_environment_refs,
+    )
+    host_placeholders = _host_placeholders(url, environment_variables, base_environment_refs)
+    environment_refs = _environment_refs(
+        source_file,
+        raw_text,
+        url,
+        environment_variables,
+        inherited_environment_refs,
+        host_placeholders,
+    )
     supported_environments = [
         env for env in ("QA1", "QA2", "QA3", "QA4") if env in environment_refs
     ]
@@ -139,30 +203,18 @@ def _build_entry(source_file, raw_text, name, method, url, headers, payload):
         source_collection=collection,
         source_file=source_file,
         headers_expected=headers,
+        environment_variables=sorted(
+            variable for variable in url_variables if variable in environment_variables
+        ),
+        host_placeholder=host_placeholders[0] if host_placeholders else "",
+        host_placeholders=host_placeholders,
         payload_base=_sanitize_payload(payload),
-    )
-
-
-def _with_collection_environments(entry, collection_environments):
-    inherited = list(collection_environments.get(entry.source_collection, set()))
-    if not inherited:
-        return entry
-
-    environment_refs = _ordered_unique([*entry.environment_refs, *inherited])
-    supported_environments = [
-        env for env in ("QA1", "QA2", "QA3", "QA4") if env in environment_refs
-    ]
-    return replace(
-        entry,
-        environment_refs=environment_refs,
-        supported_environments=supported_environments,
-        notes=_notes(environment_refs),
     )
 
 
 def _is_supported_file(filename):
     suffix = Path(filename).suffix.lower()
-    return suffix in {".bru", ".yml", ".yaml"}
+    return suffix in {".bru", ".yml", ".yaml", ".json"}
 
 
 def _looks_like_environment_yml(raw_text):
@@ -171,6 +223,58 @@ def _looks_like_environment_yml(raw_text):
         and re.search(r"(?mi)^\s*-\s*name:\s*", raw_text)
         and re.search(r"(?mi)^\s*value:\s*", raw_text)
     )
+
+
+def _parse_environment_definition(source_file, raw_text):
+    suffix = Path(source_file).suffix.lower()
+    if suffix in {".yml", ".yaml"} and _looks_like_environment_yml(raw_text):
+        name = _extract_first(r"(?mi)^\s*name:\s*(.+?)\s*$", raw_text) or source_file
+        variables = re.findall(r"(?mi)^\s*-\s*name:\s*([A-Za-z0-9_.-]+)\s*$", raw_text)
+        return _build_environment_definition(name, variables)
+
+    if suffix == ".json":
+        try:
+            data = json.loads(raw_text)
+        except json.JSONDecodeError:
+            return None
+
+        variables_data = data.get("variables") if isinstance(data, dict) else None
+        if not isinstance(variables_data, list):
+            return None
+
+        variables = [
+            str(item.get("name", "")).strip()
+            for item in variables_data
+            if isinstance(item, dict) and str(item.get("name", "")).strip()
+        ]
+        if not variables:
+            return None
+
+        name = str(data.get("name") or source_file)
+        return _build_environment_definition(name, variables)
+
+    return None
+
+
+def _build_environment_definition(name, variables):
+    environment_refs = []
+    for env in ("QA1", "QA2", "QA3", "QA4"):
+        if re.search(rf"(?i)\b{env}\b", name):
+            environment_refs.append(env)
+
+    environment = environment_refs[0] if environment_refs else ""
+    allowed_variables = {}
+    for variable in variables:
+        normalized = variable.upper()
+        allowed_variables[normalized] = {
+            "environment": environment,
+            "placeholder": _variable_host_placeholder(normalized, environment),
+        }
+
+    return {
+        "environment_refs": environment_refs,
+        "environment_variables": allowed_variables,
+    }
 
 
 def _extract_bru_method(raw_text):
@@ -282,27 +386,42 @@ def _safe_path(url):
     if not url:
         return "/"
 
-    for variable in BRUNO_VAR_RE.findall(url):
-        placeholder = f"<{variable.upper()}_HOST>"
-        url = BRUNO_VAR_RE.sub(placeholder, url, count=1)
-
     parsed = urlparse(url)
-    if parsed.path:
-        return parsed.path
+    if parsed.scheme or parsed.netloc:
+        return parsed.path or "/"
 
-    match = re.search(r"(?:https?://)?(?:<[^>]+>|[^/\s\"']+)(/[^\s\"']*)", url)
+    if url.startswith("/"):
+        return url
+
+    match = re.search(r"(?:\{\{\s*[A-Za-z0-9_.-]+\s*\}\}|<[^>]+>|[^/\s\"']+)(/[^\s\"']*)", url)
     if match:
         return match.group(1)
+
+    if parsed.path and "/" in parsed.path:
+        return parsed.path
 
     return "/"
 
 
-def _environment_refs(source_file, raw_text, url):
+def _environment_refs(
+    source_file,
+    raw_text,
+    url,
+    environment_variables=None,
+    inherited_environment_refs=None,
+    host_placeholders=None,
+):
+    environment_variables = environment_variables or {}
+    inherited_environment_refs = inherited_environment_refs or []
+    host_placeholders = host_placeholders or []
     haystack = f"{source_file}\n{raw_text}\n{url}"
-    refs = []
-    for env in ("QA1", "QA2", "QA3", "QA4"):
-        if re.search(rf"(?i)\b{env}\b", haystack):
-            refs.append(env)
+    refs = _base_environment_refs(
+        source_file,
+        raw_text,
+        url,
+        environment_variables,
+        inherited_environment_refs,
+    )
 
     if re.search(r"(?i)\bprod\b", haystack):
         refs.append("PROD_REFERENCE_ONLY")
@@ -310,7 +429,22 @@ def _environment_refs(source_file, raw_text, url):
         refs.append("LOCALHOST_REFERENCE_ONLY")
 
     if IP_RE.search(haystack) or URL_RE.search(haystack) or BRUNO_VAR_RE.search(haystack):
-        refs.append(_host_placeholder(refs))
+        refs.extend(host_placeholders or [_host_placeholder(refs)])
+
+    return _ordered_unique(refs)
+
+
+def _base_environment_refs(source_file, raw_text, url, environment_variables, inherited_environment_refs):
+    haystack = f"{source_file}\n{raw_text}\n{url}"
+    refs = list(inherited_environment_refs)
+    for env in ("QA1", "QA2", "QA3", "QA4"):
+        if re.search(rf"(?i)\b{env}\b", haystack):
+            refs.append(env)
+
+    for variable in _url_variables(url):
+        environment = environment_variables.get(variable, {}).get("environment")
+        if environment:
+            refs.append(environment)
 
     return _ordered_unique(refs)
 
@@ -320,6 +454,43 @@ def _host_placeholder(refs):
         if env in refs:
             return f"<{env}_HOST>"
     return "<HOST>"
+
+
+def _host_placeholders(url, environment_variables, inherited_environment_refs=None):
+    inherited_environment_refs = inherited_environment_refs or []
+    placeholders = []
+    for variable in _url_variables(url):
+        info = environment_variables.get(variable)
+        if info:
+            placeholders.append(info["placeholder"])
+        else:
+            environment = _first_supported_environment(inherited_environment_refs)
+            placeholders.append(_variable_host_placeholder(variable, environment))
+
+    if placeholders:
+        return _ordered_unique(placeholders)
+
+    refs = _ordered_unique(inherited_environment_refs)
+    if URL_RE.search(str(url)) or IP_RE.search(str(url)):
+        return [_host_placeholder(refs)]
+    return []
+
+
+def _url_variables(url):
+    return [variable.upper() for variable in BRUNO_VAR_RE.findall(str(url or ""))]
+
+
+def _variable_host_placeholder(variable, environment=""):
+    if environment:
+        return f"<{environment}_{variable.upper()}_HOST>"
+    return f"<{variable.upper()}_HOST>"
+
+
+def _first_supported_environment(environment_refs):
+    for env in ("QA4", "QA3", "QA2", "QA1"):
+        if env in environment_refs:
+            return env
+    return ""
 
 
 def _source_collection(source_file):

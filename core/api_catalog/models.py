@@ -19,6 +19,9 @@ class ApiCatalogEntry:
     source_collection: str = ""
     source_file: str = ""
     headers_expected: list[dict] = field(default_factory=list)
+    environment_variables: list[str] = field(default_factory=list)
+    host_placeholder: str = ""
+    host_placeholders: list[str] = field(default_factory=list)
     payload_base: object = field(default_factory=dict)
 
     def __post_init__(self):
