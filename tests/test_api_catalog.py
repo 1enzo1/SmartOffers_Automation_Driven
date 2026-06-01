@@ -255,6 +255,76 @@ http:
     assert "ghi789" not in serialized
 
 
+def test_parser_redacts_identifier_bearing_headers_by_default():
+    raw = """
+info:
+  name: "Identifier header"
+  type: http
+http:
+  method: get
+  url: {{SMART_OFFERS_INT}}/customers
+  headers:
+    - name: X-MSISDN
+      value: 11999999999
+    - name: MSISDN
+      value: 11999999999
+    - name: X-Customer-Document
+      value: 12345678901
+    - name: Customer-Document
+      value: 12345678901
+    - name: Document
+      value: 12345678901
+    - name: CPF
+      value: 12345678901
+    - name: CNPJ
+      value: 12345678000199
+    - name: Subscriber-Id
+      value: subscriber-123
+    - name: Account
+      value: account-456
+    - name: Billing-Account
+      value: billing-789
+    - name: Contract
+      value: contract-012
+    - name: Phone
+      value: 11999999999
+    - name: Telephone
+      value: 11999999999
+    - name: Content-Type
+      value: application/json
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Identifier header QA4.yml", raw)
+    headers = entry.to_dict()["headers_expected"]
+    serialized = json.dumps(headers, ensure_ascii=False)
+
+    for header_name in (
+        "X-MSISDN",
+        "MSISDN",
+        "X-Customer-Document",
+        "Customer-Document",
+        "Document",
+        "CPF",
+        "CNPJ",
+        "Subscriber-Id",
+        "Account",
+        "Billing-Account",
+        "Contract",
+        "Phone",
+        "Telephone",
+    ):
+        assert {"name": header_name, "value": "<REDACTED>"} in headers
+
+    assert {"name": "Content-Type", "value": "application/json"} in headers
+    assert "11999999999" not in serialized
+    assert "12345678901" not in serialized
+    assert "12345678000199" not in serialized
+    assert "subscriber-123" not in serialized
+    assert "account-456" not in serialized
+    assert "billing-789" not in serialized
+    assert "contract-012" not in serialized
+
+
 def test_parser_only_extracts_name_value_pairs_inside_headers_block():
     raw = """
 info:

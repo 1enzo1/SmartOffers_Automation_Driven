@@ -10,35 +10,8 @@ from .models import ApiCatalogEntry
 
 
 HTTP_METHODS = ("get", "post", "put", "patch", "delete", "head", "options")
-SENSITIVE_HEADER_NAMES = {
-    "authorization",
-    "proxy-authorization",
-    "x-api-key",
-    "api-key",
-    "apikey",
-    "token",
-    "access-token",
-    "client-secret",
-    "client_secret",
-    "cookie",
-    "password",
-    "session",
-    "set-cookie",
-    "senha",
-    "secret",
-    "x-session-id",
-}
-SENSITIVE_HEADER_NAME_TOKENS = {
-    "auth",
-    "authorization",
-    "cookie",
-    "key",
-    "passwd",
-    "password",
-    "secret",
-    "session",
-    "token",
-    "senha",
+SAFE_HEADER_VALUE_NAMES = {
+    "content-type",
 }
 
 IP_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
@@ -462,24 +435,14 @@ def _is_safe_payload_label(parent_key, path):
 
 
 def _sanitize_header_value(name, value):
-    if (
-        _header_name_is_sensitive(name)
-        or SECRET_HINT_RE.search(value)
-    ):
+    normalized_name = _normalize(name)
+    sanitized_value = _mask_sensitive_text(_strip_quotes(str(value).strip()))
+
+    if normalized_name not in SAFE_HEADER_VALUE_NAMES:
         return "<REDACTED>"
-    return _mask_sensitive_text(_strip_quotes(value))
-
-
-def _header_name_is_sensitive(name):
-    normalized = _normalize(name)
-    if normalized in SENSITIVE_HEADER_NAMES:
-        return True
-
-    if normalized == "jsessionid":
-        return True
-
-    parts = [part for part in re.split(r"[^a-z0-9]+", normalized) if part]
-    return any(part in SENSITIVE_HEADER_NAME_TOKENS for part in parts)
+    if SECRET_HINT_RE.search(sanitized_value):
+        return "<REDACTED>"
+    return sanitized_value
 
 
 def _safe_path(url):
