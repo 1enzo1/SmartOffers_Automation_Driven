@@ -372,6 +372,71 @@ get {
     assert "abc" not in serialized
 
 
+def test_parser_redacts_value_bearing_url_path_segments():
+    cases = [
+        (
+            "{{SMART_OFFERS_INT}}/customers/11999999999/profile",
+            "/customers/<PATH_PARAM>/profile",
+        ),
+        (
+            "{{SMART_OFFERS_INT}}/documents/12345678901/status",
+            "/documents/<PATH_PARAM>/status",
+        ),
+        (
+            "{{SMART_OFFERS_INT}}/documents/12345678000199/status",
+            "/documents/<PATH_PARAM>/status",
+        ),
+        (
+            "{{SMART_OFFERS_INT}}/accounts/987654321",
+            "/accounts/<PATH_PARAM>",
+        ),
+        (
+            "{{SMART_OFFERS_INT}}/contracts/12345678",
+            "/contracts/<PATH_PARAM>",
+        ),
+        (
+            "{{SMART_OFFERS_INT}}/ws/integration/online/process",
+            "/ws/integration/online/process",
+        ),
+        (
+            "{{SMART_OFFERS_INT}}/api/campaign/activate",
+            "/api/campaign/activate",
+        ),
+        (
+            "{{SMART_OFFERS_INT}}/retorno/la/xml",
+            "/retorno/la/xml",
+        ),
+        (
+            "{{SMART_OFFERS_INT}}/customers/11999999999/profile?token=abc",
+            "/customers/<PATH_PARAM>/profile",
+        ),
+    ]
+
+    for index, (url, expected_path) in enumerate(cases):
+        raw = f"""
+meta {{
+  name: Path {index}
+  type: http
+}}
+
+get {{
+  url: {url}
+}}
+"""
+
+        entry = parse_catalog_file(f"SmartOffers Copy/Path {index} QA4.bru", raw)
+        data = entry.to_dict()
+        serialized = json.dumps(data, ensure_ascii=False)
+
+        assert data["path"] == expected_path
+        assert "11999999999" not in serialized
+        assert "12345678901" not in serialized
+        assert "12345678000199" not in serialized
+        assert "987654321" not in serialized
+        assert "token" not in serialized
+        assert "abc" not in serialized
+
+
 def test_parser_does_not_invent_payload_for_bodyless_requests():
     raw = """
 meta {

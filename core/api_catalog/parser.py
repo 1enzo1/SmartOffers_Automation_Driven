@@ -13,6 +13,7 @@ HTTP_METHODS = ("get", "post", "put", "patch", "delete", "head", "options")
 SAFE_HEADER_VALUE_NAMES = {
     "content-type",
 }
+PATH_PARAM_PLACEHOLDER = "<PATH_PARAM>"
 
 IP_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 URL_RE = re.compile(r"https?://[^\s\"']+")
@@ -452,19 +453,32 @@ def _safe_path(url):
 
     parsed = urlparse(url)
     if parsed.scheme or parsed.netloc:
-        return parsed.path or "/"
+        return _sanitize_path_segments(parsed.path or "/")
 
     if url.startswith("/"):
-        return urlparse(url).path or "/"
+        return _sanitize_path_segments(urlparse(url).path or "/")
 
     match = re.search(r"(?:\{\{\s*[A-Za-z0-9_.-]+\s*\}\}|<[^>]+>|[^/\s\"']+)(/[^\s\"'?#]*)", url)
     if match:
-        return match.group(1) or "/"
+        return _sanitize_path_segments(match.group(1) or "/")
 
     if parsed.path and "/" in parsed.path:
-        return parsed.path
+        return _sanitize_path_segments(parsed.path)
 
     return "/"
+
+
+def _sanitize_path_segments(path):
+    segments = path.split("/")
+    sanitized = [
+        PATH_PARAM_PLACEHOLDER if _path_segment_is_value(segment) else segment
+        for segment in segments
+    ]
+    return "/".join(sanitized) or "/"
+
+
+def _path_segment_is_value(segment):
+    return bool(re.fullmatch(r"\d{8,}", segment))
 
 
 def _environment_refs(
