@@ -91,6 +91,19 @@ def test_adapter_run_endpoint_blocks_real_mode(app_client_factory, valid_payload
     assert data["details"]["allowed_modes"] == ["mock"]
 
 
+def test_adapter_run_endpoint_rejects_non_string_mode(app_client_factory, valid_payload):
+    client, _ = app_client_factory("adapters")
+    generated = client.post("/api/scenarios/generate", json=valid_payload())
+    scenario = generated.get_json()["scenario"]
+
+    response = client.post(f"/api/scenarios/{scenario['id']}/adapter-run", json={"mode": 1})
+
+    assert response.status_code == 400
+    data = response.get_json()
+    assert "mode invalido" in data["erro"]
+    assert data["details"]["allowed_modes"] == ["mock"]
+
+
 def test_fake_adapter_returns_standardized_status():
     adapter = FakeSmartOffersAdapter()
     result = adapter.execute(
@@ -125,6 +138,42 @@ def test_adapter_run_service_marks_report_failed_when_step_fails(valid_payload):
     assert report["status"] == "failed"
     assert report["summary"]["failed"] == 1
     assert report["adapter_results"][0]["message"] == "Falha planejada no adapter."
+
+
+def test_adapter_run_service_preserves_dry_run_status_and_message(valid_payload):
+    scenario = generate_scenario(valid_payload())
+    scenario["execution_steps"] = [scenario["execution_steps"][0]]
+    scenario["validation_steps"] = []
+    scenario["queries"] = []
+    scenario["checkpoints"] = []
+    scenario["evidence_files"] = []
+    scenario["execution_steps"][0]["dry_run_status"] = "failed"
+    scenario["execution_steps"][0]["dry_run_message"] = "Falha herdada do dry-run."
+
+    report = run_adapter_scenario(scenario, mode="mock")
+
+    assert report["status"] == "failed"
+    assert report["summary"]["failed"] == 1
+    assert report["adapter_results"][0]["status"] == "failed"
+    assert report["adapter_results"][0]["message"] == "Falha herdada do dry-run."
+
+
+def test_adapter_run_service_preserves_mock_status_and_custom_message(valid_payload):
+    scenario = generate_scenario(valid_payload())
+    scenario["execution_steps"] = [scenario["execution_steps"][0]]
+    scenario["validation_steps"] = []
+    scenario["queries"] = []
+    scenario["checkpoints"] = []
+    scenario["evidence_files"] = []
+    scenario["execution_steps"][0]["mock_status"] = "skipped"
+    scenario["execution_steps"][0]["mock_message"] = "Skip herdado do mock_status."
+
+    report = run_adapter_scenario(scenario, mode="mock")
+
+    assert report["status"] == "skipped"
+    assert report["summary"]["skipped"] == 1
+    assert report["adapter_results"][0]["status"] == "skipped"
+    assert report["adapter_results"][0]["message"] == "Skip herdado do mock_status."
 
 
 def test_existing_dry_run_endpoint_continues_working(app_client_factory, valid_payload):

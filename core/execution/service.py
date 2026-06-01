@@ -20,9 +20,11 @@ def adapters_healthcheck(registry=None):
 
 
 def run_adapter_scenario(scenario, mode="mock", registry=None):
-    mode = (mode or "mock").strip().lower()
-    if mode != "mock":
+    mode = normalize_mode(mode)
+    if mode == "real":
         raise AdapterRunModeError("mode real bloqueado: apenas mode='mock' está habilitado.")
+    if mode != "mock":
+        raise AdapterRunModeError("mode invalido: apenas mode='mock' está habilitado.")
 
     registry = registry or default_registry
     scenario_id = str(scenario.get("id") or "scenario")
@@ -158,9 +160,17 @@ def iter_adapter_steps(scenario):
 
 
 def normalize_step(index, source_section, step_type, name, source_step, payload_kind):
-    controls = source_step.get("adapter_run") if isinstance(source_step, dict) else None
-    if not controls and isinstance(source_step, dict):
-        controls = source_step.get("dry_run") or {}
+    controls = {}
+    if isinstance(source_step, dict):
+        controls.update(source_step.get("dry_run") or source_step.get("simulation") or {})
+        controls.update(source_step.get("adapter_run") or {})
+
+        status_fallback = source_step.get("dry_run_status") or source_step.get("mock_status")
+        message_fallback = source_step.get("dry_run_message") or source_step.get("mock_message")
+        if status_fallback and not controls.get("status"):
+            controls["status"] = status_fallback
+        if message_fallback and not controls.get("message"):
+            controls["message"] = message_fallback
 
     return {
         "id": f"{source_section}-{index}",
@@ -172,6 +182,14 @@ def normalize_step(index, source_section, step_type, name, source_step, payload_
         "controls": controls or {},
         "duration_ms": estimate_duration_ms(step_type, index),
     }
+
+
+def normalize_mode(mode):
+    if mode is None:
+        return "mock"
+    if not isinstance(mode, str):
+        raise AdapterRunModeError("mode invalido: deve ser string e usar mode='mock'.")
+    return mode.strip().lower()
 
 
 def resolve_query_step_type(query):
