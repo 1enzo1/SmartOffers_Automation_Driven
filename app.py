@@ -16,6 +16,12 @@ from core.generation import (
     load_scenario,
     save_scenario,
 )
+from core.execution.service import (
+    AdapterRunModeError,
+    adapters_healthcheck,
+    list_adapters,
+    run_adapter_scenario,
+)
 from core.legacy_execution import (
     SCRIPTS,
     list_legacy_tests,
@@ -84,6 +90,19 @@ def api_list_scenarios():
     return jsonify({"scenarios": list_scenarios()})
 
 
+@app.route("/api/adapters")
+def api_list_adapters():
+    adapters = list_adapters()
+    return jsonify({"adapters": adapters, "total": len(adapters)})
+
+
+@app.route("/api/adapters/health")
+def api_adapters_health():
+    checks = adapters_healthcheck()
+    status = "passed" if all(item["status"] == "passed" for item in checks) else "failed"
+    return jsonify({"status": status, "adapters": checks})
+
+
 @app.route("/api/scenarios/<scenario_id>")
 def api_get_scenario(scenario_id):
     scenario = load_scenario(scenario_id)
@@ -105,6 +124,23 @@ def api_dry_run_scenario(scenario_id):
     saved_path = save_dry_run_report(report)
 
     return jsonify({"report": report, "saved_path": saved_path}), 201
+
+
+@app.route("/api/scenarios/<scenario_id>/adapter-run", methods=["POST"])
+def api_adapter_run_scenario(scenario_id):
+    scenario = load_scenario(scenario_id)
+
+    if not scenario:
+        return jsonify({"erro": "cenario nao encontrado"}), 404
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+        report = run_adapter_scenario(scenario, mode=data.get("mode", "mock"))
+    except AdapterRunModeError as exc:
+        return jsonify({"erro": str(exc), "details": {"allowed_modes": ["mock"]}}), 400
+
+    return jsonify({"report": report}), 201
 
 
 @app.route("/api/dry-runs/<report_id>")
