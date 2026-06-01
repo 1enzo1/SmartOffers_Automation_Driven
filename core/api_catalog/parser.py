@@ -397,7 +397,11 @@ def _is_safe_payload_label(parent_key, path):
 
 def _sanitize_header_value(name, value):
     normalized = _normalize(name)
-    if normalized in SENSITIVE_HEADER_NAMES or SECRET_HINT_RE.search(value):
+    if (
+        normalized in SENSITIVE_HEADER_NAMES
+        or SECRET_HINT_RE.search(name)
+        or SECRET_HINT_RE.search(value)
+    ):
         return "<REDACTED>"
     return _mask_sensitive_text(_strip_quotes(value))
 

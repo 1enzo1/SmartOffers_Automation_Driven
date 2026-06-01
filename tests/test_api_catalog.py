@@ -171,6 +171,34 @@ http:
     assert "def456" not in serialized
 
 
+def test_parser_redacts_header_values_when_header_name_has_secret_hint():
+    raw = """
+info:
+  name: "Token header"
+  type: http
+http:
+  method: get
+  url: {{SMART_OFFERS_INT}}/customers
+  headers:
+    - name: X-Auth-Token
+      value: abc123
+    - name: X-Access-Token
+      value: def456
+    - name: Content-Type
+      value: application/json
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Token header QA4.yml", raw)
+    headers = entry.to_dict()["headers_expected"]
+    serialized = json.dumps(headers, ensure_ascii=False)
+
+    assert {"name": "X-Auth-Token", "value": "<REDACTED>"} in headers
+    assert {"name": "X-Access-Token", "value": "<REDACTED>"} in headers
+    assert {"name": "Content-Type", "value": "application/json"} in headers
+    assert "abc123" not in serialized
+    assert "def456" not in serialized
+
+
 def test_parser_strips_query_from_templated_paths():
     raw = """
 meta {
