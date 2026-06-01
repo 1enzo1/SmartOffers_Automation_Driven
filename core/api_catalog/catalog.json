@@ -1,0 +1,4829 @@
+{
+  "apis": [
+    {
+      "api_id": "post-vivo-next-habilitacao-de-cliente-ade0841563",
+      "name": "***VIVO NEXT - Habilitação de Cliente",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/VIVO NEXT - Habilitação de Cliente.yml",
+      "headers_expected": [
+        {
+          "name": "content-type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "70060213": "<STRING>",
+          "174317675": "<STRING>",
+          "349876894": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<STRING>",
+          "924143826": "<STRING>",
+          "1096727868": "<STRING>",
+          "1257708197": "<STRING>",
+          "1576075623": "<STRING>",
+          "1597489127": "<STRING>",
+          "1666101552": "<STRING>",
+          "1667261676": "<STRING>",
+          "1794057286": "<STRING>",
+          "1840045565": "<STRING>",
+          "1944018544": "<STRING>",
+          "1956476071": "<STRING>",
+          "1958653254": "<STRING>",
+          "1997035279": "<STRING>",
+          "2069729122": "<STRING>",
+          "2118173840": "<STRING>"
+        },
+        "attributeDetails": {
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "174317675": {
+            "type": "Long",
+            "name": "BILLING_ACCOUNT_STATE_REASON"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "924143826": {
+            "type": "String",
+            "name": "BANK_CHECKING_ACCOUNT"
+          },
+          "1096727868": {
+            "type": "String",
+            "name": "COLLECTION_TREATMENT"
+          },
+          "1257708197": {
+            "type": "Date",
+            "name": "AUTOMATIC_DEBIT_FIRST_DUE_DATE"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "OWNER"
+          },
+          "1956476071": {
+            "type": "String",
+            "name": "EMAIL"
+          },
+          "1958653254": {
+            "type": "String",
+            "name": "BANK_AGENCY"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "2069729122": {
+            "type": "String",
+            "name": "ACCOUNT_STATE_REASON"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-vivo-next-habilitacao-de-linha-a79ab2e31c",
+      "name": "*VIVO NEXT - Habilitação de Linha",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/VIVO NEXT - Habilitação de Linha.yml",
+      "headers_expected": [
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1576075623": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<STRING>",
+          "2069729122": "<STRING>",
+          "1257708197": "<STRING>",
+          "397164609": "<STRING>",
+          "1958653254": "<STRING>",
+          "924143826": "<STRING>",
+          "2118173840": "<STRING>",
+          "1794057286": "<STRING>",
+          "174317675": "<STRING>",
+          "1997035279": "<STRING>",
+          "1840045565": "<STRING>",
+          "1666101552": "<STRING>",
+          "70060213": "<STRING>",
+          "1956476071": "<STRING>",
+          "1667261676": "<STRING>",
+          "349876894": "<STRING>",
+          "1944018544": "<STRING>",
+          "1096727868": "<STRING>",
+          "2020041941": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "2069729122": {
+            "type": "String",
+            "name": "ACCOUNT_STATE_REASON"
+          },
+          "1257708197": {
+            "type": "Date",
+            "name": "AUTOMATIC_DEBIT_FIRST_DUE_DATE"
+          },
+          "397164609": {
+            "type": "String",
+            "name": "BANK"
+          },
+          "1958653254": {
+            "type": "String",
+            "name": "BANK_AGENCY"
+          },
+          "924143826": {
+            "type": "String",
+            "name": "BANK_CHECKING_ACCOUNT"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "174317675": {
+            "type": "Long",
+            "name": "BILLING_ACCOUNT_STATE_REASON"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "1956476071": {
+            "type": "String",
+            "name": "EMAIL"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "OWNER"
+          },
+          "1096727868": {
+            "type": "String",
+            "name": "COLLECTION_TREATMENT"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-o-vivo-next-habilitacao-de-linha-corrigido-9213d3bb09",
+      "name": "*o* VIVO NEXT - Habilitação de Linha - Corrigido",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/o- VIVO NEXT - Habilitação de Linha - Corrigido.yml",
+      "headers_expected": [
+        {
+          "name": "content-type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1576075623": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<STRING>",
+          "2118173840": "<STRING>",
+          "1794057286": "<STRING>",
+          "1997035279": "<STRING>",
+          "1840045565": "<STRING>",
+          "1666101552": "<STRING>",
+          "70060213": "<STRING>",
+          "1667261676": "<STRING>",
+          "349876894": "<STRING>",
+          "2020041941": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-o-vivo-next-habilitacao-de-linha-corrigido-1424674f2c",
+      "name": "*o* VIVO NEXT - Habilitação de Linha - Corrigido copy",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/o- VIVO NEXT - Habilitação de Linha - Corrigido copy.yml",
+      "headers_expected": [
+        {
+          "name": "content-type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "70060213": "<STRING>",
+          "349876894": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<STRING>",
+          "1576075623": "<STRING>",
+          "1597489127": "<STRING>",
+          "1666101552": "<STRING>",
+          "1667261676": "<STRING>",
+          "1794057286": "<STRING>",
+          "1840045565": "<STRING>",
+          "1997035279": "<STRING>",
+          "2020041941": "<STRING>",
+          "2118173840": "<STRING>"
+        },
+        "attributeDetails": {
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-o-vivo-next-habilitacao-de-linha-corrigido-d6bba0a2d9",
+      "name": "*o* VIVO NEXT - Habilitação de Linha - Corrigido copy copy",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/o- VIVO NEXT - Habilitação de Linha - Corrigido copy copy.yml",
+      "headers_expected": [
+        {
+          "name": "content-type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "70060213": "<STRING>",
+          "349876894": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<STRING>",
+          "1576075623": "<STRING>",
+          "1597489127": "<STRING>",
+          "1666101552": "<STRING>",
+          "1667261676": "<STRING>",
+          "1794057286": "<STRING>",
+          "1840045565": "<STRING>",
+          "1997035279": "<STRING>",
+          "2020041941": "<STRING>",
+          "2118173840": "<STRING>"
+        },
+        "attributeDetails": {
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-o-vivo-next-troca-de-oferta-fedbfb981e",
+      "name": "*o* VIVO NEXT - Troca de Oferta",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/o- VIVO NEXT - Troca de Oferta.yml",
+      "headers_expected": [
+        {
+          "name": "content-type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1576075623": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<STRING>",
+          "2118173840": "<STRING>",
+          "1794057286": "<STRING>",
+          "1997035279": "<STRING>",
+          "1840045565": "<STRING>",
+          "1666101552": "<STRING>",
+          "70060213": "<STRING>",
+          "1667261676": "<STRING>",
+          "349876894": "<STRING>",
+          "2020041941": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "1096727868": {
+            "type": "String",
+            "name": "COLLECTION_TREATMENT"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-tentativa-5-vivo-next-habilitacao-afc355f6f4",
+      "name": "TENTATIVA 5 - VIVO NEXT - Habilitação",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/TENTATIVA 5 - VIVO NEXT - Habilitação.yml",
+      "headers_expected": [
+        {
+          "name": "content-type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "70060213": "<STRING>",
+          "174317675": "<NUMBER>",
+          "349876894": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<NUMBER>",
+          "924143826": "<STRING>",
+          "1096727868": "<STRING>",
+          "1257708197": "<STRING>",
+          "1576075623": "<STRING>",
+          "1597489127": "<STRING>",
+          "1666101552": "<STRING>",
+          "1667261676": "<NUMBER>",
+          "1794057286": "<STRING>",
+          "1840045565": "<NUMBER>",
+          "1944018544": "<STRING>",
+          "1956476071": "<STRING>",
+          "1958653254": "<STRING>",
+          "1997035279": "<NUMBER>",
+          "2069729122": "<STRING>",
+          "2118173840": "<STRING>"
+        },
+        "attributeDetails": {
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "174317675": {
+            "type": "Long",
+            "name": "BILLING_ACCOUNT_STATE_REASON"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "924143826": {
+            "type": "String",
+            "name": "BANK_CHECKING_ACCOUNT"
+          },
+          "1096727868": {
+            "type": "String",
+            "name": "COLLECTION_TREATMENT"
+          },
+          "1257708197": {
+            "type": "Date",
+            "name": "AUTOMATIC_DEBIT_FIRST_DUE_DATE"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "OWNER"
+          },
+          "1956476071": {
+            "type": "String",
+            "name": "EMAIL"
+          },
+          "1958653254": {
+            "type": "String",
+            "name": "BANK_AGENCY"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "2069729122": {
+            "type": "String",
+            "name": "ACCOUNT_STATE_REASON"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-vivo-next-habilitacao-0f8ae4b9cc",
+      "name": "Vivo NEXT - Habilitação",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/Vivo NEXT - Habilitação.yml",
+      "headers_expected": [
+        {
+          "name": "content-type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "70060213": "<STRING>",
+          "174317675": "<STRING>",
+          "349876894": "<STRING>",
+          "397164609": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<STRING>",
+          "924143826": "<STRING>",
+          "1096727868": "<STRING>",
+          "1257708197": "<STRING>",
+          "1576075623": "<STRING>",
+          "1597489127": "<STRING>",
+          "1666101552": "<STRING>",
+          "1667261676": "<STRING>",
+          "1794057286": "<STRING>",
+          "1840045565": "<STRING>",
+          "1944018544": "<STRING>",
+          "1956476071": "<STRING>",
+          "1958653254": "<STRING>",
+          "1997035279": "<STRING>",
+          "2020041941": "<STRING>",
+          "2069729122": "<STRING>",
+          "2118173840": "<STRING>"
+        },
+        "attributeDetails": {
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "174317675": {
+            "type": "Long",
+            "name": "BILLING_ACCOUNT_STATE_REASON"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "397164609": {
+            "type": "String",
+            "name": "BANK"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "924143826": {
+            "type": "String",
+            "name": "BANK_CHECKING_ACCOUNT"
+          },
+          "1096727868": {
+            "type": "String",
+            "name": "COLLECTION_TREATMENT"
+          },
+          "1257708197": {
+            "type": "Date",
+            "name": "AUTOMATIC_DEBIT_FIRST_DUE_DATE"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "OWNER"
+          },
+          "1956476071": {
+            "type": "String",
+            "name": "EMAIL"
+          },
+          "1958653254": {
+            "type": "String",
+            "name": "BANK_AGENCY"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "2069729122": {
+            "type": "String",
+            "name": "ACCOUNT_STATE_REASON"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-tentativa-6-vivo-next-7834f93475",
+      "name": "tentativa 6 - vivo next",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/tentativa 6 - vivo next.yml",
+      "headers_expected": [
+        {
+          "name": "content-type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "70060213": "<STRING>",
+          "174317675": "<NUMBER>",
+          "349876894": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<NUMBER>",
+          "924143826": "<STRING>",
+          "1096727868": "<STRING>",
+          "1257708197": "<STRING>",
+          "1576075623": "<STRING>",
+          "1597489127": "<STRING>",
+          "1666101552": "<STRING>",
+          "1667261676": "<STRING>",
+          "1794057286": "<STRING>",
+          "1840045565": "<NUMBER>",
+          "1944018544": "<STRING>",
+          "1956476071": "<STRING>",
+          "1958653254": "<STRING>",
+          "1997035279": "<NUMBER>",
+          "2069729122": "<STRING>",
+          "2118173840": "<STRING>"
+        },
+        "attributeDetails": {
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "174317675": {
+            "type": "Long",
+            "name": "BILLING_ACCOUNT_STATE_REASON"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "924143826": {
+            "type": "String",
+            "name": "BANK_CHECKING_ACCOUNT"
+          },
+          "1096727868": {
+            "type": "String",
+            "name": "COLLECTION_TREATMENT"
+          },
+          "1257708197": {
+            "type": "Date",
+            "name": "AUTOMATIC_DEBIT_FIRST_DUE_DATE"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "OWNER"
+          },
+          "1956476071": {
+            "type": "String",
+            "name": "EMAIL"
+          },
+          "1958653254": {
+            "type": "String",
+            "name": "BANK_AGENCY"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "2069729122": {
+            "type": "String",
+            "name": "ACCOUNT_STATE_REASON"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-tentativa-7-vivo-next-106a272367",
+      "name": "tentativa 7 - vivo next",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>",
+        "QA4",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "Habilitação Vivo NEXT - Pós pago",
+      "source_file": "Habilitação Vivo NEXT - Pós pago/tentativa 7 - vivo next.yml",
+      "headers_expected": [
+        {
+          "name": "content-type",
+          "value": "application/json"
+        }
+      ],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "70060213": "<STRING>",
+          "174317675": "<STRING>",
+          "349876894": "<STRING>",
+          "425747132": "<STRING>",
+          "447500851": "<STRING>",
+          "908881601": "<STRING>",
+          "924143826": "<STRING>",
+          "1096727868": "<STRING>",
+          "1257708197": "<STRING>",
+          "1576075623": "<STRING>",
+          "1597489127": "<STRING>",
+          "1666101552": "<STRING>",
+          "1667261676": "<STRING>",
+          "1794057286": "<STRING>",
+          "1840045565": "<STRING>",
+          "1944018544": "<STRING>",
+          "1956476071": "<STRING>",
+          "1958653254": "<STRING>",
+          "1997035279": "<STRING>",
+          "2069729122": "<STRING>",
+          "2118173840": "<STRING>"
+        },
+        "attributeDetails": {
+          "70060213": {
+            "type": "String",
+            "name": "DOCUMENT_TYPE"
+          },
+          "174317675": {
+            "type": "Long",
+            "name": "BILLING_ACCOUNT_STATE_REASON"
+          },
+          "349876894": {
+            "type": "String",
+            "name": "OFFER"
+          },
+          "425747132": {
+            "type": "String",
+            "name": "SENDING_FORM"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "924143826": {
+            "type": "String",
+            "name": "BANK_CHECKING_ACCOUNT"
+          },
+          "1096727868": {
+            "type": "String",
+            "name": "COLLECTION_TREATMENT"
+          },
+          "1257708197": {
+            "type": "Date",
+            "name": "AUTOMATIC_DEBIT_FIRST_DUE_DATE"
+          },
+          "1576075623": {
+            "type": "String",
+            "name": "PAYMENT_METHOD"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1666101552": {
+            "type": "String",
+            "name": "DOCUMENT_ID"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "1794057286": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT_STATE"
+          },
+          "1840045565": {
+            "type": "Long",
+            "name": "BILLING_CYCLE_CUT_OFF_DAY"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "OWNER"
+          },
+          "1956476071": {
+            "type": "String",
+            "name": "EMAIL"
+          },
+          "1958653254": {
+            "type": "String",
+            "name": "BANK_AGENCY"
+          },
+          "1997035279": {
+            "type": "Long",
+            "name": "BILLING_CYCLE"
+          },
+          "2069729122": {
+            "type": "String",
+            "name": "ACCOUNT_STATE_REASON"
+          },
+          "2118173840": {
+            "type": "String",
+            "name": "BILLING_ACCOUNT"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-alteracao-de-situacao-de-portabilidade-15b4461d5e",
+      "name": "Alteração de situação de portabilidade *",
+      "category": "portabilidade",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Alteração de situação de portabilidade -.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1650737577": "<STRING>",
+          "1952846045": "<STRING>",
+          "1760625139": "<NUMBER>",
+          "741842957": "<NUMBER>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1952846045": {
+            "type": "Long",
+            "name": "Old Portability Situation"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "Reason Code"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "Multi Operation"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-alteracao-servico-cca-ativacao-de-vt-4e5687b6fe",
+      "name": "Alteração serviço CCA - Ativação de VT",
+      "category": "cobranca",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Alteração serviço CCA - Ativação de VT.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1760625139": "<STRING>",
+          "970723104": "<STRING>",
+          "487372743": "<STRING>",
+          "1956373189": "<STRING>",
+          "1216223958": "<STRING>",
+          "1667261676": "<STRING>",
+          "1597489127": "<STRING>",
+          "1526480059": "<STRING>",
+          "741842957": "<STRING>"
+        },
+        "attributeDetails": {
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "970723104": {
+            "type": "String",
+            "name": "PRODUCT_CODE"
+          },
+          "487372743": {
+            "type": "String",
+            "name": "STEP_ID"
+          },
+          "1956373189": {
+            "type": "String",
+            "name": "ORIGIN_INSTANCE"
+          },
+          "1216223958": {
+            "type": "String",
+            "name": "ORIGIN_TYPE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "1526480059": {
+            "type": "Double",
+            "name": "MONETARY_BALANCE"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-ativacao-de-iad-809069eb11",
+      "name": "Ativação de IAD",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Ativação de IAD.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1760625139": "<STRING>",
+          "1526480059": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "Identificador externo"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "Reason Code"
+          },
+          "1526480059": {
+            "type": "Double",
+            "name": "MONETARY_BALANCE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-ativacao-de-td-458e4841ee",
+      "name": "Ativação de TD",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Ativação de TD.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1760625139": "<STRING>",
+          "1526480059": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "Identificador externo"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "Reason Code"
+          },
+          "1526480059": {
+            "type": "Double",
+            "name": "MONETARY_BALANCE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-ativacao-de-campanha-por-api-2e656ee31c",
+      "name": "Ativação de campanha por API",
+      "category": "campanha",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Ativação de campanha por API.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1760625139": "<NUMBER>",
+          "741842957": "<NUMBER>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON CODE"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI OPERATION"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-cadeastro-de-promocao-013001b8b3",
+      "name": "Cadeastro  de promoção",
+      "category": "campanha",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Cadeastro  de promoção.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1760625139": "<STRING>",
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>"
+        },
+        "attributeDetails": {
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-chamada-de-dados-c08c3fa0a0",
+      "name": "Chamada de Dados",
+      "category": "voz_dados",
+      "method": "POST",
+      "path": "//",
+      "environment_refs": [],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Chamada de Dados.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "Identificador externo"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-chamada-de-voz-0b9e1ca4fc",
+      "name": "Chamada de Voz",
+      "category": "voz_dados",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Chamada de Voz.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "29390589": "<STRING>",
+          "2059056207": "<STRING>",
+          "1525223935": "<STRING>",
+          "1058556538": "<STRING>",
+          "1411866684": "<STRING>",
+          "302021274": "<STRING>",
+          "1427344057": "<STRING>",
+          "1281275467": "<STRING>",
+          "2015552883": "<STRING>",
+          "1134758438": "<STRING>",
+          "816838072": "<STRING>",
+          "1512701806": "<STRING>",
+          "1898496430": "<STRING>",
+          "346762259": "<STRING>",
+          "1674504738": "<STRING>",
+          "981923927": "<STRING>",
+          "12908688": "<STRING>",
+          "1723350563": "<STRING>",
+          "164996913": "<STRING>",
+          "378157372": "<STRING>",
+          "1587421594": "<STRING>",
+          "682141076": "<STRING>",
+          "1441829369": "<STRING>",
+          "655643704": "<STRING>",
+          "7424997": "<STRING>",
+          "549046910": "<STRING>",
+          "1155023189": "<STRING>",
+          "1035891110": "<STRING>",
+          "1978787871": "<STRING>",
+          "11468124": "<STRING>",
+          "2138388945": "<STRING>",
+          "1007590034": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "29390589": {
+            "type": "Date",
+            "name": "Event Request Date"
+          },
+          "2059056207": {
+            "type": "Date",
+            "name": "Event Processed Date"
+          },
+          "1525223935": {
+            "type": "String",
+            "name": "Event Type"
+          },
+          "1058556538": {
+            "type": "Long",
+            "name": "Call Type"
+          },
+          "1411866684": {
+            "type": "String",
+            "name": "Tariff Detail"
+          },
+          "302021274": {
+            "type": "Long",
+            "name": "Billed Duration"
+          },
+          "1427344057": {
+            "type": "Long",
+            "name": "Consumed Duration"
+          },
+          "1281275467": {
+            "type": "Long",
+            "name": "Service Type"
+          },
+          "2015552883": {
+            "type": "String",
+            "name": "Call Transaction"
+          },
+          "1134758438": {
+            "type": "Long",
+            "name": "Access Type"
+          },
+          "816838072": {
+            "type": "Long",
+            "name": "Process Type"
+          },
+          "1512701806": {
+            "type": "Long",
+            "name": "P1 Type"
+          },
+          "1898496430": {
+            "type": "Long",
+            "name": "P1 Cost"
+          },
+          "346762259": {
+            "type": "Long",
+            "name": "P1 Balance"
+          },
+          "1674504738": {
+            "type": "Long",
+            "name": "P2 Type"
+          },
+          "981923927": {
+            "type": "Long",
+            "name": "P2 Cost"
+          },
+          "12908688": {
+            "type": "Long",
+            "name": "P2 Balance"
+          },
+          "1723350563": {
+            "type": "Long",
+            "name": "P3 Type"
+          },
+          "164996913": {
+            "type": "Long",
+            "name": "P3 Cost"
+          },
+          "378157372": {
+            "type": "Long",
+            "name": "P3 Balance"
+          },
+          "1587421594": {
+            "type": "Long",
+            "name": "P4 Type"
+          },
+          "682141076": {
+            "type": "Long",
+            "name": "P4 Cost"
+          },
+          "1441829369": {
+            "type": "Long",
+            "name": "P4 Balance"
+          },
+          "655643704": {
+            "type": "Long",
+            "name": "P5 Type"
+          },
+          "7424997": {
+            "type": "Long",
+            "name": "P5 Cost"
+          },
+          "549046910": {
+            "type": "Long",
+            "name": "P5 Balance"
+          },
+          "1155023189": {
+            "type": "Long",
+            "name": "P6 Type"
+          },
+          "1035891110": {
+            "type": "Long",
+            "name": "P6 Cost"
+          },
+          "1978787871": {
+            "type": "Long",
+            "name": "P6 Balance"
+          },
+          "11468124": {
+            "type": "Long",
+            "name": "P7 Type"
+          },
+          "2138388945": {
+            "type": "Long",
+            "name": "P7 Cost"
+          },
+          "1007590034": {
+            "type": "Long",
+            "name": "P7 Balance"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-consulta-de-saldo-f3317b27b3",
+      "name": "Consulta de Saldo",
+      "category": "recarga",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Consulta de Saldo.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1360906723": "<STRING>",
+          "1080893129": "<STRING>",
+          "1787595735": "<STRING>",
+          "932798723": "<STRING>",
+          "1922744983": "<STRING>",
+          "961562706": "<STRING>",
+          "1110015324": "<STRING>",
+          "545060613": "<STRING>",
+          "14124681": "<STRING>",
+          "384916946": "<STRING>",
+          "1857992992": "<STRING>",
+          "2120243672": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1360906723": {
+            "type": "Long",
+            "name": "PLAFOND_GROUP_1"
+          },
+          "1080893129": {
+            "type": "Long",
+            "name": "PLAFOND_GROUP_2"
+          },
+          "1787595735": {
+            "type": "Long",
+            "name": "PLAFOND_GROUP_3"
+          },
+          "932798723": {
+            "type": "Long",
+            "name": "PLAFOND_GROUP_4"
+          },
+          "1922744983": {
+            "type": "Double",
+            "name": "AVAILABLE_BALANCE_1"
+          },
+          "961562706": {
+            "type": "Double",
+            "name": "AVAILABLE_BALANCE_2"
+          },
+          "1110015324": {
+            "type": "Double",
+            "name": "AVAILABLE_BALANCE_3"
+          },
+          "545060613": {
+            "type": "Double",
+            "name": "AVAILABLE_BALANCE_4"
+          },
+          "14124681": {
+            "type": "Date",
+            "name": "BALANCE_EXPIRY_DATE_1"
+          },
+          "384916946": {
+            "type": "Date",
+            "name": "BALANCE_EXPIRY_DATE_2"
+          },
+          "1857992992": {
+            "type": "Date",
+            "name": "BALANCE_EXPIRY_DATE_3"
+          },
+          "2120243672": {
+            "type": "Date",
+            "name": "BALANCE_EXPIRY_DATE_4"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-criacao-remocao-de-agente-de-cobranca-cca-3c5d2ee838",
+      "name": "Criação/Remoção de Agente de Cobrança CCA",
+      "category": "cobranca",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Criação-Remoção de Agente de Cobrança CCA.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1760625139": "<STRING>",
+          "970723104": "<STRING>",
+          "1829580912": "<STRING>",
+          "1597489127": "<STRING>",
+          "524314627": "<STRING>",
+          "1667261676": "<STRING>",
+          "1526480059": "<STRING>",
+          "1216223958": "<STRING>"
+        },
+        "attributeDetails": {
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "970723104": {
+            "type": "String",
+            "name": "PRODUCT_CODE"
+          },
+          "1829580912": {
+            "type": "Long",
+            "name": "ACTION_TYPE"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "524314627": {
+            "type": "String",
+            "name": "NEW_STATUS"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "1526480059": {
+            "type": "Double",
+            "name": "MONETARY_BALANCE"
+          },
+          "1216223958": {
+            "type": "String",
+            "name": "ORIGIN_TYPE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-evento-sva-b564874f11",
+      "name": "Evento SVA",
+      "category": "sva",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Evento SVA.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1360906723": "<STRING>",
+          "1080893129": "<STRING>",
+          "1787595735": "<STRING>",
+          "932798723": "<STRING>",
+          "1922744983": "<STRING>",
+          "961562706": "<STRING>",
+          "1110015324": "<STRING>",
+          "545060613": "<STRING>",
+          "14124681": "<STRING>",
+          "384916946": "<STRING>",
+          "1857992992": "<STRING>",
+          "2120243672": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1360906723": {
+            "type": "Long",
+            "name": "PLAFOND_GROUP_1"
+          },
+          "1080893129": {
+            "type": "Long",
+            "name": "PLAFOND_GROUP_2"
+          },
+          "1787595735": {
+            "type": "Long",
+            "name": "PLAFOND_GROUP_3"
+          },
+          "932798723": {
+            "type": "Long",
+            "name": "PLAFOND_GROUP_4"
+          },
+          "1922744983": {
+            "type": "Double",
+            "name": "AVAILABLE_BALANCE_1"
+          },
+          "961562706": {
+            "type": "Double",
+            "name": "AVAILABLE_BALANCE_2"
+          },
+          "1110015324": {
+            "type": "Double",
+            "name": "AVAILABLE_BALANCE_3"
+          },
+          "545060613": {
+            "type": "Double",
+            "name": "AVAILABLE_BALANCE_4"
+          },
+          "14124681": {
+            "type": "Date",
+            "name": "BALANCE_EXPIRY_DATE_1"
+          },
+          "384916946": {
+            "type": "Date",
+            "name": "BALANCE_EXPIRY_DATE_2"
+          },
+          "1857992992": {
+            "type": "Date",
+            "name": "BALANCE_EXPIRY_DATE_3"
+          },
+          "2120243672": {
+            "type": "Date",
+            "name": "BALANCE_EXPIRY_DATE_4"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-evento-vivo-turbo-e124494049",
+      "name": "Evento Vivo Turbo",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Evento Vivo Turbo.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "564446028": "<STRING>",
+          "1207183952": "<STRING>",
+          "524314627": "<STRING>",
+          "1252431603": "<STRING>",
+          "1216876527": "<STRING>",
+          "1095319917": "<STRING>",
+          "1686512487": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External ID"
+          },
+          "564446028": {
+            "type": "String",
+            "name": "PACOTE"
+          },
+          "1207183952": {
+            "type": "Date",
+            "name": "ATIVACAO"
+          },
+          "524314627": {
+            "type": "String",
+            "name": "NEW_STATUS"
+          },
+          "1252431603": {
+            "type": "String",
+            "name": "OLD_STATUS"
+          },
+          "1216876527": {
+            "type": "Long",
+            "name": "VALIDADE"
+          },
+          "1095319917": {
+            "type": "String",
+            "name": "TIPO"
+          },
+          "1686512487": {
+            "type": "String",
+            "name": "PROMO"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-evento-de-recarga-6954ef3458",
+      "name": "Evento de Recarga***",
+      "category": "recarga",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Evento de Recarga---.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "268728916": "<STRING>",
+          "549959275": "<STRING>",
+          "741842957": "<STRING>",
+          "1199565567": "<STRING>",
+          "1961905368": "<STRING>",
+          "1760625139": "<STRING>",
+          "2059056207": "<STRING>",
+          "29390589": "<STRING>",
+          "1978127984": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "268728916": {
+            "type": "Date",
+            "name": "Last Recharge Date"
+          },
+          "549959275": {
+            "type": "Double",
+            "name": "Last Recharge Value"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "Multi Operation"
+          },
+          "1199565567": {
+            "type": "Long",
+            "name": "Mix Code"
+          },
+          "1961905368": {
+            "type": "Long",
+            "name": "Channel Code"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "Reason Code"
+          },
+          "2059056207": {
+            "type": "Date",
+            "name": "Event Processed Date"
+          },
+          "29390589": {
+            "type": "Date",
+            "name": "Event Request Date"
+          },
+          "1978127984": {
+            "type": "Long",
+            "name": "Subchannel Code"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-evento-de-alarme-902b9b0fd8",
+      "name": "Evento de alarme",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Evento de alarme.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1012243761": "<STRING>",
+          "1044149280": "<STRING>",
+          "1526480059": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1012243761": {
+            "type": "Long",
+            "name": "ALARM_ID"
+          },
+          "1044149280": {
+            "type": "Long",
+            "name": "ALARM_STATUS"
+          },
+          "1526480059": {
+            "type": "Double",
+            "name": "MONETARY_BALANCE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-evento-de-alarme-rm-6596d32117",
+      "name": "Evento de alarme RM",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Evento de alarme RM.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1655982784": "<STRING>",
+          "1044149280": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1655982784": {
+            "type": "String",
+            "name": "ALARM_ID_RM"
+          },
+          "1044149280": {
+            "type": "Long",
+            "name": "ALARM_STATUS"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-99f59fd07d",
+      "name": "Habilitação de cliente",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "908881601": "<STRING>",
+          "1966426172": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-c881daa379",
+      "name": "Habilitação de cliente ***",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente ---.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "1966426172": "<STRING>",
+          "908881601": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          },
+          "579515748": {
+            "type": "String",
+            "name": "TIPO_CHIP"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-copy-d741cdb09a",
+      "name": "Habilitação de cliente *** Copy",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente --- Copy.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "1966426172": "<STRING>",
+          "908881601": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          },
+          "579515748": {
+            "type": "String",
+            "name": "TIPO_CHIP"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-copy-1-4020721404",
+      "name": "Habilitação de cliente *** Copy_1",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente --- Copy_1.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "1966426172": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>",
+          "579515748": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          },
+          "579515748": {
+            "type": "String",
+            "name": "TIPO_CHIP"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-emergencial-pre-d6177f244c",
+      "name": "Habilitação de cliente *** Emergencial pre",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente --- Emergencial pre.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "1966426172": "<STRING>",
+          "908881601": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          },
+          "579515748": {
+            "type": "String",
+            "name": "TIPO_CHIP"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-port-in-controle-24a495327b",
+      "name": "Habilitação de cliente *** PORT IN CONTROLE",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente --- PORT IN CONTROLE.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "1966426172": "<STRING>",
+          "908881601": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          },
+          "579515748": {
+            "type": "String",
+            "name": "TIPO_CHIP"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-1-5c448e7e80",
+      "name": "Habilitação de cliente ***_1",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente ---_1.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "1966426172": "<STRING>",
+          "908881601": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          },
+          "579515748": {
+            "type": "String",
+            "name": "TIPO_CHIP"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-copy-6aa3e7731c",
+      "name": "Habilitação de cliente Copy",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente Copy.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "908881601": "<STRING>",
+          "1966426172": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-copy-2-12bbffb7a0",
+      "name": "Habilitação de cliente Copy 2",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente Copy 2.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "908881601": "<STRING>",
+          "1966426172": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "1667261676": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-copy-1-bdb809ed9d",
+      "name": "Habilitação de cliente Copy_1",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente Copy_1.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "908881601": "<STRING>",
+          "1966426172": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "1667261676": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-copy-2-21151a8714",
+      "name": "Habilitação de cliente Copy_2",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente Copy_2.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "908881601": "<STRING>",
+          "1966426172": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-habilitacao-de-cliente-teste-51210c51ef",
+      "name": "Habilitação de cliente TESTE",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Habilitação de cliente TESTE.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "908881601": "<STRING>",
+          "1966426172": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-limiar-de-saldo-3817842b30",
+      "name": "Limiar de saldo",
+      "category": "recarga",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Limiar de saldo.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "1012243761": "<STRING>",
+          "1044149280": "<STRING>",
+          "1526480059": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1012243761": {
+            "type": "Long",
+            "name": "ALARM_ID"
+          },
+          "1044149280": {
+            "type": "Long",
+            "name": "ALARM_STATUS"
+          },
+          "1526480059": {
+            "type": "Double",
+            "name": "MONETARY_BALANCE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-migracao-de-tipo-de-pefil-profile-2fada81374",
+      "name": "Migração de tipo de Pefil - Profile",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Migração de tipo de Pefil - Profile.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1597489127": "<STRING>",
+          "943629665": "<STRING>",
+          "2059056207": "<STRING>",
+          "29390589": "<STRING>",
+          "741842957": "<STRING>",
+          "1760625139": "<STRING>"
+        },
+        "attributeDetails": {
+          "1190622368": {
+            "type": "Long",
+            "name": "Profile"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "Profile Date"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External ID"
+          },
+          "943629665": {
+            "type": "String",
+            "name": "Old Profile"
+          },
+          "2059056207": {
+            "type": "Date",
+            "name": "Event Processed Date"
+          },
+          "29390589": {
+            "type": "Date",
+            "name": "Event Request Date"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "Multi Operation"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "Reason Code"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-migracao-de-tipo-do-cliente-controle-pre-d6426ff2ca",
+      "name": "Migração de tipo do cliente Controle > Pré",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Migração de tipo do cliente Controle - Pré.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1966426172": "<STRING>",
+          "2020041941": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1597489127": "<STRING>",
+          "943629665": "<STRING>",
+          "2059056207": "<STRING>",
+          "29390589": "<STRING>",
+          "741842957": "<STRING>",
+          "1760625139": "<STRING>",
+          "1596888223": "<STRING>",
+          "908881601": "<STRING>",
+          "1254850832": "<STRING>",
+          "447500851": "<STRING>"
+        },
+        "attributeDetails": {
+          "1966426172": {
+            "type": "Date",
+            "name": "Account State Date"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "Account State"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "Client Type"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "Profile"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "Profile Date"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External ID"
+          },
+          "943629665": {
+            "type": "String",
+            "name": "Old Profile"
+          },
+          "2059056207": {
+            "type": "Date",
+            "name": "Event Processed Date"
+          },
+          "29390589": {
+            "type": "Date",
+            "name": "Event Request Date"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "Multi Operation"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "Reason Code"
+          },
+          "1596888223": {
+            "type": "Long",
+            "name": "Old Client Type"
+          },
+          "1254850832": {
+            "type": "Long",
+            "name": "Old Account State"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-migracao-de-tipo-do-cliente-pre-controle-7e1c851cd9",
+      "name": "Migração de tipo do cliente Pré > Controle",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Migração de tipo do cliente Pré - Controle.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1966426172": "<STRING>",
+          "2020041941": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1597489127": "<STRING>",
+          "943629665": "<STRING>",
+          "2059056207": "<STRING>",
+          "29390589": "<STRING>",
+          "741842957": "<STRING>",
+          "1760625139": "<STRING>",
+          "1596888223": "<STRING>",
+          "908881601": "<STRING>",
+          "1254850832": "<STRING>",
+          "447500851": "<STRING>"
+        },
+        "attributeDetails": {
+          "1966426172": {
+            "type": "Date",
+            "name": "Account State Date"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "Account State"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "Client Type"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "Profile"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "Profile Date"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External ID"
+          },
+          "943629665": {
+            "type": "String",
+            "name": "Old Profile"
+          },
+          "2059056207": {
+            "type": "Date",
+            "name": "Event Processed Date"
+          },
+          "29390589": {
+            "type": "Date",
+            "name": "Event Request Date"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "Multi Operation"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "Reason Code"
+          },
+          "1596888223": {
+            "type": "Long",
+            "name": "Old Client Type"
+          },
+          "1254850832": {
+            "type": "Long",
+            "name": "Old Account State"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-mudanca-de-estado-76e8471e7f",
+      "name": "Mudança de estado ***",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Mudança de estado ---.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "908881601": "<STRING>",
+          "1966426172": "<STRING>",
+          "1597489127": "<STRING>",
+          "2047205742": "<STRING>",
+          "1650737577": "<STRING>",
+          "1760625139": "<STRING>",
+          "741842957": "<STRING>",
+          "1254850832": "<STRING>",
+          "1952846045": "<STRING>"
+        },
+        "attributeDetails": {
+          "908881601": {
+            "type": "Long",
+            "name": "Account State"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "Account State Date"
+          },
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "Portability Situation"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "Account Activation Date"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "Reason Code"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "Multi Operation"
+          },
+          "1254850832": {
+            "type": "Long",
+            "name": "Old Account State"
+          },
+          "1952846045": {
+            "type": "Long",
+            "name": "Old Portability Situation"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-rm-habilitacao-de-cliente-78d3563f2b",
+      "name": "RM - Habilitação de cliente",
+      "category": "habilitacao",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/RM - Habilitação de cliente.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "908881601": "<STRING>",
+          "1966426172": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-retorno-la-880c339c3e",
+      "name": "Retorno LA",
+      "category": "la_xml",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Retorno LA.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "968492727": "<STRING>",
+          "602283979": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "968492727": {
+            "type": "Long",
+            "name": "LA"
+          },
+          "602283979": {
+            "type": "String",
+            "name": "PALAVRA_CHAVE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-retorno-la-xml-e73a7721f4",
+      "name": "Retorno LA xml",
+      "category": "la_xml",
+      "method": "POST",
+      "path": "/generic-service/genericAdapter",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Retorno LA xml.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    },
+    {
+      "api_id": "post-sincronismo-e8537bd912",
+      "name": "Sincronismo",
+      "category": "smartoffers",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Sincronismo.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "447500851": "<STRING>",
+          "1667261676": "<STRING>",
+          "2047205742": "<STRING>",
+          "1068616960": "<STRING>",
+          "908881601": "<STRING>",
+          "1966426172": "<STRING>",
+          "427862433": "<STRING>",
+          "1944018544": "<STRING>",
+          "2020041941": "<STRING>",
+          "29905344": "<STRING>",
+          "1095579373": "<STRING>",
+          "741842957": "<STRING>",
+          "1957846968": "<STRING>",
+          "1650737577": "<STRING>",
+          "1358620105": "<STRING>",
+          "1190622368": "<STRING>",
+          "569463775": "<STRING>",
+          "1760625139": "<STRING>",
+          "1581479658": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "EXTERNAL_ID"
+          },
+          "447500851": {
+            "type": "String",
+            "name": "ACCOUNT"
+          },
+          "2047205742": {
+            "type": "Date",
+            "name": "ACCOUNT_ACTIVATION_DATE"
+          },
+          "1068616960": {
+            "type": "Date",
+            "name": "ACCOUNT_PROVISION_DATE"
+          },
+          "908881601": {
+            "type": "Long",
+            "name": "ACCOUNT_STATE"
+          },
+          "1966426172": {
+            "type": "Date",
+            "name": "ACCOUNT_STATE_DATE"
+          },
+          "427862433": {
+            "type": "String",
+            "name": "AREA_CODE"
+          },
+          "1944018544": {
+            "type": "String",
+            "name": "CLIENT_OWNER"
+          },
+          "2020041941": {
+            "type": "Long",
+            "name": "CLIENT_TYPE"
+          },
+          "29905344": {
+            "type": "Long",
+            "name": "COMPANY_OPERATOR"
+          },
+          "1095579373": {
+            "type": "String",
+            "name": "GEOGRAPHICAL_STATE"
+          },
+          "1667261676": {
+            "type": "Long",
+            "name": "MSISDN"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1957846968": {
+            "type": "String",
+            "name": "NOTIFY_PERMISSIONS"
+          },
+          "1650737577": {
+            "type": "Long",
+            "name": "PORTABILITY_SITUATION"
+          },
+          "1358620105": {
+            "type": "Long",
+            "name": "PRODUCT_TYPE"
+          },
+          "1190622368": {
+            "type": "Long",
+            "name": "PROFILE"
+          },
+          "569463775": {
+            "type": "Date",
+            "name": "PROFILE_DATE"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          },
+          "1581479658": {
+            "type": "String",
+            "name": "GRUPO CONTROLE UNIVERSAL"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-transicao-de-campanha-e56d89817e",
+      "name": "Transição de campanha",
+      "category": "campanha",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Transição de campanha.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "741842957": "<STRING>",
+          "125500491": "<STRING>",
+          "1067305122": "<STRING>",
+          "1018743664": "<STRING>",
+          "66612830": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "External Id"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "Multi Operation"
+          },
+          "125500491": {
+            "type": "Long",
+            "name": "Promo Code"
+          },
+          "1067305122": {
+            "type": "Long",
+            "name": "Promotion New Status"
+          },
+          "1018743664": {
+            "type": "Long",
+            "name": "Promotion Old Status"
+          },
+          "66612830": {
+            "type": "Long",
+            "name": "Vivo Turbo Promotion Status"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-transicao-de-estado-de-servico-aceite-3751798e76",
+      "name": "Transição de estado de serviço *** ACEITE",
+      "category": "campanha",
+      "method": "POST",
+      "path": "/ws/integration/online/process",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/Transição de estado de serviço --- ACEITE.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "operation": "processEvent",
+        "extEventId": "<NUMBER>",
+        "eventTime": "<STRING>",
+        "attributes": {
+          "1597489127": "<STRING>",
+          "406702364": "<STRING>",
+          "1957588062": "<STRING>",
+          "425429780": "<STRING>",
+          "491833713": "<STRING>",
+          "741842957": "<STRING>",
+          "1760625139": "<STRING>"
+        },
+        "attributeDetails": {
+          "1597489127": {
+            "type": "String",
+            "name": "Identificador externo"
+          },
+          "406702364": {
+            "type": "String",
+            "name": "SERVICE_OPERATION"
+          },
+          "1957588062": {
+            "type": "String",
+            "name": "SERVICE_CODE"
+          },
+          "425429780": {
+            "type": "String",
+            "name": "NEW_SERVICE_STATUS"
+          },
+          "491833713": {
+            "type": "String",
+            "name": "OLD_SERVICE_STATUS"
+          },
+          "741842957": {
+            "type": "Long",
+            "name": "MULTI_OPERATION"
+          },
+          "1760625139": {
+            "type": "Long",
+            "name": "REASON_CODE"
+          }
+        }
+      }
+    },
+    {
+      "api_id": "post-xml-retorno-de-la-2791075f8b",
+      "name": "XML Retorno de LA",
+      "category": "la_xml",
+      "method": "POST",
+      "path": "/generic-service/genericAdapter",
+      "environment_refs": [
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5.",
+      "safe_for_real_execution": false,
+      "source_collection": "SmartOffers Copy",
+      "source_file": "SmartOffers Copy/XML Retorno de LA.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    },
+    {
+      "api_id": "post-credito-prod-2c1ba16679",
+      "name": "Credito PROD",
+      "category": "la_xml",
+      "method": "POST",
+      "path": "/generic_http_xml_interface",
+      "environment_refs": [
+        "PROD_REFERENCE_ONLY",
+        "LOCALHOST_REFERENCE_ONLY",
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5. Referencia PROD mantida apenas como nome de colecao. Referencia localhost mantida apenas como metadado.",
+      "safe_for_real_execution": false,
+      "source_collection": "UIF PROD Copy",
+      "source_file": "UIF PROD Copy/Credito PROD.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    },
+    {
+      "api_id": "get-ftm-channeleffecteletronicrechargev01-marcel-b9f893bcd4",
+      "name": "FTM - channelEffectEletronicRechargeV01 Marcelo **** FTM WL -QA4",
+      "category": "uif",
+      "method": "GET",
+      "path": "/rs/recharge/execute-event",
+      "environment_refs": [
+        "QA4",
+        "PROD_REFERENCE_ONLY",
+        "<QA4_HOST>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5. Referencia PROD mantida apenas como nome de colecao.",
+      "safe_for_real_execution": false,
+      "source_collection": "UIF PROD Copy",
+      "source_file": "UIF PROD Copy/FTM - channelEffectEletronicRechargeV01 Marcelo ---- FTM WL -QA4.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    },
+    {
+      "api_id": "post-pacote-fe39fc113a",
+      "name": "Pacote",
+      "category": "la_xml",
+      "method": "POST",
+      "path": "/generic_http_xml_interface",
+      "environment_refs": [
+        "PROD_REFERENCE_ONLY",
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5. Referencia PROD mantida apenas como nome de colecao.",
+      "safe_for_real_execution": false,
+      "source_collection": "UIF PROD Copy",
+      "source_file": "UIF PROD Copy/Pacote.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    },
+    {
+      "api_id": "post-pacote-prod-3d24dd9d04",
+      "name": "Pacote PROD",
+      "category": "la_xml",
+      "method": "POST",
+      "path": "/generic_http_xml_interface",
+      "environment_refs": [
+        "PROD_REFERENCE_ONLY",
+        "LOCALHOST_REFERENCE_ONLY",
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5. Referencia PROD mantida apenas como nome de colecao. Referencia localhost mantida apenas como metadado.",
+      "safe_for_real_execution": false,
+      "source_collection": "UIF PROD Copy",
+      "source_file": "UIF PROD Copy/Pacote PROD.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    },
+    {
+      "api_id": "post-pacote-prod-frase-58cf99b3df",
+      "name": "Pacote PROD frase",
+      "category": "la_xml",
+      "method": "POST",
+      "path": "/generic_http_xml_interface",
+      "environment_refs": [
+        "PROD_REFERENCE_ONLY",
+        "LOCALHOST_REFERENCE_ONLY",
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5. Referencia PROD mantida apenas como nome de colecao. Referencia localhost mantida apenas como metadado.",
+      "safe_for_real_execution": false,
+      "source_collection": "UIF PROD Copy",
+      "source_file": "UIF PROD Copy/Pacote PROD frase.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    },
+    {
+      "api_id": "post-promocao-copy-5b24885fea",
+      "name": "Promoção Copy",
+      "category": "campanha",
+      "method": "POST",
+      "path": "/generic_http_xml_interface",
+      "environment_refs": [
+        "PROD_REFERENCE_ONLY",
+        "LOCALHOST_REFERENCE_ONLY",
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5. Referencia PROD mantida apenas como nome de colecao. Referencia localhost mantida apenas como metadado.",
+      "safe_for_real_execution": false,
+      "source_collection": "UIF PROD Copy",
+      "source_file": "UIF PROD Copy/Promoção Copy.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    },
+    {
+      "api_id": "post-promocao-copy-2-06839be152",
+      "name": "Promoção Copy 2",
+      "category": "campanha",
+      "method": "POST",
+      "path": "/generic_http_xml_interface",
+      "environment_refs": [
+        "PROD_REFERENCE_ONLY",
+        "LOCALHOST_REFERENCE_ONLY",
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5. Referencia PROD mantida apenas como nome de colecao. Referencia localhost mantida apenas como metadado.",
+      "safe_for_real_execution": false,
+      "source_collection": "UIF PROD Copy",
+      "source_file": "UIF PROD Copy/Promoção Copy 2.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    },
+    {
+      "api_id": "get-teste-interno-84b2d31d7d",
+      "name": "TESTE interno",
+      "category": "uif",
+      "method": "GET",
+      "path": "/ver_teste",
+      "environment_refs": [
+        "PROD_REFERENCE_ONLY",
+        "LOCALHOST_REFERENCE_ONLY",
+        "<HOST>"
+      ],
+      "supported_environments": [],
+      "execution_status": "blocked",
+      "notes": "Catalogado para analise local. Execucao real bloqueada no MVP7.5. Referencia PROD mantida apenas como nome de colecao. Referencia localhost mantida apenas como metadado.",
+      "safe_for_real_execution": false,
+      "source_collection": "UIF PROD Copy",
+      "source_file": "UIF PROD Copy/TESTE interno.bru",
+      "headers_expected": [],
+      "payload_base": {
+        "raw": "<STRING>"
+      }
+    }
+  ],
+  "source": {
+    "name": "APIsUtilizaveis.zip",
+    "sensitive_values": "masked",
+    "real_execution": false
+  }
+}
