@@ -112,6 +112,58 @@ body:json {
         shutil.rmtree(base, ignore_errors=True)
 
 
+def test_parser_masks_generic_payload_name_fields():
+    raw = """
+meta {
+  name: Teste com nome no payload
+  type: http
+}
+
+post {
+  url: {{SMART_OFFERS_INT}}/customers
+  body: json
+}
+
+body:json {
+  {
+    "operation": "processEvent",
+    "customer": {"name": "Pessoa Teste"},
+    "attributeDetails": {
+      "70060213": {"type": "String", "name": "DOCUMENT_TYPE"}
+    }
+  }
+}
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Nome payload QA4.bru", raw)
+    payload = entry.to_dict()["payload_base"]
+
+    assert payload["customer"]["name"] == "<STRING>"
+    assert payload["attributeDetails"]["70060213"]["name"] == "DOCUMENT_TYPE"
+
+
+def test_parser_strips_query_from_templated_paths():
+    raw = """
+meta {
+  name: Teste query
+  type: http
+}
+
+get {
+  url: {{SMART_OFFERS_INT}}/customers?msisdn=11999999999&token=abc
+}
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Query QA4.bru", raw)
+    data = entry.to_dict()
+
+    assert data["path"] == "/customers"
+    serialized = json.dumps(data, ensure_ascii=False)
+    assert "msisdn" not in serialized
+    assert "11999999999" not in serialized
+    assert "abc" not in serialized
+
+
 def test_versioned_catalog_does_not_expose_sensitive_values():
     data = {"apis": load_api_catalog()}
     serialized = json.dumps(data, ensure_ascii=False)

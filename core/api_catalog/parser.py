@@ -358,20 +358,34 @@ def _balanced_object(text, start):
     return ""
 
 
-def _sanitize_payload(value, parent_key=""):
+def _sanitize_payload(value, parent_key="", path=()):
     if isinstance(value, dict):
-        return {str(key): _sanitize_payload(item, str(key)) for key, item in value.items()}
+        return {
+            str(key): _sanitize_payload(item, str(key), (*path, str(key)))
+            for key, item in value.items()
+        }
     if isinstance(value, list):
-        return [_sanitize_payload(item, parent_key) for item in value[:3]]
+        return [_sanitize_payload(item, parent_key, path) for item in value[:3]]
     if isinstance(value, bool) or value is None:
         return value
     if isinstance(value, (int, float)):
         return "<NUMBER>"
     if isinstance(value, str):
-        if parent_key in {"type", "name", "operation"} and not SECRET_HINT_RE.search(value):
+        if _is_safe_payload_label(parent_key, path) and not SECRET_HINT_RE.search(value):
             return _mask_sensitive_text(value)
         return "<STRING>"
     return "<VALUE>"
+
+
+def _is_safe_payload_label(parent_key, path):
+    if parent_key == "operation":
+        return True
+
+    return (
+        len(path) >= 3
+        and path[-3] == "attributeDetails"
+        and parent_key in {"type", "name"}
+    )
 
 
 def _sanitize_header_value(name, value):
@@ -391,11 +405,11 @@ def _safe_path(url):
         return parsed.path or "/"
 
     if url.startswith("/"):
-        return url
+        return urlparse(url).path or "/"
 
-    match = re.search(r"(?:\{\{\s*[A-Za-z0-9_.-]+\s*\}\}|<[^>]+>|[^/\s\"']+)(/[^\s\"']*)", url)
+    match = re.search(r"(?:\{\{\s*[A-Za-z0-9_.-]+\s*\}\}|<[^>]+>|[^/\s\"']+)(/[^\s\"'?#]*)", url)
     if match:
-        return match.group(1)
+        return match.group(1) or "/"
 
     if parsed.path and "/" in parsed.path:
         return parsed.path
