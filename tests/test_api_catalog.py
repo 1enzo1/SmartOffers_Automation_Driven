@@ -199,6 +199,62 @@ http:
     assert "def456" not in serialized
 
 
+def test_parser_redacts_auth_and_session_header_aliases_by_name():
+    raw = """
+info:
+  name: "Alias header"
+  type: http
+http:
+  method: get
+  url: {{SMART_OFFERS_INT}}/customers
+  headers:
+    - name: X-Auth
+      value: alpha
+    - name: Auth
+      value: beta
+    - name: X-Session
+      value: gamma
+    - name: Session
+      value: delta
+    - name: Session-Id
+      value: epsilon
+    - name: X-Session-Id
+      value: zeta
+    - name: Cookie
+      value: JSESSIONID=abc123
+    - name: Set-Cookie
+      value: JSESSIONID=def456
+    - name: JSESSIONID
+      value: ghi789
+    - name: Content-Type
+      value: application/json
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Alias header QA4.yml", raw)
+    headers = entry.to_dict()["headers_expected"]
+    serialized = json.dumps(headers, ensure_ascii=False)
+
+    assert {"name": "X-Auth", "value": "<REDACTED>"} in headers
+    assert {"name": "Auth", "value": "<REDACTED>"} in headers
+    assert {"name": "X-Session", "value": "<REDACTED>"} in headers
+    assert {"name": "Session", "value": "<REDACTED>"} in headers
+    assert {"name": "Session-Id", "value": "<REDACTED>"} in headers
+    assert {"name": "X-Session-Id", "value": "<REDACTED>"} in headers
+    assert {"name": "Cookie", "value": "<REDACTED>"} in headers
+    assert {"name": "Set-Cookie", "value": "<REDACTED>"} in headers
+    assert {"name": "JSESSIONID", "value": "<REDACTED>"} in headers
+    assert {"name": "Content-Type", "value": "application/json"} in headers
+    assert "alpha" not in serialized
+    assert "beta" not in serialized
+    assert "gamma" not in serialized
+    assert "delta" not in serialized
+    assert "epsilon" not in serialized
+    assert "zeta" not in serialized
+    assert "abc123" not in serialized
+    assert "def456" not in serialized
+    assert "ghi789" not in serialized
+
+
 def test_parser_only_extracts_name_value_pairs_inside_headers_block():
     raw = """
 info:

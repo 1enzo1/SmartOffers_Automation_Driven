@@ -28,6 +28,18 @@ SENSITIVE_HEADER_NAMES = {
     "secret",
     "x-session-id",
 }
+SENSITIVE_HEADER_NAME_TOKENS = {
+    "auth",
+    "authorization",
+    "cookie",
+    "key",
+    "passwd",
+    "password",
+    "secret",
+    "session",
+    "token",
+    "senha",
+}
 
 IP_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 URL_RE = re.compile(r"https?://[^\s\"']+")
@@ -450,14 +462,24 @@ def _is_safe_payload_label(parent_key, path):
 
 
 def _sanitize_header_value(name, value):
-    normalized = _normalize(name)
     if (
-        normalized in SENSITIVE_HEADER_NAMES
-        or SECRET_HINT_RE.search(name)
+        _header_name_is_sensitive(name)
         or SECRET_HINT_RE.search(value)
     ):
         return "<REDACTED>"
     return _mask_sensitive_text(_strip_quotes(value))
+
+
+def _header_name_is_sensitive(name):
+    normalized = _normalize(name)
+    if normalized in SENSITIVE_HEADER_NAMES:
+        return True
+
+    if normalized == "jsessionid":
+        return True
+
+    parts = [part for part in re.split(r"[^a-z0-9]+", normalized) if part]
+    return any(part in SENSITIVE_HEADER_NAME_TOKENS for part in parts)
 
 
 def _safe_path(url):
