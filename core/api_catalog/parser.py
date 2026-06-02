@@ -14,6 +14,33 @@ SAFE_HEADER_VALUE_NAMES = {
     "content-type",
 }
 PATH_PARAM_PLACEHOLDER = "<PATH_PARAM>"
+SENSITIVE_PATH_SEGMENT_HINTS = {
+    "account",
+    "accounts",
+    "auth",
+    "authorization",
+    "client",
+    "clients",
+    "contract",
+    "contracts",
+    "cpf",
+    "cnpj",
+    "customer",
+    "customers",
+    "document",
+    "documents",
+    "msisdn",
+    "phone",
+    "phones",
+    "session",
+    "sessions",
+    "subscriber",
+    "subscribers",
+    "token",
+    "tokens",
+    "user",
+    "users",
+}
 
 IP_RE = re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b")
 URL_RE = re.compile(r"https?://[^\s\"']+")
@@ -21,6 +48,10 @@ BRUNO_VAR_RE = re.compile(r"\{\{\s*([A-Za-z0-9_.-]+)\s*\}\}")
 SECRET_HINT_RE = re.compile(
     r"(?i)(authorization|bearer|token|password|passwd|senha|secret|client_secret|api[-_]?key)"
 )
+UUID_RE = re.compile(
+    r"(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
+)
+ALPHANUM_IDENTIFIER_RE = re.compile(r"(?i)^[a-z0-9][a-z0-9_-]{5,}$")
 
 
 def parse_api_catalog_zip(zip_path, environment_json_paths=None):
@@ -471,14 +502,50 @@ def _safe_path(url):
 def _sanitize_path_segments(path):
     segments = path.split("/")
     sanitized = [
-        PATH_PARAM_PLACEHOLDER if _path_segment_is_value(segment) else segment
-        for segment in segments
+        PATH_PARAM_PLACEHOLDER if should_redact else segment
+        for segment, should_redact in _iter_sanitized_path_segments(segments)
     ]
     return "/".join(sanitized) or "/"
 
 
-def _path_segment_is_value(segment):
-    return bool(re.fullmatch(r"\d{8,}", segment))
+def _iter_sanitized_path_segments(segments):
+    sensitive_context = False
+    for segment in segments:
+        should_redact = _path_segment_is_value(segment, sensitive_context)
+        yield segment, should_redact
+        sensitive_context = _path_segment_indicates_entity(segment) or should_redact
+
+
+def _path_segment_is_value(segment, sensitive_context=False):
+    if not segment:
+        return False
+
+    if re.fullmatch(r"\d{8,}", segment):
+        return True
+
+    if not sensitive_context:
+        return False
+
+    normalized = _normalize(segment)
+    compact = re.sub(r"[^a-z0-9]", "", normalized)
+    return bool(UUID_RE.fullmatch(normalized) or ALPHANUM_IDENTIFIER_RE.fullmatch(normalized) and _looks_like_identifier_token(compact))
+
+
+def _path_segment_indicates_entity(segment):
+    normalized = _normalize(segment)
+    if normalized in SENSITIVE_PATH_SEGMENT_HINTS:
+        return True
+
+    parts = [part for part in re.split(r"[^a-z0-9]+", normalized) if part]
+    return any(part in SENSITIVE_PATH_SEGMENT_HINTS for part in parts)
+
+
+def _looks_like_identifier_token(compact_segment):
+    return (
+        len(compact_segment) >= 6
+        and any(char.isalpha() for char in compact_segment)
+        and any(char.isdigit() for char in compact_segment)
+    )
 
 
 def _environment_refs(

@@ -375,39 +375,43 @@ get {
 def test_parser_redacts_value_bearing_url_path_segments():
     cases = [
         (
-            "{{SMART_OFFERS_INT}}/customers/11999999999/profile",
+            "{{HOST}}/customers/550e8400-e29b-41d4-a716-446655440000/profile",
             "/customers/<PATH_PARAM>/profile",
         ),
         (
-            "{{SMART_OFFERS_INT}}/documents/12345678901/status",
+            "{{HOST}}/sessions/abc123token/profile",
+            "/sessions/<PATH_PARAM>/profile",
+        ),
+        (
+            "{{HOST}}/accounts/cust-abc-123/profile",
+            "/accounts/<PATH_PARAM>/profile",
+        ),
+        (
+            "{{HOST}}/contracts/contract-001/status",
+            "/contracts/<PATH_PARAM>/status",
+        ),
+        (
+            "{{HOST}}/documents/cpf-abc-123/status",
             "/documents/<PATH_PARAM>/status",
         ),
         (
-            "{{SMART_OFFERS_INT}}/documents/12345678000199/status",
-            "/documents/<PATH_PARAM>/status",
-        ),
-        (
-            "{{SMART_OFFERS_INT}}/accounts/987654321",
+            "{{HOST}}/accounts/987654321",
             "/accounts/<PATH_PARAM>",
         ),
         (
-            "{{SMART_OFFERS_INT}}/contracts/12345678",
-            "/contracts/<PATH_PARAM>",
-        ),
-        (
-            "{{SMART_OFFERS_INT}}/ws/integration/online/process",
+            "{{HOST}}/ws/integration/online/process",
             "/ws/integration/online/process",
         ),
         (
-            "{{SMART_OFFERS_INT}}/api/campaign/activate",
+            "{{HOST}}/api/campaign/activate",
             "/api/campaign/activate",
         ),
         (
-            "{{SMART_OFFERS_INT}}/retorno/la/xml",
+            "{{HOST}}/retorno/la/xml",
             "/retorno/la/xml",
         ),
         (
-            "{{SMART_OFFERS_INT}}/customers/11999999999/profile?token=abc",
+            "{{HOST}}/customers/550e8400-e29b-41d4-a716-446655440000/profile?token=abc",
             "/customers/<PATH_PARAM>/profile",
         ),
     ]
@@ -429,9 +433,11 @@ get {{
         serialized = json.dumps(data, ensure_ascii=False)
 
         assert data["path"] == expected_path
-        assert "11999999999" not in serialized
-        assert "12345678901" not in serialized
-        assert "12345678000199" not in serialized
+        assert "550e8400-e29b-41d4-a716-446655440000" not in serialized
+        assert "abc123token" not in serialized
+        assert "cust-abc-123" not in serialized
+        assert "contract-001" not in serialized
+        assert "cpf-abc-123" not in serialized
         assert "987654321" not in serialized
         assert "token" not in serialized
         assert "abc" not in serialized
