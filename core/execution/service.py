@@ -56,6 +56,8 @@ def run_adapter_scenario(scenario, mode="mock", registry=None):
             result = adapter.execute(step, context)
 
         adapter_results.append(result)
+        if (result.get("metadata") or {}).get("blocked"):
+            warnings.append(result["message"])
         logs.append(
             "ADAPTER_RUN|STEP|{status}|{adapter}|{type}|{name}|{message}".format(
                 status=result["status"],
@@ -172,7 +174,7 @@ def normalize_step(index, source_section, step_type, name, source_step, payload_
         if message_fallback and not controls.get("message"):
             controls["message"] = message_fallback
 
-    return {
+    normalized = {
         "id": f"{source_section}-{index}",
         "name": name or f"Step {index}",
         "type": step_type,
@@ -182,6 +184,11 @@ def normalize_step(index, source_section, step_type, name, source_step, payload_
         "controls": controls or {},
         "duration_ms": estimate_duration_ms(step_type, index),
     }
+
+    if isinstance(source_step, dict) and source_step.get("api_id"):
+        normalized["api_id"] = source_step["api_id"]
+
+    return normalized
 
 
 def normalize_mode(mode):
