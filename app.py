@@ -1,5 +1,6 @@
 from flask import Flask, Response, jsonify, render_template, request, send_file
 
+from core.api_catalog import get_api_catalog_entry, list_api_catalog_entries
 from core.exporters import (
     ExportFormatError,
     ExportSourceNotFoundError,
@@ -101,6 +102,21 @@ def api_adapters_health():
     checks = adapters_healthcheck()
     status = "passed" if all(item["status"] == "passed" for item in checks) else "failed"
     return jsonify({"status": status, "adapters": checks})
+
+
+@app.route("/api/api-catalog")
+def api_list_api_catalog():
+    return jsonify(list_api_catalog_entries())
+
+
+@app.route("/api/api-catalog/<api_id>")
+def api_get_api_catalog_entry(api_id):
+    entry = get_api_catalog_entry(api_id)
+
+    if not entry:
+        return jsonify({"erro": "api nao encontrada"}), 404
+
+    return jsonify({"api": entry})
 
 
 @app.route("/api/scenarios/<scenario_id>")
