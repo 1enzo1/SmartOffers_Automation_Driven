@@ -14,6 +14,17 @@ SAFE_HEADER_VALUE_NAMES = {
     "content-type",
 }
 PATH_PARAM_PLACEHOLDER = "<PATH_PARAM>"
+PAYLOAD_KEY_PLACEHOLDER = "<PAYLOAD_KEY>"
+SAFE_PAYLOAD_KEYS = {
+    "attributedetails",
+    "attributes",
+    "exteventid",
+    "name",
+    "operation",
+    "raw",
+    "type",
+}
+SAFE_ATTRIBUTE_KEY_CONTAINERS = {"attributes", "attributedetails"}
 SENSITIVE_PATH_SEGMENT_HINTS = {
     "account",
     "accounts",
@@ -52,6 +63,33 @@ UUID_RE = re.compile(
     r"(?i)^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"
 )
 ALPHANUM_IDENTIFIER_RE = re.compile(r"(?i)^[a-z0-9][a-z0-9_-]{5,}$")
+PAYLOAD_KEY_HINTS = {
+    "account",
+    "accounts",
+    "auth",
+    "authorization",
+    "client",
+    "clients",
+    "contract",
+    "contracts",
+    "cpf",
+    "cnpj",
+    "customer",
+    "customers",
+    "document",
+    "documents",
+    "msisdn",
+    "phone",
+    "phones",
+    "session",
+    "sessions",
+    "subscriber",
+    "subscribers",
+    "token",
+    "tokens",
+    "user",
+    "users",
+}
 
 
 def parse_api_catalog_zip(zip_path, environment_json_paths=None):
@@ -438,10 +476,12 @@ def _balanced_json_value(text, start):
 
 def _sanitize_payload(value, parent_key="", path=()):
     if isinstance(value, dict):
-        return {
-            str(key): _sanitize_payload(item, str(key), (*path, str(key)))
-            for key, item in value.items()
-        }
+        sanitized = {}
+        for key, item in value.items():
+            key_text = str(key)
+            sanitized_key = _sanitize_payload_key(key_text, parent_key, path)
+            sanitized[sanitized_key] = _sanitize_payload(item, key_text, (*path, key_text))
+        return sanitized
     if isinstance(value, list):
         return [_sanitize_payload(item, parent_key, path) for item in value[:3]]
     if isinstance(value, bool) or value is None:
@@ -453,6 +493,78 @@ def _sanitize_payload(value, parent_key="", path=()):
             return _mask_sensitive_text(value)
         return "<STRING>"
     return "<VALUE>"
+
+
+def _sanitize_payload_key(key, parent_key="", path=()):
+    normalized = _normalize(key)
+    if normalized in SAFE_PAYLOAD_KEYS:
+        return key
+
+    if _is_safe_attribute_key(parent_key, normalized):
+        return key
+
+    if _payload_key_is_sensitive(key, parent_key, path):
+        return PAYLOAD_KEY_PLACEHOLDER
+
+    return key
+
+
+def _is_safe_attribute_key(parent_key, key):
+    normalized_parent = _normalize(parent_key)
+    if normalized_parent not in SAFE_ATTRIBUTE_KEY_CONTAINERS:
+        return False
+
+    return bool(re.fullmatch(r"\d+", key))
+
+
+def _payload_key_is_sensitive(key, parent_key, path):
+    normalized = _normalize(key)
+    compact = re.sub(r"[^a-z0-9]", "", normalized)
+
+    if re.fullmatch(r"\d{8,}", normalized):
+        return True
+    if UUID_RE.fullmatch(normalized):
+        return True
+
+    if _payload_key_in_sensitive_context(parent_key, path):
+        return bool(
+            ALPHANUM_IDENTIFIER_RE.fullmatch(normalized)
+            and _looks_like_identifier_token(compact)
+        )
+
+    if any(hint in normalized for hint in PAYLOAD_KEY_HINTS):
+        return bool(
+            _looks_like_identifier_token(compact)
+            or re.search(r"\d", normalized)
+            or "-" in normalized
+            or "_" in normalized
+        )
+
+    return False
+
+
+def _payload_key_in_sensitive_context(parent_key, path):
+    for candidate in (parent_key, *path):
+        normalized = _normalize(candidate)
+        if not normalized:
+            continue
+
+        if normalized in PAYLOAD_KEY_HINTS:
+            return True
+
+        parts = [part for part in re.split(r"[^a-z0-9]+", normalized) if part]
+        if any(part in PAYLOAD_KEY_HINTS for part in parts):
+            return True
+
+    return False
+
+
+def _looks_like_identifier_token(compact_segment):
+    return (
+        len(compact_segment) >= 6
+        and any(char.isalpha() for char in compact_segment)
+        and any(char.isdigit() for char in compact_segment)
+    )
 
 
 def _is_safe_payload_label(parent_key, path):
@@ -538,14 +650,6 @@ def _path_segment_indicates_entity(segment):
 
     parts = [part for part in re.split(r"[^a-z0-9]+", normalized) if part]
     return any(part in SENSITIVE_PATH_SEGMENT_HINTS for part in parts)
-
-
-def _looks_like_identifier_token(compact_segment):
-    return (
-        len(compact_segment) >= 6
-        and any(char.isalpha() for char in compact_segment)
-        and any(char.isdigit() for char in compact_segment)
-    )
 
 
 def _environment_refs(

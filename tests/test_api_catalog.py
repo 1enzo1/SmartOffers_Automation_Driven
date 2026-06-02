@@ -142,6 +142,72 @@ body:json {
     assert payload["attributeDetails"]["70060213"]["name"] == "DOCUMENT_TYPE"
 
 
+def test_parser_masks_value_bearing_payload_object_keys():
+    raw = """
+meta {
+  name: Teste com chaves no payload
+  type: http
+}
+
+post {
+  url: {{SMART_OFFERS_INT}}/customers
+  body: json
+}
+
+body:json {
+  {
+    "operation": "processEvent",
+    "extEventId": 123,
+    "name": "payload tecnico",
+    "raw": "raw tecnico",
+    "attributes": {
+      "1597489127": "ABC123"
+    },
+    "attributeDetails": {
+      "70060213": {"type": "String", "name": "DOCUMENT_TYPE"}
+    },
+    "customers": {
+      "11999999999": {"name": "Pessoa 1"}
+    },
+    "accounts": {
+      "987654321": {"name": "Conta 1"}
+    },
+    "sessions": {
+      "abc123token": {"name": "Sessao 1"}
+    },
+    "documents": {
+      "12345678901": {"name": "Documento 1"}
+    },
+    "tokens": {
+      "550e8400-e29b-41d4-a716-446655440000": {"name": "Token 1"}
+    }
+  }
+}
+"""
+
+    entry = parse_catalog_file("SmartOffers Copy/Chaves payload QA4.bru", raw)
+    payload = entry.to_dict()["payload_base"]
+    serialized = json.dumps(payload, ensure_ascii=False)
+
+    assert payload["operation"] == "processEvent"
+    assert payload["extEventId"] == "<NUMBER>"
+    assert payload["name"] == "<STRING>"
+    assert payload["raw"] == "<STRING>"
+    assert payload["attributes"]["1597489127"] == "<STRING>"
+    assert payload["attributeDetails"]["70060213"]["type"] == "String"
+    assert payload["attributeDetails"]["70060213"]["name"] == "DOCUMENT_TYPE"
+    assert payload["customers"]["<PAYLOAD_KEY>"]["name"] == "<STRING>"
+    assert payload["accounts"]["<PAYLOAD_KEY>"]["name"] == "<STRING>"
+    assert payload["sessions"]["<PAYLOAD_KEY>"]["name"] == "<STRING>"
+    assert payload["documents"]["<PAYLOAD_KEY>"]["name"] == "<STRING>"
+    assert payload["tokens"]["<PAYLOAD_KEY>"]["name"] == "<STRING>"
+    assert "11999999999" not in serialized
+    assert "987654321" not in serialized
+    assert "abc123token" not in serialized
+    assert "12345678901" not in serialized
+    assert "550e8400-e29b-41d4-a716-446655440000" not in serialized
+
+
 def test_parser_redacts_cookie_headers():
     raw = """
 info:
