@@ -79,7 +79,7 @@ def run_adapter_scenario(scenario, mode="mock", registry=None):
     run_id = build_run_id(scenario_id, started_at)
 
     logs.append(
-        "ADAPTER_RUN|END|{status}|total={total}|passed={passed}|failed={failed}|skipped={skipped}".format(
+        "ADAPTER_RUN|END|{status}|total={total}|passed={passed}|failed={failed}|blocked={blocked}|skipped={skipped}".format(
             status=status,
             **summary,
         )
@@ -213,7 +213,7 @@ def resolve_query_step_type(query):
 
 
 def build_summary(results):
-    summary = {"total": len(results), "passed": 0, "failed": 0, "skipped": 0}
+    summary = {"total": len(results), "passed": 0, "failed": 0, "blocked": 0, "skipped": 0}
     for result in results:
         status = result.get("status")
         if status in summary:
@@ -224,6 +224,8 @@ def build_summary(results):
 def resolve_status(summary):
     if summary["failed"]:
         return "failed"
+    if summary["blocked"]:
+        return "blocked"
     if summary["total"] and summary["passed"] == 0 and summary["skipped"] == summary["total"]:
         return "skipped"
     return "passed"

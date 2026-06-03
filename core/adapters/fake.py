@@ -56,10 +56,9 @@ class FakeSmartOffersAdapter(FakeAdapter):
             metadata["blocked"] = True
             metadata["block_reason"] = "api_id inexistente no catalogo"
             metadata["api_id"] = api_id
-            return adapter_result_from_step(
+            return blocked_adapter_result_from_step(
                 self,
                 step,
-                status="skipped",
                 message=f"SmartOffers api_id={api_id} nao encontrado no catalogo seguro.",
                 metadata=metadata,
             )
@@ -69,10 +68,9 @@ class FakeSmartOffersAdapter(FakeAdapter):
             metadata["block_reason"] = "api_id fora da policy mock_only"
             metadata["api_id"] = api_id
             metadata["catalog_status"] = catalog_entry.get("execution_status")
-            return adapter_result_from_step(
+            return blocked_adapter_result_from_step(
                 self,
                 step,
-                status="skipped",
                 message=f"SmartOffers api_id={api_id} bloqueado para planejamento mock_only.",
                 metadata=metadata,
             )
@@ -105,6 +103,18 @@ def resolve_step_api_id(step):
         return source_step.get("api_id")
 
     return None
+
+
+def blocked_adapter_result_from_step(adapter, step, message, metadata):
+    result = adapter_result_from_step(
+        adapter,
+        step,
+        status="skipped",
+        message=message,
+        metadata=metadata,
+    )
+    result["status"] = "blocked"
+    return result
 
 
 def smartoffers_metadata(step, context):

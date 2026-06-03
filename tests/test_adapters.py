@@ -183,8 +183,9 @@ def test_smartoffers_api_outside_policy_is_blocked_controlled():
     report = run_adapter_scenario(scenario, mode="mock")
     result = report["adapter_results"][0]
 
-    assert report["status"] == "skipped"
-    assert result["status"] == "skipped"
+    assert report["status"] == "blocked"
+    assert report["summary"]["blocked"] == 1
+    assert result["status"] == "blocked"
     assert result["metadata"]["blocked"] is True
     assert result["metadata"]["block_reason"] == "api_id fora da policy mock_only"
     assert "request_plan" not in result["metadata"]
@@ -206,12 +207,63 @@ def test_smartoffers_missing_api_id_is_blocked_controlled():
     report = run_adapter_scenario(scenario, mode="mock")
     result = report["adapter_results"][0]
 
-    assert report["status"] == "skipped"
-    assert result["status"] == "skipped"
+    assert report["status"] == "blocked"
+    assert report["summary"]["blocked"] == 1
+    assert result["status"] == "blocked"
     assert result["metadata"]["blocked"] is True
     assert result["metadata"]["block_reason"] == "api_id inexistente no catalogo"
     assert "request_plan" not in result["metadata"]
     assert any("api-inexistente" in warning for warning in report["warnings"])
+
+
+def test_smartoffers_mixed_allowed_and_outside_policy_is_blocked():
+    scenario = {
+        "id": "smartoffers-plan-mixed-blocked",
+        "queries": [
+            {
+                "name": "plan_allowed_api",
+                "kind": "http_plan",
+                "api_id": MOCK_ONLY_API_IDS[0],
+            },
+            {
+                "name": "plan_blocked_api",
+                "kind": "http_plan",
+                "api_id": BLOCKED_API_ID,
+            },
+        ],
+    }
+
+    report = run_adapter_scenario(scenario, mode="mock")
+
+    assert report["status"] == "blocked"
+    assert report["summary"]["passed"] == 1
+    assert report["summary"]["blocked"] == 1
+    assert [result["status"] for result in report["adapter_results"]] == ["passed", "blocked"]
+
+
+def test_smartoffers_mixed_allowed_and_missing_api_id_is_blocked():
+    scenario = {
+        "id": "smartoffers-plan-mixed-missing",
+        "queries": [
+            {
+                "name": "plan_allowed_api",
+                "kind": "http_plan",
+                "api_id": MOCK_ONLY_API_IDS[0],
+            },
+            {
+                "name": "plan_missing_api",
+                "kind": "http_plan",
+                "api_id": "api-inexistente",
+            },
+        ],
+    }
+
+    report = run_adapter_scenario(scenario, mode="mock")
+
+    assert report["status"] == "blocked"
+    assert report["summary"]["passed"] == 1
+    assert report["summary"]["blocked"] == 1
+    assert [result["status"] for result in report["adapter_results"]] == ["passed", "blocked"]
 
 
 def test_adapter_run_endpoint_accepts_smartoffers_api_id_in_http_plan(app_client_factory):
@@ -258,7 +310,9 @@ def test_adapter_run_endpoint_blocks_smartoffers_api_id_outside_policy(app_clien
     assert response.status_code == 201
     report = response.get_json()["report"]
     result = report["adapter_results"][0]
-    assert report["status"] == "skipped"
+    assert report["status"] == "blocked"
+    assert report["summary"]["blocked"] == 1
+    assert result["status"] == "blocked"
     assert result["metadata"]["blocked"] is True
     assert result["metadata"]["block_reason"] == "api_id fora da policy mock_only"
 
@@ -283,7 +337,9 @@ def test_adapter_run_endpoint_blocks_missing_smartoffers_api_id(app_client_facto
     assert response.status_code == 201
     report = response.get_json()["report"]
     result = report["adapter_results"][0]
-    assert report["status"] == "skipped"
+    assert report["status"] == "blocked"
+    assert report["summary"]["blocked"] == 1
+    assert result["status"] == "blocked"
     assert result["metadata"]["blocked"] is True
     assert result["metadata"]["block_reason"] == "api_id inexistente no catalogo"
 
