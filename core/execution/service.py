@@ -40,6 +40,8 @@ def run_adapter_scenario(scenario, mode="mock", registry=None):
         "scenario_id": scenario_id,
         "mode": mode,
         "source": "adapter-run",
+        "source_answers": scenario.get("source_answers") or {},
+        "payload": scenario.get("payload") or {},
     }
 
     for step in iter_adapter_steps(scenario):

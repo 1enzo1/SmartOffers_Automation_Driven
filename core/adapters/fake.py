@@ -1,5 +1,5 @@
 from core.api_catalog.catalog import get_api_catalog
-from core.api_catalog.policy import is_mock_plannable
+from core.api_catalog.policy import is_mock_plannable, resolve_default_http_plan_api_id
 
 from .base import BaseAdapter
 from .results import adapter_result_from_step, normalize_adapter_status
@@ -48,7 +48,22 @@ class FakeSmartOffersAdapter(FakeAdapter):
     def execute(self, step, context):
         api_id = resolve_step_api_id(step)
         if not api_id:
-            return super().execute(step, context)
+            if step.get("type") != "smartoffers.http_plan":
+                return super().execute(step, context)
+
+            event_type = resolve_step_event_type(step, context)
+            api_id = resolve_default_http_plan_api_id(event_type)
+            if not api_id:
+                metadata = smartoffers_metadata(step, context)
+                metadata["blocked"] = True
+                metadata["block_reason"] = "api_id nao resolvido para http_plan"
+                metadata["event_type"] = event_type
+                return blocked_adapter_result_from_step(
+                    self,
+                    step,
+                    message="SmartOffers http_plan sem api_id e sem mapeamento seguro na policy mock_only.",
+                    metadata=metadata,
+                )
 
         metadata = smartoffers_metadata(step, context)
         catalog_entry = get_api_catalog(api_id)
@@ -77,6 +92,9 @@ class FakeSmartOffersAdapter(FakeAdapter):
 
         metadata["api_id"] = api_id
         metadata["request_plan"] = build_request_plan(catalog_entry)
+        if not resolve_step_api_id(step):
+            metadata["resolved_by"] = "default_http_plan_policy"
+            metadata["event_type"] = resolve_step_event_type(step, context)
 
         controls = step.get("controls") or {}
         status = normalize_adapter_status(controls.get("status") or step.get("status") or "passed")
@@ -103,6 +121,27 @@ def resolve_step_api_id(step):
         return source_step.get("api_id")
 
     return None
+
+
+def resolve_step_event_type(step, context):
+    source_step = step.get("source_step") or {}
+    if isinstance(source_step, dict):
+        if source_step.get("event_type"):
+            return source_step["event_type"]
+
+        metadata = source_step.get("metadata") or {}
+        if isinstance(metadata, dict) and metadata.get("event_type"):
+            return metadata["event_type"]
+
+    source_answers = context.get("source_answers") or {}
+    if isinstance(source_answers, dict) and source_answers.get("event_type"):
+        return source_answers["event_type"]
+
+    payload = context.get("payload") or {}
+    if isinstance(payload, dict) and payload.get("eventType"):
+        return payload["eventType"]
+
+    return ""
 
 
 def blocked_adapter_result_from_step(adapter, step, message, metadata):

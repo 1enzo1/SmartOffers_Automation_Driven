@@ -26,6 +26,10 @@ BLOCKED_API_ID = "post-transicao-de-campanha-e56d89817e"
 SAFE_HOST_PLACEHOLDERS = {"<QA4_HOST>", "<QA4_SMART_OFFERS_INT_HOST>"}
 
 
+def first_http_plan_result(report):
+    return next(result for result in report["adapter_results"] if result["step_type"] == "smartoffers.http_plan")
+
+
 def test_list_adapters_endpoint_returns_fake_adapters(app_client_factory):
     client, _ = app_client_factory("adapters")
 
@@ -166,6 +170,85 @@ def test_smartoffers_request_plan_does_not_expose_real_network_values():
     assert "QA4_Copy.json" not in serialized
     assert "APIsUtilizaveis.zip" not in serialized
     assert any(placeholder in serialized for placeholder in SAFE_HOST_PLACEHOLDERS)
+
+
+def test_generated_recarga_api_validation_uses_default_catalog_request_plan(valid_payload):
+    scenario = generate_scenario(
+        valid_payload(
+            customer_type="pre",
+            event_type="recarga",
+            validations=["api"],
+            deadline_rule="d0",
+        )
+    )
+
+    report = run_adapter_scenario(scenario, mode="mock")
+    result = first_http_plan_result(report)
+    plan = result["metadata"]["request_plan"]
+
+    assert report["status"] == "passed"
+    assert result["status"] == "passed"
+    assert plan["api_id"] == "post-evento-de-recarga-6954ef3458"
+    assert plan["category"] == "recarga"
+    assert result["metadata"]["resolved_by"] == "default_http_plan_policy"
+
+
+def test_generated_upsell_api_validation_uses_default_catalog_request_plan(valid_payload):
+    scenario = generate_scenario(valid_payload(event_type="upsell", validations=["api"]))
+
+    report = run_adapter_scenario(scenario, mode="mock")
+    result = first_http_plan_result(report)
+    plan = result["metadata"]["request_plan"]
+
+    assert report["status"] == "passed"
+    assert result["status"] == "passed"
+    assert plan["api_id"] == "post-ativacao-de-campanha-por-api-2e656ee31c"
+    assert plan["category"] == "campanha"
+    assert result["metadata"]["resolved_by"] == "default_http_plan_policy"
+
+
+def test_http_plan_without_api_id_and_unknown_event_type_is_blocked_controlled():
+    scenario = {
+        "id": "smartoffers-plan-unknown-default",
+        "source_answers": {"event_type": "evento_desconhecido"},
+        "queries": [
+            {
+                "name": "api_contract",
+                "kind": "http_plan",
+                "request": "POST /smartoffers/{{operation}}",
+            }
+        ],
+    }
+
+    report = run_adapter_scenario(scenario, mode="mock")
+    result = report["adapter_results"][0]
+
+    assert report["status"] == "blocked"
+    assert result["status"] == "blocked"
+    assert result["metadata"]["blocked"] is True
+    assert result["metadata"]["block_reason"] == "api_id nao resolvido para http_plan"
+    assert "request_plan" not in result["metadata"]
+
+
+def test_explicit_api_id_has_priority_over_default_event_type_mapping(valid_payload):
+    scenario = generate_scenario(
+        valid_payload(
+            customer_type="pre",
+            event_type="recarga",
+            validations=["api"],
+            deadline_rule="d0",
+        )
+    )
+    scenario["queries"][0]["api_id"] = "post-ativacao-de-campanha-por-api-2e656ee31c"
+
+    report = run_adapter_scenario(scenario, mode="mock")
+    result = first_http_plan_result(report)
+    plan = result["metadata"]["request_plan"]
+
+    assert report["status"] == "passed"
+    assert result["status"] == "passed"
+    assert plan["api_id"] == "post-ativacao-de-campanha-por-api-2e656ee31c"
+    assert "resolved_by" not in result["metadata"]
 
 
 def test_smartoffers_api_outside_policy_is_blocked_controlled():
