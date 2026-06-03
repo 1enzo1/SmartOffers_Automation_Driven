@@ -46,11 +46,11 @@ class FakeSmartOffersAdapter(FakeAdapter):
     default_message = "SmartOffers simulado localmente, sem chamada de API real."
 
     def execute(self, step, context):
+        if step.get("type") != "smartoffers.http_plan":
+            return super().execute(step, context)
+
         api_id = resolve_step_api_id(step)
         if not api_id:
-            if step.get("type") != "smartoffers.http_plan":
-                return super().execute(step, context)
-
             event_type = resolve_step_event_type(step, context)
             api_id = resolve_default_http_plan_api_id(event_type)
             if not api_id:

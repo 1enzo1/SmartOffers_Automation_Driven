@@ -283,6 +283,38 @@ def test_explicit_api_id_has_priority_over_default_event_type_mapping(valid_payl
     assert "resolved_by" not in result["metadata"]
 
 
+def test_smartoffers_execution_with_api_id_stays_fake_and_ignores_policy():
+    for api_id in [
+        MOCK_ONLY_API_IDS[0],
+        BLOCKED_API_ID,
+        "api-inexistente",
+    ]:
+        scenario = {
+            "id": f"smartoffers-execution-{api_id}",
+            "execution_steps": [
+                {
+                    "step": "1",
+                    "action": "Executar SmartOffers",
+                    "api_id": api_id,
+                }
+            ],
+            "validation_steps": [],
+            "queries": [],
+            "checkpoints": [],
+            "evidence_files": [],
+        }
+
+        report = run_adapter_scenario(scenario, mode="mock")
+        result = report["adapter_results"][0]
+
+        assert report["status"] == "passed"
+        assert result["status"] == "passed"
+        assert result["adapter_id"] == "fake-smartoffers"
+        assert result["step_type"] == "smartoffers.execution"
+        assert "request_plan" not in result["metadata"]
+        assert "blocked" not in result["metadata"]
+
+
 def test_smartoffers_api_outside_policy_is_blocked_controlled():
     scenario = {
         "id": "smartoffers-plan-blocked",
