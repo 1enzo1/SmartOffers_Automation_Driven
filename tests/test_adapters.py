@@ -3,9 +3,10 @@ import re
 
 from core.adapters.fake import FakeSmartOffersAdapter
 from core.api_catalog.catalog import load_api_catalog
-from core.api_catalog.policy import list_mock_plannable_api_ids
+from core.api_catalog.policy import DEFAULT_HTTP_PLAN_API_IDS_BY_EVENT_TYPE, list_mock_plannable_api_ids
 from core.execution.service import run_adapter_scenario
 from core.generation import generate_scenario
+from core.generation.constants import EVENT_RULES
 from core.generation.storage import save_scenario
 
 
@@ -24,6 +25,15 @@ MOCK_ONLY_API_IDS = [
 
 BLOCKED_API_ID = "post-transicao-de-campanha-e56d89817e"
 SAFE_HOST_PLACEHOLDERS = {"<QA4_HOST>", "<QA4_SMART_OFFERS_INT_HOST>"}
+EXPECTED_DEFAULT_API_BY_GENERATED_EVENT_TYPE = {
+    "alteracao_perfil": "post-o-vivo-next-troca-de-oferta-fedbfb981e",
+    "downgrade": "post-o-vivo-next-troca-de-oferta-fedbfb981e",
+    "habilitacao": "post-vivo-next-habilitacao-de-cliente-ade0841563",
+    "mailing": "post-ativacao-de-campanha-por-api-2e656ee31c",
+    "recarga": "post-evento-de-recarga-6954ef3458",
+    "rehab": "post-sincronismo-e8537bd912",
+    "upsell": "post-ativacao-de-campanha-por-api-2e656ee31c",
+}
 
 
 def first_http_plan_result(report):
@@ -205,6 +215,28 @@ def test_generated_upsell_api_validation_uses_default_catalog_request_plan(valid
     assert plan["api_id"] == "post-ativacao-de-campanha-por-api-2e656ee31c"
     assert plan["category"] == "campanha"
     assert result["metadata"]["resolved_by"] == "default_http_plan_policy"
+
+
+def test_all_generated_event_types_with_api_validation_use_default_catalog_request_plan(valid_payload):
+    assert set(EXPECTED_DEFAULT_API_BY_GENERATED_EVENT_TYPE) == set(EVENT_RULES)
+    policy_ids = set(list_mock_plannable_api_ids())
+
+    for event_type, expected_api_id in EXPECTED_DEFAULT_API_BY_GENERATED_EVENT_TYPE.items():
+        payload = valid_payload(event_type=event_type, validations=["api"])
+        if event_type == "recarga":
+            payload.update({"customer_type": "pre", "deadline_rule": "d0"})
+
+        scenario = generate_scenario(payload)
+        report = run_adapter_scenario(scenario, mode="mock")
+        result = first_http_plan_result(report)
+        plan = result["metadata"]["request_plan"]
+
+        assert expected_api_id in policy_ids
+        assert DEFAULT_HTTP_PLAN_API_IDS_BY_EVENT_TYPE[event_type] == expected_api_id
+        assert report["status"] == "passed"
+        assert result["status"] == "passed"
+        assert plan["api_id"] == expected_api_id
+        assert result["metadata"]["resolved_by"] == "default_http_plan_policy"
 
 
 def test_http_plan_without_api_id_and_unknown_event_type_is_blocked_controlled():

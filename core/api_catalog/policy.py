@@ -16,10 +16,14 @@ MOCK_PLANNABLE_API_IDS = {
 
 
 DEFAULT_HTTP_PLAN_API_IDS_BY_EVENT_TYPE = {
+    "alteracao_perfil": "post-o-vivo-next-troca-de-oferta-fedbfb981e",
     "ativacao": "post-ativacao-de-campanha-por-api-2e656ee31c",
     "campanha": "post-ativacao-de-campanha-por-api-2e656ee31c",
+    "downgrade": "post-o-vivo-next-troca-de-oferta-fedbfb981e",
     "habilitacao": "post-vivo-next-habilitacao-de-cliente-ade0841563",
+    "mailing": "post-ativacao-de-campanha-por-api-2e656ee31c",
     "recarga": "post-evento-de-recarga-6954ef3458",
+    "rehab": "post-sincronismo-e8537bd912",
     "saldo": "post-consulta-de-saldo-f3317b27b3",
     "upsell": "post-ativacao-de-campanha-por-api-2e656ee31c",
     "vivo_turbo": "post-evento-vivo-turbo-e124494049",
