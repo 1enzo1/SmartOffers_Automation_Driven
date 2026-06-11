@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.6.7
-- Ultimo MVP aprovado: MVP7.6.7 - Adapter Risk Classifier
+- MVP atual concluido: MVP7.7.0
+- Ultimo MVP aprovado: MVP7.7.0 - Real Execution Readiness Gate
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -37,6 +37,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.6.6 | Concluido/Aprovado | Scenario Intelligence Layer deterministico |
 | MVP7.6.6.1 | Concluido/Aprovado | Safety hotfix para sinais de execucao real |
 | MVP7.6.7 | Concluido/Aprovado | Adapter Risk Classifier deterministico |
+| MVP7.7.0 | Concluido/Aprovado | Real Execution Readiness Gate deterministico |
 
 ## MVP7.6
 
@@ -407,6 +408,48 @@ Fechamento:
 - testes existentes devem passar;
 - diff funcional proibido deve permanecer vazio;
 - validacoes de escopo, pureza, determinismo, precedencia, ausencia de mutacao, ASCII e seguranca devem passar.
+
+### MVP7.7.0 - Real Execution Readiness Gate
+
+Status: concluido/aprovado.
+
+Objetivo: criar readiness gate deterministico para avaliar intencao futura de execucao real em QA4 sem executar chamada real.
+
+Entregas:
+
+- criar documentacao em `ai/real-execution/`;
+- criar pacote interno `core/real_execution/`;
+- criar `build_readiness_policy(...) -> dict`;
+- criar `evaluate_real_execution_readiness(request: dict, policy: dict) -> dict`;
+- validar opt-in, allowlist, ambiente, kill switch, timeout, retry, policy e risco;
+- manter `ready_for_real_call=false` mesmo quando a decisao for `ready_for_manual_review`;
+- criar testes dedicados em `tests/test_real_execution_readiness.py`.
+
+Nao escopo:
+
+- MVP7.7.1;
+- chamada real;
+- client HTTP;
+- leitura de `.env` ou variaveis de ambiente;
+- host real, IP real, token, secret, credential, payload real, MSISDN, account ou documento real;
+- alteracao de `app.py`, `templates/`, rotas ou UI;
+- alteracao de geracao de cenarios ou JSON salvo;
+- alteracao de dry-run, adapter-run, catalogo seguro ou `request_plan`;
+- endpoint;
+- schema executavel;
+- automacao externa;
+- chamada Oracle, API real, Kafka, Jenkins, rede, subprocesso ou LLM;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`;
+- Playwright;
+- liberacao de `mode=real`.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- mudancas devem ficar restritas a `ai/real-execution/`, `core/real_execution/`, `tests/test_real_execution_readiness.py` e `PROJECT_STATUS.md`;
+- validacoes de escopo, imports proibidos, logs sanitizados, determinismo, ausencia de mutacao e ausencia de chamada externa devem passar.
 
 ### MVP7.7 - Primeira chamada real opt-in em QA4
 
