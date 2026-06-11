@@ -123,3 +123,31 @@ def test_blocked_status_has_precedence_over_future_and_read_only():
 
     assert analysis["overall_status"] == "blocked"
     assert any(risk["status"] == "blocked" for risk in analysis["risks"])
+
+
+def test_safe_for_real_execution_true_blocks_scenario_without_mutation():
+    scenario = _scenario(validations=["api", "database", "kafka"])
+    scenario["adapter_policy"] = {"safe_for_real_execution": True}
+    original = copy.deepcopy(scenario)
+
+    first = analyze_scenario(scenario)
+    second = analyze_scenario(scenario)
+
+    assert scenario == original
+    assert first == second
+    assert first["overall_status"] == "blocked"
+    assert {
+        "code": "blocked_real_execution_signal",
+        "status": "blocked",
+        "reason": "Scenario contains signal of real execution, sensitive data, or external dependency.",
+    } in first["risks"]
+
+
+def test_real_execution_true_string_blocks_scenario():
+    scenario = _scenario(validations=["api", "database"])
+    scenario["notes"] = '"real_execution": true'
+
+    analysis = analyze_scenario(scenario)
+
+    assert analysis["overall_status"] == "blocked"
+    assert any(risk["status"] == "blocked" for risk in analysis["risks"])

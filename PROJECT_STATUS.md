@@ -35,6 +35,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.6.4 | Concluido/Aprovado | Evidence Planner Foundation em Markdown |
 | MVP7.6.5 | Concluido/Aprovado | AI Supervisors Foundation em Markdown |
 | MVP7.6.6 | Concluido/Aprovado | Scenario Intelligence Layer deterministico |
+| MVP7.6.6.1 | Concluido/Aprovado | Safety hotfix para sinais de execucao real |
 
 ## MVP7.6
 
@@ -339,6 +340,32 @@ Fechamento:
 - testes existentes devem passar;
 - diff funcional proibido deve permanecer vazio;
 - validacoes de escopo, ASCII, seguranca, imports proibidos, nao mutacao e determinismo devem passar.
+
+### MVP7.6.6.1 - Scenario Intelligence Safety Hotfix
+
+Status: concluido/aprovado.
+
+Objetivo: bloquear explicitamente sinais de execucao real segura indevida na camada de inteligencia de cenario.
+
+Entregas:
+
+- detectar `safe_for_real_execution=true`;
+- detectar `real_execution=true`;
+- manter `blocked` com precedencia sobre `future-controlled` e `read-only`;
+- adicionar testes dedicados para sinais booleanos e textuais;
+- preservar funcao pura, deterministica, sem I/O e sem mutacao do dict recebido.
+
+Nao escopo:
+
+- MVP7.6.7;
+- alteracao de rotas, UI, geracao de cenarios, JSON salvo, dry-run, adapter-run, catalogo seguro ou `request_plan`;
+- chamada externa, Flask, Playwright, LLM, MCP/App SDK ou execucao real.
+
+Fechamento:
+
+- testes existentes devem passar;
+- mudancas devem ficar restritas a `core/intelligence/scenario_analysis.py`, `tests/test_scenario_intelligence.py` e `PROJECT_STATUS.md`;
+- `safe_for_real_execution=true` e `real_execution=true` devem resultar em `overall_status=blocked`.
 
 ### MVP7.6.7 - Adapter Risk Classifier
 

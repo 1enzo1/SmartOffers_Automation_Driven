@@ -30,6 +30,8 @@ STATUS_PRECEDENCE = {
 BLOCKED_PATTERNS = (
     re.compile(r"\bmode\s*[=:]\s*real\b", re.IGNORECASE),
     re.compile(r"\bmode\b.*\breal\b", re.IGNORECASE),
+    re.compile(r"\bsafe_for_real_execution\b[\"']?\s*(?:[=:]\s*)?\btrue\b", re.IGNORECASE),
+    re.compile(r"\breal_execution\b[\"']?\s*(?:[=:]\s*)?\btrue\b", re.IGNORECASE),
     re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b"),
     re.compile(r"\bhost\s*[=:]\s*[A-Za-z0-9.-]+\b", re.IGNORECASE),
     re.compile(r"\breal_host\b", re.IGNORECASE),
