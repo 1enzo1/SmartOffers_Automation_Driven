@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.6.3
-- Ultimo MVP aprovado: MVP7.6.3 - Operational Playbooks
+- MVP atual concluido: MVP7.6.4
+- Ultimo MVP aprovado: MVP7.6.4 - Evidence Planner Foundation
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -32,6 +32,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.6 | Concluido | SmartOffersAdapter config-driven mockado |
 | MVP7.6.2 | Concluido/Aprovado | SmartOffers Ontology em Markdown |
 | MVP7.6.3 | Concluido/Aprovado | Operational Playbooks em Markdown |
+| MVP7.6.4 | Concluido/Aprovado | Evidence Planner Foundation em Markdown |
 
 ## MVP7.6
 
@@ -225,7 +226,44 @@ Fechamento:
 
 ### MVP7.6.4 - Evidence Planner Foundation
 
+Status: concluido/aprovado.
+
 Objetivo: preparar o produto para gerar plano de evidencias, ainda de forma deterministica e sem Oracle real.
+
+Entregas:
+
+- criar `ai/evidence/README.md`;
+- criar `ai/evidence/evidence-planner-contract.md`;
+- criar `ai/evidence/evidence-layers.md`;
+- criar `ai/evidence/playbook-mapping.md`;
+- criar `ai/evidence/evidence-statuses.md`;
+- registrar camadas conceituais de evidencia;
+- mapear playbooks operacionais do MVP7.6.3 para camadas de evidencia;
+- definir status seguros `mock`, `read-only`, `blocked` e `future-controlled`;
+- atualizar `ai/README.md` com a nova area documental.
+
+Nao escopo:
+
+- codigo funcional;
+- `core/evidence/`;
+- alteracao de `app.py`, `core/`, `templates/` ou `tests/`;
+- novos endpoints;
+- schemas executaveis;
+- fixtures;
+- automacoes;
+- JSONs de cenario;
+- execucao real;
+- alteracao de dry-run, adapter-run, `request_plan` ou catalogo seguro;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`;
+- Playwright ou Flask.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- diff funcional deve permanecer vazio;
+- validacoes de camadas, playbooks, statuses, ASCII e seguranca devem passar.
 
 ### MVP7.6.5 - AI Supervisors Foundation
 

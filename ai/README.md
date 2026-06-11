@@ -13,6 +13,7 @@ No MVP7.6.1, `ai/` e somente Markdown:
 
 ## Subpastas
 
+- `evidence/`: contratos conceituais do Evidence Planner.
 - `knowledge/`: ontologia e conhecimento SmartOffers.
 - `playbooks/`: roteiros operacionais e troubleshooting.
 - `safety/`: categorias de risco e guardrails.
