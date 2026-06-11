@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.6.5
-- Ultimo MVP aprovado: MVP7.6.5 - AI Supervisors Foundation
+- MVP atual concluido: MVP7.6.6
+- Ultimo MVP aprovado: MVP7.6.6 - Scenario Intelligence Layer
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -34,6 +34,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.6.3 | Concluido/Aprovado | Operational Playbooks em Markdown |
 | MVP7.6.4 | Concluido/Aprovado | Evidence Planner Foundation em Markdown |
 | MVP7.6.5 | Concluido/Aprovado | AI Supervisors Foundation em Markdown |
+| MVP7.6.6 | Concluido/Aprovado | Scenario Intelligence Layer deterministico |
 
 ## MVP7.6
 
@@ -305,7 +306,39 @@ Fechamento:
 
 ### MVP7.6.6 - Scenario Intelligence Layer
 
+Status: concluido/aprovado.
+
 Objetivo: adicionar analise deterministica do cenario, incluindo dominio, fluxo principal, camadas de evidencia esperadas e supervisores sugeridos.
+
+Entregas:
+
+- criar documentacao em `ai/scenario-intelligence/`;
+- criar pacote interno `core/intelligence/`;
+- criar funcao pura `analyze_scenario(scenario: dict) -> dict`;
+- derivar dominio, fluxo principal, entidades, playbooks, camadas de evidencia, supervisores, riscos e status geral;
+- manter a analise deterministica, read-only, sem I/O, sem rede, sem LLM, sem ambiente real, sem data/hora/random e sem mutar o dict recebido;
+- criar testes dedicados em `tests/test_scenario_intelligence.py`.
+
+Nao escopo:
+
+- alteracao de `app.py`, `templates/`, rotas ou UI;
+- alteracao de geracao de cenarios ou JSON salvo;
+- alteracao de dry-run, adapter-run, catalogo seguro ou `request_plan`;
+- endpoint;
+- schema executavel;
+- automacao externa;
+- chamada Oracle, API real, Kafka, Jenkins, rede, subprocesso ou LLM;
+- MCP/App SDK;
+- Playwright;
+- `mode=real`;
+- MVP7.6.7.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- diff funcional proibido deve permanecer vazio;
+- validacoes de escopo, ASCII, seguranca, imports proibidos, nao mutacao e determinismo devem passar.
 
 ### MVP7.6.7 - Adapter Risk Classifier
 
