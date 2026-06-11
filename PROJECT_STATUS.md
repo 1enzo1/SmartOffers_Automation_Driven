@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.6.4
-- Ultimo MVP aprovado: MVP7.6.4 - Evidence Planner Foundation
+- MVP atual concluido: MVP7.6.5
+- Ultimo MVP aprovado: MVP7.6.5 - AI Supervisors Foundation
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -33,6 +33,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.6.2 | Concluido/Aprovado | SmartOffers Ontology em Markdown |
 | MVP7.6.3 | Concluido/Aprovado | Operational Playbooks em Markdown |
 | MVP7.6.4 | Concluido/Aprovado | Evidence Planner Foundation em Markdown |
+| MVP7.6.5 | Concluido/Aprovado | AI Supervisors Foundation em Markdown |
 
 ## MVP7.6
 
@@ -267,7 +268,40 @@ Fechamento:
 
 ### MVP7.6.5 - AI Supervisors Foundation
 
+Status: concluido/aprovado.
+
 Objetivo: criar estrutura inicial de supervisores e skills do produto, ainda sem LLM externo e sem integracoes reais.
+
+Entregas:
+
+- expandir `ai/supervisors/README.md` como indice operacional;
+- criar contratos Markdown para `smartoffers-architect-supervisor`, `campaign-supervisor`, `evidence-supervisor`, `troubleshooting-supervisor`, `catalog-config-supervisor`, `adapter-supervisor` e `safety-supervisor`;
+- criar `ai/supervisors/supervisor-routing.md`;
+- registrar relacao conceitual entre supervisores e skills futuras em `ai/skills/README.md`;
+- usar `ai/knowledge/`, `ai/playbooks/` e `ai/evidence/` como fontes documentais;
+- preparar base conceitual para MVP7.6.6 Scenario Intelligence Layer.
+
+Nao escopo:
+
+- codigo funcional;
+- LLM externo;
+- agentes autonomos;
+- ferramentas;
+- MCP/App SDK;
+- endpoints;
+- schemas executaveis;
+- fixtures;
+- automacoes;
+- JSONs operacionais ou de cenario;
+- execucao real;
+- alteracao de `app.py`, `core/`, `templates/`, `tests/`, catalogo seguro, dry-run, adapter-run ou `request_plan`.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- diff funcional deve permanecer vazio;
+- validacoes de contratos, secoes, roteamento, ASCII e seguranca devem passar.
 
 ### MVP7.6.6 - Scenario Intelligence Layer
 
