@@ -7,7 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.6
+- MVP atual concluido: MVP7.6.2
+- Ultimo MVP aprovado: MVP7.6.2 - SmartOffers Ontology
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -29,6 +30,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7 | Concluido | Adapters Foundation |
 | MVP7.5 | Concluido | Catalogo seguro de APIs |
 | MVP7.6 | Concluido | SmartOffersAdapter config-driven mockado |
+| MVP7.6.2 | Concluido/Aprovado | SmartOffers Ontology em Markdown |
 
 ## MVP7.6
 
@@ -133,7 +135,44 @@ Fechamento:
 
 ### MVP7.6.2 - SmartOffers Ontology
 
-Objetivo: criar vocabulario interno do produto para clientes, campanhas, eventos, metricas, caracteristicas, auditoria, processamento e integracoes.
+Status: concluido/aprovado.
+
+Objetivo: criar vocabulario interno do produto para clientes, campanhas, eventos, metricas, caracteristicas, auditoria, processamento, integracoes e evidencias.
+
+Entregas:
+
+- expandir `ai/knowledge/README.md` como indice da ontologia;
+- criar `ai/knowledge/ontology.md`;
+- criar `ai/knowledge/customer.md`;
+- criar `ai/knowledge/campaign.md`;
+- criar `ai/knowledge/event.md`;
+- criar `ai/knowledge/metric.md`;
+- criar `ai/knowledge/characteristic.md`;
+- criar `ai/knowledge/audit.md`;
+- criar `ai/knowledge/processing.md`;
+- criar `ai/knowledge/integration.md`;
+- criar `ai/knowledge/evidence.md`;
+- preparar base conceitual para MVP7.6.3 Operational Playbooks e MVP7.6.4 Evidence Planner.
+
+Nao escopo:
+
+- codigo funcional;
+- alteracao de `app.py`, `core/`, `templates/` ou `tests/`;
+- novos endpoints;
+- schemas executaveis;
+- fixtures;
+- JSONs de cenario;
+- execucao real;
+- alteracao de dry-run, adapter-run, `request_plan` ou catalogo seguro;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`;
+- Playwright ou Flask.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- diff funcional deve permanecer vazio.
 
 ### MVP7.6.3 - Operational Playbooks
 
