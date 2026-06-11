@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.7.0
-- Ultimo MVP aprovado: MVP7.7.0 - Real Execution Readiness Gate
+- MVP atual concluido: MVP7.7.1.0
+- Ultimo MVP aprovado: MVP7.7.1.0 - Runtime Secret Contract
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -38,6 +38,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.6.6.1 | Concluido/Aprovado | Safety hotfix para sinais de execucao real |
 | MVP7.6.7 | Concluido/Aprovado | Adapter Risk Classifier deterministico |
 | MVP7.7.0 | Concluido/Aprovado | Real Execution Readiness Gate deterministico |
+| MVP7.7.1.0 | Concluido/Aprovado | Runtime Secret Contract com fake client obrigatorio |
 
 ## MVP7.6
 
@@ -450,6 +451,50 @@ Fechamento:
 - testes existentes devem passar;
 - mudancas devem ficar restritas a `ai/real-execution/`, `core/real_execution/`, `tests/test_real_execution_readiness.py` e `PROJECT_STATUS.md`;
 - validacoes de escopo, imports proibidos, logs sanitizados, determinismo, ausencia de mutacao e ausencia de chamada externa devem passar.
+
+### MVP7.7.1.0 - Runtime Secret Contract
+
+Status: concluido/aprovado.
+
+Objetivo: criar contrato de runtime seguro para uma futura primeira chamada QA4, ainda sem chamada real e sem iniciar MVP7.7.1.1.
+
+Entregas:
+
+- criar contrato documental de runtime seguro em `ai/real-execution/runtime-secret-contract.md`;
+- criar runbook conceitual em `ai/real-execution/first-call-runbook.md`;
+- criar `core/real_execution/runtime.py` para validar referencias runtime injetadas;
+- criar `core/real_execution/allowlist.py` com allowlist conceitual separada do catalogo sanitizado;
+- criar `core/real_execution/http_client.py` com fake client obrigatorio;
+- criar `core/real_execution/executor.py` com `prepare_first_qa4_call(...)`;
+- bloquear antes do fake client quando runtime, allowlist, risk classifier, readiness gate ou kill switch falham;
+- manter `real_call_executed=false`;
+- criar testes dedicados em `tests/test_real_execution_runtime_contract.py` e `tests/test_first_qa4_call_executor.py`.
+
+Nao escopo:
+
+- MVP7.7.1.1;
+- chamada real;
+- client HTTP real;
+- leitura de `.env`, arquivo externo ou variaveis reais;
+- host real, IP real, material de autenticacao, credencial, massa real, linha, conta ou documento real;
+- alteracao de `app.py`, `templates/`, rotas ou UI;
+- alteracao de geracao de cenarios ou JSON salvo;
+- alteracao de dry-run, adapter-run, catalogo seguro ou `request_plan`;
+- endpoint;
+- schema executavel;
+- automacao externa;
+- chamada Oracle, API real, Kafka, Jenkins, rede, subprocesso ou LLM;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`;
+- Playwright;
+- liberacao de `mode=real`.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- mudancas devem ficar restritas a `ai/real-execution/`, `core/real_execution/`, `tests/test_real_execution_runtime_contract.py`, `tests/test_first_qa4_call_executor.py` e `PROJECT_STATUS.md`;
+- validacoes de escopo, imports proibidos, logs sanitizados, fake client obrigatorio, determinismo, ausencia de mutacao e ausencia de chamada externa devem passar.
 
 ### MVP7.7 - Primeira chamada real opt-in em QA4
 
