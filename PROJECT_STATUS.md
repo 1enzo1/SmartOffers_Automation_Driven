@@ -5,12 +5,15 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 ## Estado atual
 
 - Branch base atual: `qa/mvp4-integration`
+- Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
+- Produto atual: `SmartOffers_Automation_Driven`
 - MVP atual concluido: MVP7.6
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
 - Catalogo de APIs: sanitizado e versionado em `core/api_catalog/catalog.json`
 - Dados brutos de ambiente/API: nao versionados
+- PortalQA: referencia historica, nao orienta a arquitetura atual
 
 ## MVPs concluidos
 
@@ -69,33 +72,16 @@ post-vivo-next-habilitacao-de-cliente-ade0841563
 post-vivo-next-habilitacao-de-linha-a79ab2e31c
 ```
 
-## Mapeamentos default por event_type
-
-Steps `smartoffers.http_plan` sem `api_id` podem resolver um plano seguro por `event_type`, desde que o destino esteja na policy `mock_only`.
-
-| event_type | api_id |
-| --- | --- |
-| `alteracao_perfil` | `post-o-vivo-next-troca-de-oferta-fedbfb981e` |
-| `ativacao` | `post-ativacao-de-campanha-por-api-2e656ee31c` |
-| `campanha` | `post-ativacao-de-campanha-por-api-2e656ee31c` |
-| `downgrade` | `post-o-vivo-next-troca-de-oferta-fedbfb981e` |
-| `habilitacao` | `post-vivo-next-habilitacao-de-cliente-ade0841563` |
-| `mailing` | `post-ativacao-de-campanha-por-api-2e656ee31c` |
-| `recarga` | `post-evento-de-recarga-6954ef3458` |
-| `rehab` | `post-sincronismo-e8537bd912` |
-| `saldo` | `post-consulta-de-saldo-f3317b27b3` |
-| `upsell` | `post-ativacao-de-campanha-por-api-2e656ee31c` |
-| `vivo_turbo` | `post-evento-vivo-turbo-e124494049` |
-
 ## Decisoes de seguranca
 
 - O catalogo versionado deve permanecer sanitizado.
-- `catalog.json` nao deve ser alterado para liberar execucao real no MVP7.6.
+- `catalog.json` nao deve ser alterado para liberar execucao real sem MVP especifico.
 - `execution_status` permanece `blocked` para as APIs catalogadas.
 - `safe_for_real_execution` permanece `false` para as APIs catalogadas.
 - `request_plan` usa placeholders de host, nao hosts reais.
 - `mode=real` permanece bloqueado no endpoint de adapter-run.
 - Fluxos mockados nao devem chamar rede, Oracle, Kafka, Jenkins nem subprocessos reais.
+- MVP7.7 depende da sequencia 7.6.x antes de qualquer chamada real opt-in.
 
 ## Fluxo recomendado de desenvolvimento
 
@@ -104,7 +90,7 @@ Steps `smartoffers.http_plan` sem `api_id` podem resolver um plano seguro por `e
 3. Rodar `python -m pytest tests -q`.
 4. Quando necessario, fazer smoke Flask em background com cleanup.
 5. Confirmar porta livre ao final do smoke.
-6. Confirmar `git status` limpo.
+6. Confirmar `git status` limpo ou explicar arquivos gerados.
 7. Abrir PR draft.
 8. Resolver reviews sem expandir escopo.
 9. Marcar Ready for review apenas sem threads abertas.
@@ -112,37 +98,68 @@ Steps `smartoffers.http_plan` sem `api_id` podem resolver um plano seguro por `e
 
 ## Proximos MVPs
 
-### MVP7.6.1 - Codex SmartOffers Guardrails
+### MVP7.6.1 - Guardrails e alinhamento da linha evolutiva
 
-Objetivo: reforcar instrucoes, skills e revisao de escopo para manter o desenvolvimento dentro das regras do projeto.
+Objetivo: corrigir o mapa de produto e registrar guardrails para que o projeto evolua como laboratorio seguro SmartOffers/ACM.
 
-Possiveis entregas:
+Entregas:
 
+- atualizar `README.md`;
+- atualizar `PROJECT_STATUS.md`;
+- atualizar `AGENTS.md`;
 - atualizar `.agents/skills/smartoffers-automation-architect/SKILL.md`;
-- criar uma skill de safety/scope review, se fizer sentido;
-- classificar acoes por risco;
-- registrar roadmap;
-- impedir expansao de PR sem confirmacao.
+- registrar `qa/mvp4-integration` como branch evolutiva atual;
+- registrar PortalQA como referencia historica, nao arquitetura atual;
+- criar `docs/ARCHITECTURE.md`;
+- criar `docs/ROADMAP.md`;
+- criar `docs/SECURITY_MODEL.md`;
+- criar `docs/SUPERVISORS.md`;
+- criar estrutura inicial `ai/` em Markdown.
+
+Nao escopo:
+
+- codigo funcional;
+- novos endpoints;
+- novos campos de JSON;
+- execucao real;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`.
+
+Fechamento:
+
+- testes existentes devem passar;
+- nenhuma chamada externa deve ser adicionada;
+- autoavaliacao deve ser entregue no relato final da implementacao.
+
+### MVP7.6.2 - SmartOffers Ontology
+
+Objetivo: criar vocabulario interno do produto para clientes, campanhas, eventos, metricas, caracteristicas, auditoria, processamento e integracoes.
+
+### MVP7.6.3 - Operational Playbooks
+
+Objetivo: transformar troubleshooting operacional em roteiros seguros e reutilizaveis.
+
+### MVP7.6.4 - Evidence Planner Foundation
+
+Objetivo: preparar o produto para gerar plano de evidencias, ainda de forma deterministica e sem Oracle real.
 
 ### MVP7.6.5 - AI Supervisors Foundation
 
-Objetivo: criar estrutura inicial de agentes e skills do produto, ainda sem LLM externo e sem integracoes reais.
+Objetivo: criar estrutura inicial de supervisores e skills do produto, ainda sem LLM externo e sem integracoes reais.
 
-Estrutura prevista:
+### MVP7.6.6 - Scenario Intelligence Layer
 
-```txt
-ai/
-  architects/
-  agents/
-  skills/
-  knowledge/
-  playbooks/
-  safety/
-```
+Objetivo: adicionar analise deterministica do cenario, incluindo dominio, fluxo principal, camadas de evidencia esperadas e supervisores sugeridos.
+
+### MVP7.6.7 - Adapter Risk Classifier
+
+Objetivo: classificar risco antes de qualquer adapter-run real futuro, mantendo `mode=real` bloqueado ate MVP especifico.
 
 ### MVP7.7 - Primeira chamada real opt-in em QA4
 
 Objetivo: permitir a primeira chamada real controlada em QA4, somente com opt-in e guardrails.
+
+MVP7.7 depende de ontologia SmartOffers, playbooks operacionais, evidence planner, supervisores de dominio, risk classifier, policy explicita de allow/deny e testes cobrindo cenarios permitidos e negados.
 
 Condicoes esperadas:
 
@@ -156,7 +173,7 @@ logs sanitizados
 producao bloqueada
 ```
 
-### MVP8 - Runner distribuido / filas
+### MVP8 - Runner controlado / filas
 
 Objetivo: evoluir execucao para modelo assincrono/controlado, com fila e acompanhamento de status.
 
@@ -168,9 +185,9 @@ Objetivo: incorporar IA auxiliar com uso controlado, apoiada por knowledge base,
 
 Objetivo: avaliar uma UI mais robusta somente quando o backend estiver maduro o suficiente.
 
-## Documentos futuros
+## Documentos
 
-Quando o roadmap pedir mais detalhe, criar:
-
-- `ARCHITECTURE.md` para adapters, catalogo, generation, simulation, exports e execution service;
-- `SECURITY_MODEL.md` para regras de execucao real, dados sensiveis, `mode=real`, QA4 e bloqueio de producao.
+- `docs/ARCHITECTURE.md`: arquitetura atual e direcao futura.
+- `docs/ROADMAP.md`: sequencia de MVPs e dependencias.
+- `docs/SECURITY_MODEL.md`: regras de execucao real, dados sensiveis, `mode=real`, QA4 e bloqueio de producao.
+- `docs/SUPERVISORS.md`: supervisores e skills previstos.

@@ -1,14 +1,14 @@
 # SmartOffers Automation Driven
 
-Plataforma Flask/Python para geracao, simulacao, planejamento mockado e futura execucao controlada de cenarios SmartOffers/ACM.
+SmartOffers_Automation_Driven e uma plataforma Flask/Python local-first e mock-first para geracao, simulacao, planejamento seguro e futura execucao controlada de cenarios SmartOffers/ACM.
 
-O projeto evolui de forma incremental: primeiro gera cenarios deterministicos, depois simula execucao localmente, exporta evidencias QA/DET e prepara adapters seguros para uma futura execucao real com opt-in explicito.
+O produto deve evoluir como um laboratorio seguro de automacao SmartOffers/ACM, nao apenas como um gerador ou simulador de testes. Ele transforma regras de campanha, eventos, APIs sanitizadas, evidencias operacionais e troubleshooting em cenarios deterministicos, dry-runs, adapter-runs mockados, `request_plan` seguro e, em MVP futuro, execucoes reais controladas.
 
-Estado atual: MVP7.6 concluido. A execucao real segue bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs, Kafka, Jenkins ou rede externa.
+Estado atual: MVP7.6 concluido. A branch `qa/mvp4-integration` e a linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4. A execucao real segue bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs, Kafka, Jenkins ou rede externa.
 
 ## Objetivo
 
-Centralizar e padronizar o ciclo de testes SmartOffers:
+Centralizar e padronizar um ciclo seguro de automacao SmartOffers:
 
 - gerar cenarios deterministicos a partir de respostas e templates;
 - salvar e reabrir cenarios em JSON;
@@ -17,7 +17,20 @@ Centralizar e padronizar o ciclo de testes SmartOffers:
 - exportar artefatos QA/DET em JSON, DOCX e XLSX;
 - consultar um catalogo seguro de APIs sanitizadas;
 - montar `request_plan` SmartOffers deterministico sem rede real;
+- organizar conhecimento de dominio em ontologia, playbooks, supervisores e skills do produto;
 - manter uma base preparada para execucao real controlada em MVP futuro.
+
+## Linha evolutiva atual
+
+A branch `qa/mvp4-integration` e a branch base evolutiva atual do SmartOffers_Automation_Driven. O nome permanece por historico, mas a branch ja contem evolucoes posteriores, incluindo biblioteca de templates, dry-run mockado, exports QA/DET, adapters mockados, catalogo seguro de APIs e planejamento SmartOffers `mock_only`.
+
+Nao iniciar novo MVP a partir de `main` sem confirmacao explicita. Antes de qualquer PR, confirmar que a branch contem o merge do MVP7.6 ou posterior.
+
+## Direcao do produto
+
+O projeto nao deve ser tratado apenas como ferramenta de testes. A direcao correta e um laboratorio seguro de automacao SmartOffers/ACM com geracao deterministica, planejamento mockado, evidencias esperadas, classificacao de risco, supervisores de dominio, playbooks operacionais e preparacao gradual para adapters reais.
+
+A execucao real continua bloqueada por padrao. Qualquer evolucao para `mode=real` exige MVP especifico, opt-in explicito, ambiente permitido, API liberada por policy, logs sanitizados, timeout, bloqueio de producao e testes cobrindo cenarios permitidos e negados.
 
 ## Stack
 
@@ -93,6 +106,13 @@ Ao validar Flask em tarefas automatizadas, suba o processo em background, faca c
 |   |-- legacy_execution/
 |   |-- simulation/
 |   `-- templates/
+|-- ai/
+|   |-- knowledge/
+|   |-- playbooks/
+|   |-- safety/
+|   |-- skills/
+|   `-- supervisors/
+|-- docs/
 |-- templates/
 |   `-- index.html
 |-- tests/
@@ -114,6 +134,10 @@ Ao validar Flask em tarefas automatizadas, suba o processo em background, faca c
 `core/execution/` orquestra adapter-run, normaliza steps e agrega status.
 
 `core/api_catalog/` contem o catalogo sanitizado de APIs, modelos, servico e policy `mock_only`.
+
+`ai/` contem contratos conceituais e operacionais para supervisores, skills, conhecimento, playbooks e safety. No MVP7.6.1, essa pasta nao contem implementacao Python nem LLM externo.
+
+`docs/` contem a documentacao de arquitetura, roadmap, modelo de seguranca e supervisores.
 
 `templates/index.html` contem a UI Flask atual em HTML/CSS/JavaScript puro.
 
@@ -152,6 +176,34 @@ Contrato resumido de `request_plan`:
   "planning_mode": "mock_only"
 }
 ```
+
+## Supervisores e skills
+
+A partir da linha 7.6.x, o projeto passa a organizar conhecimento SmartOffers em supervisores e skills. Esses artefatos nao habilitam IA externa, execucao real, Oracle, Kafka, Jenkins ou chamadas de rede. Eles servem como camada de dominio para orientar geracao de cenarios, planejamento de evidencia, classificacao de risco e evolucao futura dos adapters.
+
+Supervisores previstos:
+
+- `smartoffers-architect-supervisor`
+- `campaign-supervisor`
+- `evidence-supervisor`
+- `troubleshooting-supervisor`
+- `catalog-config-supervisor`
+- `adapter-supervisor`
+- `safety-supervisor`
+
+Skills previstas:
+
+- `campaign-analysis`
+- `evidence-planning`
+- `troubleshooting`
+- `sql-evidence`
+- `api-contract-analysis`
+- `request-plan-analysis`
+- `adapter-execution-planning`
+- `catalog-config-analysis`
+- `kafka-nrt-analysis`
+- `bko-analysis`
+- `risk-classification`
 
 ## Regras de seguranca
 
