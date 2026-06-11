@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.6.6
-- Ultimo MVP aprovado: MVP7.6.6 - Scenario Intelligence Layer
+- MVP atual concluido: MVP7.6.7
+- Ultimo MVP aprovado: MVP7.6.7 - Adapter Risk Classifier
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -36,6 +36,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.6.5 | Concluido/Aprovado | AI Supervisors Foundation em Markdown |
 | MVP7.6.6 | Concluido/Aprovado | Scenario Intelligence Layer deterministico |
 | MVP7.6.6.1 | Concluido/Aprovado | Safety hotfix para sinais de execucao real |
+| MVP7.6.7 | Concluido/Aprovado | Adapter Risk Classifier deterministico |
 
 ## MVP7.6
 
@@ -369,7 +370,43 @@ Fechamento:
 
 ### MVP7.6.7 - Adapter Risk Classifier
 
+Status: concluido/aprovado.
+
 Objetivo: classificar risco antes de qualquer adapter-run real futuro, mantendo `mode=real` bloqueado ate MVP especifico.
+
+Entregas:
+
+- criar documentacao em `ai/risk/`;
+- criar pacote interno `core/risk/`;
+- criar funcao pura `classify_adapter_risk(work_item: dict) -> dict`;
+- classificar risco para adapter, request plan, http plan, item de catalogo, resultado de inteligencia de cenario, evidence layer ou execucao pretendida;
+- retornar `risk_level`, `risk_status`, `blocked_reasons`, `allowed_mode`, `required_guardrails`, `related_supervisors` e `safe_next_step`;
+- aplicar precedencia `blocked > future_controlled_required > read_only_allowed > mock_allowed`;
+- manter execucao real bloqueada e preparar base para MVP7.7 sem inicia-lo;
+- criar testes dedicados em `tests/test_adapter_risk_classifier.py`.
+
+Nao escopo:
+
+- alteracao de `app.py`, `templates/`, rotas ou UI;
+- alteracao de geracao de cenarios ou JSON salvo;
+- alteracao de dry-run, adapter-run, catalogo seguro ou `request_plan`;
+- endpoint;
+- schema executavel;
+- fixture;
+- automacao externa;
+- chamada Oracle, API real, Kafka, Jenkins, rede, subprocesso ou LLM;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`;
+- Playwright;
+- `mode=real`;
+- MVP7.7.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- diff funcional proibido deve permanecer vazio;
+- validacoes de escopo, pureza, determinismo, precedencia, ausencia de mutacao, ASCII e seguranca devem passar.
 
 ### MVP7.7 - Primeira chamada real opt-in em QA4
 
