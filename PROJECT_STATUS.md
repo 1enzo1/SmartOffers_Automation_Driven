@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.6.2
-- Ultimo MVP aprovado: MVP7.6.2 - SmartOffers Ontology
+- MVP atual concluido: MVP7.6.3
+- Ultimo MVP aprovado: MVP7.6.3 - Operational Playbooks
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -31,6 +31,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.5 | Concluido | Catalogo seguro de APIs |
 | MVP7.6 | Concluido | SmartOffersAdapter config-driven mockado |
 | MVP7.6.2 | Concluido/Aprovado | SmartOffers Ontology em Markdown |
+| MVP7.6.3 | Concluido/Aprovado | Operational Playbooks em Markdown |
 
 ## MVP7.6
 
@@ -176,7 +177,51 @@ Fechamento:
 
 ### MVP7.6.3 - Operational Playbooks
 
+Status: concluido/aprovado.
+
 Objetivo: transformar troubleshooting operacional em roteiros seguros e reutilizaveis.
+
+Escopo planejado:
+
+- expandir `ai/playbooks/README.md` como indice dos playbooks;
+- criar playbooks Markdown para cliente fora da campanha, SMS nao enviado, evento nao processado, callback nao refletido, beneficio/oferta nao atualizado, campanha travada, backlog/atraso de processamento, publicacao/configuracao e divergencia de evidencia;
+- usar a ontologia do MVP7.6.2 como fonte principal;
+- preparar base conceitual para MVP7.6.4 Evidence Planner.
+
+Arquivos entregues:
+
+- `ai/playbooks/README.md`;
+- `ai/playbooks/customer-not-in-campaign.md`;
+- `ai/playbooks/sms-not-sent.md`;
+- `ai/playbooks/event-not-processed.md`;
+- `ai/playbooks/callback-not-reflected.md`;
+- `ai/playbooks/benefit-or-offer-not-updated.md`;
+- `ai/playbooks/campaign-stuck-in-state.md`;
+- `ai/playbooks/processing-backlog-or-delay.md`;
+- `ai/playbooks/catalog-publication-config-issue.md`;
+- `ai/playbooks/evidence-mismatch.md`.
+
+Nao escopo:
+
+- codigo funcional;
+- alteracao de `app.py`, `core/`, `templates/` ou `tests/`;
+- novos endpoints;
+- schemas executaveis;
+- fixtures;
+- JSONs de cenario;
+- automacoes;
+- execucao real;
+- alteracao de dry-run, adapter-run, `request_plan` ou catalogo seguro;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`;
+- Playwright ou Flask.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- diff funcional deve permanecer vazio;
+- validacoes de secoes, ASCII e seguranca devem passar.
 
 ### MVP7.6.4 - Evidence Planner Foundation
 
