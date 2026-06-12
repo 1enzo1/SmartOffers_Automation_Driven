@@ -41,6 +41,8 @@
     --bad-soft: rgba(255,85,113,.12);
     --purple: #a78bfa;
     --purple-soft: rgba(167,139,250,.12);
+    --blocked: #a78bfa;
+    --blocked-soft: rgba(167,139,250,.14);
     --shadow: 0 18px 46px rgba(0, 0, 0, .34);
     --shadow-soft: 0 10px 24px rgba(0, 0, 0, .2);
     --mono: "JetBrains Mono Local", "JetBrains Mono", Consolas, "SFMono-Regular", Menlo, Monaco, monospace;
@@ -621,6 +623,21 @@ select.runner-select {
     font-size: 14px;
 }
 
+.runner-suite .status-metric .v {
+    justify-content: center;
+}
+
+.suite-note {
+    border: 1px solid rgba(167,139,250,.22);
+    border-radius: 7px;
+    padding: 8px 9px;
+    background: var(--blocked-soft);
+    color: #d8ccff;
+    font-family: var(--mono);
+    font-size: 10px;
+    line-height: 1.45;
+}
+
 .scenario-filter-group {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -913,6 +930,7 @@ select.runner-select {
 .logline.ok { border-left: 3px solid var(--good); }
 .logline.warn { border-left: 3px solid var(--warn); }
 .logline.bad { border-left: 3px solid var(--bad); }
+.logline.blocked { border-left: 3px solid var(--blocked); background: var(--blocked-soft); }
 
 .logline {
     position: relative;
@@ -936,6 +954,50 @@ select.runner-select {
 .log-text {
     min-width: 0;
     overflow-wrap: anywhere;
+}
+
+.status-token {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 76px;
+    border: 1px solid var(--border-soft);
+    border-radius: 999px;
+    padding: 4px 9px;
+    font-family: var(--mono);
+    font-size: 11px;
+    line-height: 1;
+}
+
+.status-pass {
+    border-color: rgba(40,214,163,.36);
+    background: var(--good-soft);
+    color: var(--good);
+}
+
+.status-fail {
+    border-color: rgba(255,85,113,.36);
+    background: var(--bad-soft);
+    color: #ffd6dc;
+}
+
+.status-blocked {
+    border-color: rgba(167,139,250,.42);
+    background: var(--blocked-soft);
+    color: #d8ccff;
+}
+
+.status-running {
+    border-color: rgba(68,215,255,.38);
+    background: var(--accent-soft);
+    color: var(--accent-2);
+}
+
+.status-paused,
+.status-idle {
+    border-color: var(--border-soft);
+    background: rgba(7,10,16,.38);
+    color: var(--muted);
 }
 
 .scenarios,
@@ -1071,6 +1133,7 @@ select.runner-select {
 .scenario.active { outline: 1px solid var(--accent); }
 .scenario[data-status="passed"] { border-left: 3px solid var(--good); }
 .scenario[data-status="failed"] { border-left: 3px solid var(--bad); }
+.scenario[data-status="blocked"] { border-left: 3px solid var(--blocked); }
 .scenario[data-status="skipped"] { border-left: 3px solid var(--warn); }
 .scenario[data-status="running"] { border-left: 3px solid var(--accent); }
 
@@ -1101,6 +1164,7 @@ select.runner-select {
 
 .scenario[data-status="passed"] .status-dot { background: var(--good); box-shadow: 0 0 14px rgba(40,214,163,.35); }
 .scenario[data-status="failed"] .status-dot { background: var(--bad); box-shadow: 0 0 14px rgba(255,85,113,.35); }
+.scenario[data-status="blocked"] .status-dot { background: var(--blocked); box-shadow: 0 0 14px rgba(167,139,250,.35); }
 .scenario[data-status="skipped"] .status-dot { background: var(--warn); box-shadow: 0 0 14px rgba(255,181,69,.35); }
 
 .scenario-kpis,
@@ -1118,6 +1182,30 @@ select.runner-select {
     color: var(--muted);
     font-family: var(--mono);
     font-size: 11px;
+}
+
+.scenario-kpis .scenario-status {
+    color: var(--accent-2);
+    background: var(--accent-soft);
+    border-color: rgba(68,215,255,.28);
+}
+
+.scenario[data-status="passed"] .scenario-status {
+    color: var(--good);
+    background: var(--good-soft);
+    border-color: rgba(40,214,163,.3);
+}
+
+.scenario[data-status="failed"] .scenario-status {
+    color: #ffd6dc;
+    background: var(--bad-soft);
+    border-color: rgba(255,85,113,.3);
+}
+
+.scenario[data-status="blocked"] .scenario-status {
+    color: #d8ccff;
+    background: var(--blocked-soft);
+    border-color: rgba(167,139,250,.35);
 }
 
 .scenario-actions button {
@@ -1515,6 +1603,7 @@ pre {
                 <input type="checkbox" id="analisar">
                 <span class="toggle-ui" aria-hidden="true"></span>
             </label>
+            <div class="suite-note sidebar-text">Guard real ativo por padrao: bloqueios aparecem como BLOCKED.</div>
 
             <div class="suite-actions">
                 <button class="primary command-button wide" id="executeButton" type="button" onclick="executar()" title="Executar testes">
@@ -1540,9 +1629,9 @@ pre {
             </div>
 
             <div class="summary">
-                <div class="metric">
+                <div class="metric status-metric">
                     <div class="k">Status</div>
-                    <div class="v" id="status">-</div>
+                    <div class="v status-token status-idle" id="status">IDLE</div>
                 </div>
                 <div class="metric">
                     <div class="k">Steps</div>
@@ -1561,6 +1650,8 @@ pre {
                 <button class="scenario-filter active" type="button" data-filter="all" onclick="filterRunnerScenarios('all')">Todos</button>
                 <button class="scenario-filter" type="button" data-filter="passed" onclick="filterRunnerScenarios('passed')">Passed</button>
                 <button class="scenario-filter" type="button" data-filter="failed" onclick="filterRunnerScenarios('failed')">Failed</button>
+                <button class="scenario-filter" type="button" data-filter="blocked" onclick="filterRunnerScenarios('blocked')">Blocked</button>
+                <button class="scenario-filter" type="button" data-filter="running" onclick="filterRunnerScenarios('running')">Running</button>
                 <button class="scenario-filter" type="button" data-filter="skipped" onclick="filterRunnerScenarios('skipped')">Skipped</button>
             </div>
         </section>
@@ -1594,7 +1685,7 @@ pre {
                 <div class="status-line"><strong>/api/scenarios</strong><span>ok</span></div>
                 <div class="status-line"><strong>/api/templates</strong><span>ok</span></div>
                 <div class="status-line"><strong>/api/adapters</strong><span>mock</span></div>
-                <div class="status-line"><strong>/executar</strong><span>SSE</span></div>
+                <div class="status-line"><strong>/executar</strong><span>SSE seguro</span></div>
             </div>
         </section>
     </aside>
@@ -3184,11 +3275,31 @@ function setExecutionControlState(state){
     executeButton.disabled = false
 }
 
+function getRunStatusMeta(status){
+    const value = String(status || "IDLE").toUpperCase()
+    if(value === "PASS") return { text: "PASS", cls: "status-pass", logClass: "ok", scenarioText: "concluido" }
+    if(value === "FAIL") return { text: "FAIL", cls: "status-fail", logClass: "bad", scenarioText: "falha" }
+    if(value === "BLOCKED") return { text: "BLOCKED", cls: "status-blocked", logClass: "blocked", scenarioText: "bloqueado" }
+    if(value === "RUNNING") return { text: "RUNNING", cls: "status-running", logClass: "warn", scenarioText: "em execucao" }
+    if(value === "PAUSED") return { text: "PAUSED", cls: "status-paused", logClass: "warn", scenarioText: "pausado" }
+    return { text: "IDLE", cls: "status-idle", logClass: "", scenarioText: "idle" }
+}
+
+function setRunStatus(status){
+    const target = document.getElementById("status")
+    if(!target) return
+    const meta = getRunStatusMeta(status)
+    target.textContent = meta.text
+    target.className = `v status-token ${meta.cls}`
+}
+
 function normalizeScenarioStatus(status){
     const value = String(status || "").toLowerCase()
+    if(value.includes("block") || value.includes("bloque")) return "blocked"
     if(value.includes("fail") || value.includes("erro") || value.includes("falha")) return "failed"
     if(value.includes("skip") || value.includes("ignorado") || value.includes("pul")) return "skipped"
     if(value.includes("pass") || value.includes("conclu")) return "passed"
+    if(value.includes("run") || value.includes("execu")) return "running"
     if(value.includes("paus")) return "skipped"
     return "running"
 }
@@ -3253,7 +3364,7 @@ function toggleExecutionPause(){
         executionPaused = true
         currentEventSource.close()
         currentEventSource = null
-        document.getElementById("status").textContent = "PAUSED"
+        setRunStatus("PAUSED")
         addFeed("Execucao pausada no frontend.", "warn")
         setExecutionControlState("paused")
         return
@@ -3320,7 +3431,7 @@ function ensureScenario(kind, numero, msisdn, path){
                 <span class="pill">${escapeHtml(msisdn)}</span>
             </div>
             <div class="scenario-kpis">
-                <span class="scenario-status">em execucao</span>
+                <span class="scenario-status">RUNNING</span>
                 <span><span class="step-count">0</span> steps</span>
                 <span class="duration">-</span>
             </div>
@@ -3366,6 +3477,26 @@ function addScenarioStep(kind, numero, step){
     card.dataset.stepCount = String(stepCount)
     const count = card.querySelector(".step-count")
     if(count) count.textContent = stepCount
+}
+
+function setScenarioStatusText(kind, numero, status){
+    const card = document.getElementById(getScenarioId(kind, numero))
+    if(!card) return
+    const state = card.querySelector(".state")
+    if(state) state.textContent = status
+    const scenarioStatus = card.querySelector(".scenario-status")
+    if(scenarioStatus) scenarioStatus.textContent = status
+}
+
+function appendScenarioAnalysis(kind, numero, analysisText){
+    const card = document.getElementById(getScenarioId(kind, numero))
+    if(!card || !analysisText) return
+
+    const steps = card.querySelector(".steps")
+    const line = document.createElement("div")
+    line.className = "step-item"
+    line.textContent = `Analise: ${analysisText}`
+    steps.appendChild(line)
 }
 
 function finishScenario(kind, numero, status, analysisText){
@@ -3417,7 +3548,7 @@ function executar(options = {}){
     document.getElementById("scenarios").innerHTML = ""
     document.getElementById("analysis").textContent = "Nenhuma análise ainda."
     document.getElementById("analysis").classList.add("muted")
-    document.getElementById("status").textContent = "-"
+    setRunStatus("IDLE")
     document.getElementById("stepsCount").textContent = "0"
     document.getElementById("errorCount").textContent = "0"
     document.getElementById("progress").style.width = "0%"
@@ -3428,6 +3559,7 @@ function executar(options = {}){
     totalErrors = append ? totalErrors : 0
     executionPaused = false
     lastExecutionConfig = {tipo, analisar}
+    setRunStatus("RUNNING")
     setExecutionControlState("running")
     updateRunnerEmptyState()
 
@@ -3445,17 +3577,18 @@ function executar(options = {}){
             const status = parts[2]
             const steps = parts[3]
             const errors = parts[4]
-            document.getElementById("status").textContent = status
+            const statusMeta = getRunStatusMeta(status)
+            setRunStatus(status)
             document.getElementById("stepsCount").textContent = steps
             document.getElementById("errorCount").textContent = errors
             document.getElementById("progress").style.width = "100%"
-            addFeed(`Execução finalizada: ${status}`, status === "PASS" ? "ok" : "bad")
+            addFeed(`Execucao finalizada: ${statusMeta.text}`, statusMeta.logClass)
             eventSource.close()
             currentEventSource = null
             setExecutionControlState("idle")
             document.querySelectorAll("#scenarios .scenario.active").forEach(card => {
                 const parts = card.id.split("-")
-                finishScenario(parts[0], parts.slice(1).join("-"), status === "PASS" ? "concluido" : "falha", "")
+                finishScenario(parts[0], parts.slice(1).join("-"), statusMeta.scenarioText, "")
             })
         }
         else if(data.startsWith("SCENARIO|START")){
@@ -3472,8 +3605,8 @@ function executar(options = {}){
             const parts = data.split("|")
             const kind = parts[2]
             const numero = parts[3]
-            addFeed(`Cenário finalizado: ${kind} #${numero}`, "ok")
-            finishScenario(kind, numero, "concluído", "")
+            addFeed(`Cenario finalizado: ${kind} #${numero}`, "ok")
+            setScenarioStatusText(kind, numero, "aguardando resultado")
         }
         else if(data.startsWith("STEP|")){
             const parts = data.split("|")
@@ -3494,7 +3627,8 @@ function executar(options = {}){
             document.getElementById("analysis").textContent = analysis
             document.getElementById("analysis").classList.remove("muted")
             addFeed(`Análise ${kind} #${numero}: ${analysis}`, "ok")
-            finishScenario(kind, numero, "concluído com análise", analysis)
+            setScenarioStatusText(kind, numero, "analise recebida")
+            appendScenarioAnalysis(kind, numero, analysis)
         }
         else if(data.startsWith("ERROR|")){
             totalErrors++
@@ -3521,6 +3655,7 @@ function executar(options = {}){
 
 applySidebarPreference()
 setExecutionControlState("idle")
+setRunStatus("IDLE")
 updateRunnerEmptyState()
 updateAdapterPanelForScenario()
 loadQuestions()

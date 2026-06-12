@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.7.5.2
-- Ultimo MVP aprovado: MVP7.7.5.2 - Legacy Evidence Runner Result Semantics Fix
+- MVP atual concluido: MVP7.8.0
+- Ultimo MVP aprovado: MVP7.8.0 - Presentation UI Polish & Smoke Test
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -46,6 +46,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.7.5 | Concluido/Aprovado | Evidence Payload Builder Fix |
 | MVP7.7.5.1 | Concluido/Aprovado | Legacy Real Script Safety Wrapper |
 | MVP7.7.5.2 | Concluido/Aprovado | Legacy Evidence Runner Result Semantics Fix |
+| MVP7.8.0 | Concluido/Aprovado | Presentation UI Polish & Smoke Test |
 
 ## MVP7.6
 
@@ -804,6 +805,42 @@ Fechamento:
 - testes existentes devem passar com `python -m pytest tests -q`;
 - testes do runner devem usar apenas fixtures sinteticas e subprocess fake;
 - diff deve permanecer seguro e sem dado sensivel novo;
+- worktree deve ficar limpa apos commit/push.
+
+### MVP7.8.0 - Presentation UI Polish & Smoke Test
+
+Status: concluido/aprovado.
+
+Objetivo: aplicar polimento leve na UI para apresentacao tecnica, mantendo o produto estavel e sem tocar em API, BD, payload builder, adapter-run, dry-run core ou catalogo seguro.
+
+Entregas:
+
+- adicionar tokens visuais explicitos para `PASS`, `FAIL`, `BLOCKED`, `RUNNING`, `PAUSED` e `IDLE` no runner legado;
+- diferenciar `BLOCKED` de falha funcional no terminal, resumo lateral e cards de execucao;
+- incluir filtros de cards para `Blocked` e `Running`;
+- deixar visivel que o guard de execucao real permanece ativo por padrao;
+- evitar que `SCENARIO|END` marque sucesso antes do `RUN|END` final;
+- melhorar legibilidade de logs e cards sem reescrever a UI;
+- adicionar teste estatico de UI para estados do runner.
+
+Nao escopo:
+
+- executar QA4;
+- chamar API real;
+- chamar Oracle/BD real;
+- alterar regras SmartOffers;
+- alterar payloads;
+- alterar adapter-run real mode;
+- alterar dry-run core;
+- alterar catalogo seguro;
+- adicionar dependencia pesada;
+- versionar ZIP bruto, host, IP, token, secret, payload real, MSISDN, account, documento ou response body.
+
+Fechamento:
+
+- validar telas principais localmente;
+- executar `python -m pytest tests -q`;
+- manter diff seguro e sem dado sensivel novo;
 - worktree deve ficar limpa apos commit/push.
 
 ### MVP7.7 - Primeira chamada real opt-in em QA4
