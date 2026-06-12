@@ -47,15 +47,26 @@ DB_PORT=1521
 DB_SERVICE="SMARTDB"
 DB_USER="acm"
 DB_PASS="acm"
-
-oracledb.init_oracle_client(
-    lib_dir=r"C:\Users\322249\OneDrive - OPEN LABS S.A\Documentos\PosPagoSazonal\auto\instantclient-basic-windows.x64-21.20.0.0.0dbru\instantclient_21_20"
-)
+LEGACY_REAL_SCRIPT_ENV = "SMARTOFFERS_ALLOW_LEGACY_REAL_SCRIPT"
+LEGACY_REAL_SCRIPT_CONFIRMATION = "YES_I_UNDERSTAND"
 
 # ==========================
 
 
+def ensure_legacy_real_script_allowed():
+    if os.getenv(LEGACY_REAL_SCRIPT_ENV) != LEGACY_REAL_SCRIPT_CONFIRMATION:
+        raise SystemExit(
+            "Execucao real bloqueada. Defina "
+            f"{LEGACY_REAL_SCRIPT_ENV}={LEGACY_REAL_SCRIPT_CONFIRMATION} "
+            "somente durante execucao manual autorizada."
+        )
+
+
 def conectar_db():
+    oracledb.init_oracle_client(
+        lib_dir=r"C:\Users\322249\OneDrive - OPEN LABS S.A\Documentos\PosPagoSazonal\auto\instantclient-basic-windows.x64-21.20.0.0.0dbru\instantclient_21_20"
+    )
+
     dsn = oracledb.makedsn(DB_HOST, DB_PORT, service_name=DB_SERVICE)
 
     return oracledb.connect(
@@ -291,16 +302,25 @@ def executar_pre(numero,conn):
 # MAIN
 # ==========================
 
-print("\n====== INICIO TESTES ======\n")
+def main():
+    ensure_legacy_real_script_allowed()
 
-conn = conectar_db()
+    print("\n====== INICIO TESTES ======\n")
 
-for i in range(1,3):
-    executar_pos("upsell",i,conn)
+    conn = conectar_db()
 
-for i in range(1,3):
-    executar_pre(i,conn)
+    try:
+        for i in range(1,3):
+            executar_pos("upsell",i,conn)
 
-conn.close()
+        for i in range(1,3):
+            executar_pre(i,conn)
+    finally:
+        conn.close()
 
-print("\n====== FINALIZADO ======\n")
+    print("\n====== FINALIZADO ======\n")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

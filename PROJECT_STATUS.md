@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.7.5
-- Ultimo MVP aprovado: MVP7.7.5 - Evidence Payload Builder Fix
+- MVP atual concluido: MVP7.7.5.1
+- Ultimo MVP aprovado: MVP7.7.5.1 - Legacy Real Script Safety Wrapper
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -44,6 +44,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.7.3 | Concluido/Aprovado | Manual QA4 Execution Readiness Package |
 | MVP7.7.4 | Concluido/Aprovado | Documentation Sync & Evidence Regression Analysis |
 | MVP7.7.5 | Concluido/Aprovado | Evidence Payload Builder Fix |
+| MVP7.7.5.1 | Concluido/Aprovado | Legacy Real Script Safety Wrapper |
 
 ## MVP7.6
 
@@ -709,6 +710,48 @@ Nao escopo:
 - alteracao de adapter-run real mode;
 - alteracao do catalogo seguro;
 - versionamento de ZIP bruto, host, IP, token, secret, payload real, MSISDN, account, documento ou response body.
+
+Fechamento:
+
+- testes existentes devem passar com `python -m pytest tests -q`;
+- `adapter-run mode=real` deve continuar bloqueado;
+- diff deve permanecer seguro e sem dado sensivel novo;
+- worktree deve ficar limpa apos commit/push.
+
+### MVP7.7.5.1 - Legacy Real Script Safety Wrapper
+
+Status: concluido/aprovado.
+
+Objetivo: impedir execucao real acidental dos scripts historicos de evidencia, preservando a execucao manual autorizada e a correcao de `attributeDetails` do MVP7.7.5.
+
+Entregas:
+
+- adicionar guard obrigatorio `SMARTOFFERS_ALLOW_LEGACY_REAL_SCRIPT=YES_I_UNDERSTAND`;
+- mover o fluxo executavel de `test_campaign_api_variante.py` para `main()`;
+- mover o fluxo executavel de `test_campaign_api_variante_copy.py` para `main()`;
+- proteger `main()` com `if __name__ == "__main__"`;
+- manter `montar_payload_pos` e `montar_payload_pre` funcionando;
+- manter chamadas manuais API/BD disponiveis quando o guard explicito for definido;
+- criar `tests/test_legacy_real_script_safety.py` com testes deterministicos por import controlado e AST.
+
+Achados da correcao:
+
+- sem guard, a execucao aborta antes de inicializacao Oracle, conexao BD ou chamada HTTP;
+- importar os scripts nao dispara fluxo real;
+- com guard e funcoes de execucao substituidas por fakes nos testes, o caminho manual continua alcancavel;
+- os builders puros do MVP7.7.5 continuam sendo usados.
+
+Nao escopo:
+
+- executar QA4;
+- chamar API real;
+- chamar Oracle/BD real;
+- remover a capacidade de execucao manual autorizada;
+- alterar adapter-run;
+- alterar dry-run;
+- alterar UI/rotas;
+- alterar catalogo seguro;
+- versionar ZIP bruto, secret, token, payload real, MSISDN, account, documento ou response body.
 
 Fechamento:
 
