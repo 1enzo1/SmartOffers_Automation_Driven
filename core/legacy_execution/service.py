@@ -2,10 +2,16 @@ import json
 import os
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
+
+from core.utils.evidence_response_contract import analyze_smartoffers_response
 
 
 BASE_PATH = "evidencias_variante"
+LEGACY_REAL_SCRIPT_ENV = "SMARTOFFERS_ALLOW_LEGACY_REAL_SCRIPT"
+LEGACY_REAL_SCRIPT_CONFIRMATION = "YES_I_UNDERSTAND"
+LEGACY_REAL_BLOCKED_MARKER = "execucao real bloqueada"
 
 SCRIPTS = {
     "padrao": "test_campaign_api.py",
@@ -14,7 +20,12 @@ SCRIPTS = {
 }
 
 
-def stream_legacy_execution(tipo, analisar):
+def stream_legacy_execution(
+    tipo,
+    analisar,
+    allow_legacy_real_script=False,
+    process_factory=None,
+):
     script = SCRIPTS.get(tipo)
 
     if not script:
@@ -24,10 +35,13 @@ def stream_legacy_execution(tipo, analisar):
     try:
         yield f"data:RUN|START|{tipo}\n\n"
 
-        env = os.environ.copy()
-        env["ANALISAR_EXECUCAO"] = "1" if analisar else "0"
+        env = build_legacy_execution_env(
+            analisar,
+            allow_legacy_real_script=allow_legacy_real_script,
+        )
+        process_factory = process_factory or subprocess.Popen
 
-        process = subprocess.Popen(
+        process = process_factory(
             [sys.executable, "-u", script],
             stdout=subprocess.PIPE,
             stderr=subprocess.STDOUT,
@@ -38,16 +52,27 @@ def stream_legacy_execution(tipo, analisar):
 
         total_steps = 0
         errors = 0
+        blocked = False
+        scenario_paths = set()
 
         for line in process.stdout:
             line = line.strip()
             if not line:
                 continue
 
-            if line.startswith("STEP|"):
+            if is_legacy_real_blocked_output(line):
+                blocked = True
+                errors += 1
+                yield f"data:ERROR|{line}\n\n"
+            elif line.startswith("STEP|"):
                 total_steps += 1
                 yield f"data:{line}\n\n"
-            elif line.startswith("SCENARIO|") or line.startswith("ANALYSIS|"):
+            elif line.startswith("SCENARIO|"):
+                scenario_path = extract_legacy_scenario_path(line)
+                if scenario_path:
+                    scenario_paths.add(scenario_path)
+                yield f"data:{line}\n\n"
+            elif line.startswith("ANALYSIS|"):
                 yield f"data:{line}\n\n"
             elif "erro" in line.lower():
                 errors += 1
@@ -56,10 +81,119 @@ def stream_legacy_execution(tipo, analisar):
                 yield f"data:LOG|{line}\n\n"
 
         process.wait()
-        status = "PASS" if errors == 0 else "FAIL"
+        response_summary = analyze_legacy_response_files(scenario_paths)
+        if response_summary["failed"] > 0:
+            errors += response_summary["failed"]
+            issue_summary = ",".join(response_summary["issue_counts"].keys()) or "unknown"
+            yield (
+                "data:ERROR|SmartOffers functional response failure:"
+                f" failed={response_summary['failed']} issues={issue_summary}\n\n"
+            )
+        elif scenario_paths and response_summary["total"] == 0:
+            errors += 1
+            yield "data:ERROR|SmartOffers response evidence missing\n\n"
+
+        returncode = getattr(process, "returncode", 0)
+        if returncode not in (0, None) and not blocked:
+            errors += 1
+
+        status = resolve_legacy_run_status(
+            blocked=blocked,
+            errors=errors,
+            returncode=returncode,
+            response_summary=response_summary,
+        )
         yield f"data:RUN|END|{status}|{total_steps}|{errors}\n\n"
     except Exception as exc:
         yield f"data:ERROR|{str(exc)}\n\n"
+
+
+def build_legacy_execution_env(
+    analisar,
+    allow_legacy_real_script=False,
+    base_env=None,
+):
+    env = dict(os.environ if base_env is None else base_env)
+    env["ANALISAR_EXECUCAO"] = "1" if analisar else "0"
+    env.pop(LEGACY_REAL_SCRIPT_ENV, None)
+
+    if allow_legacy_real_script:
+        env[LEGACY_REAL_SCRIPT_ENV] = LEGACY_REAL_SCRIPT_CONFIRMATION
+
+    return env
+
+
+def resolve_legacy_run_status(blocked, errors, returncode, response_summary=None):
+    if blocked:
+        return "BLOCKED"
+    if errors > 0:
+        return "FAIL"
+    if returncode not in (0, None):
+        return "FAIL"
+    if response_summary and response_summary.get("failed", 0) > 0:
+        return "FAIL"
+    return "PASS"
+
+
+def is_legacy_real_blocked_output(line):
+    normalized = unicodedata.normalize("NFKD", line)
+    ascii_line = normalized.encode("ascii", "ignore").decode("ascii")
+    return LEGACY_REAL_BLOCKED_MARKER in ascii_line.lower()
+
+
+def extract_legacy_scenario_path(line):
+    parts = line.split("|")
+    if len(parts) < 6:
+        return None
+    return "|".join(parts[5:]).strip() or None
+
+
+def analyze_legacy_response_files(scenario_paths):
+    summary = {
+        "total": 0,
+        "passed": 0,
+        "failed": 0,
+        "issue_counts": {},
+    }
+
+    for response_file in find_legacy_response_files(scenario_paths):
+        response = load_json_file(response_file)
+        result = analyze_smartoffers_response(response)
+        summary["total"] += 1
+
+        if result["status"] == "PASS":
+            summary["passed"] += 1
+            continue
+
+        summary["failed"] += 1
+        for issue in result["issues"]:
+            summary["issue_counts"][issue] = summary["issue_counts"].get(issue, 0) + 1
+
+    return summary
+
+
+def find_legacy_response_files(scenario_paths):
+    seen = set()
+
+    for scenario_path in scenario_paths:
+        folder = Path(scenario_path)
+        if not folder.exists() or not folder.is_dir():
+            continue
+
+        for path in sorted(folder.glob("*response*.json")):
+            resolved = path.resolve()
+            if resolved in seen:
+                continue
+            seen.add(resolved)
+            yield path
+
+
+def load_json_file(path):
+    try:
+        with open(path, encoding="utf-8") as file:
+            return json.load(file)
+    except Exception:
+        return None
 
 
 def list_legacy_tests():

@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.7.5.1
-- Ultimo MVP aprovado: MVP7.7.5.1 - Legacy Real Script Safety Wrapper
+- MVP atual concluido: MVP7.7.5.2
+- Ultimo MVP aprovado: MVP7.7.5.2 - Legacy Evidence Runner Result Semantics Fix
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -45,6 +45,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.7.4 | Concluido/Aprovado | Documentation Sync & Evidence Regression Analysis |
 | MVP7.7.5 | Concluido/Aprovado | Evidence Payload Builder Fix |
 | MVP7.7.5.1 | Concluido/Aprovado | Legacy Real Script Safety Wrapper |
+| MVP7.7.5.2 | Concluido/Aprovado | Legacy Evidence Runner Result Semantics Fix |
 
 ## MVP7.6
 
@@ -757,6 +758,51 @@ Fechamento:
 
 - testes existentes devem passar com `python -m pytest tests -q`;
 - `adapter-run mode=real` deve continuar bloqueado;
+- diff deve permanecer seguro e sem dado sensivel novo;
+- worktree deve ficar limpa apos commit/push.
+
+### MVP7.7.5.2 - Legacy Evidence Runner Result Semantics Fix
+
+Status: concluido/aprovado.
+
+Objetivo: corrigir a semantica do runner legado de evidencias para que bloqueio operacional, erro funcional de API e sucesso funcional real sejam classificados de forma distinta.
+
+Entregas:
+
+- adicionar analisador puro `core/utils/evidence_response_contract.py` para responses SmartOffers sanitizadas;
+- classificar response como `PASS` somente quando `status == "Success"`, `result == true` e `uniqueId` estiver preenchido;
+- classificar response como `FAIL` quando houver `status == "Error"`, `result == false`, `uniqueId` ausente/nulo ou `event` vazio em resposta de erro;
+- analisar response no root e tambem dentro de `body`;
+- alterar `core/legacy_execution/service.py` para retornar `BLOCKED` quando stdout/stderr indicar `Execucao real bloqueada`;
+- manter o guard `SMARTOFFERS_ALLOW_LEGACY_REAL_SCRIPT=YES_I_UNDERSTAND` fora do ambiente do subprocess por padrao;
+- permitir que o runner passe o guard somente por parametro explicito de autorizacao manual;
+- criar `tests/test_legacy_execution_result_semantics.py` com subprocess fake e fixtures sinteticas.
+
+Achados da correcao:
+
+- exit code zero nao e mais suficiente para `PASS` quando a response SmartOffers indica erro funcional;
+- HTTP 200 com `result=false` e tratado como falha funcional;
+- execucao bloqueada pelo guard deixa de aparecer como `PASS`;
+- a rota atual `/executar` continua usando o comportamento seguro por padrao, sem autorizacao automatica para execucao real;
+- `adapter-run mode=real` permanece bloqueado.
+
+Nao escopo:
+
+- executar QA4;
+- chamar API real;
+- chamar Oracle/BD real;
+- remover o guard;
+- habilitar execucao real por padrao;
+- alterar payload builder do MVP7.7.5;
+- alterar dry-run;
+- alterar adapter-run;
+- alterar catalogo seguro;
+- versionar ZIP bruto, host, IP, token, secret, payload real, MSISDN, account, documento ou response body.
+
+Fechamento:
+
+- testes existentes devem passar com `python -m pytest tests -q`;
+- testes do runner devem usar apenas fixtures sinteticas e subprocess fake;
 - diff deve permanecer seguro e sem dado sensivel novo;
 - worktree deve ficar limpa apos commit/push.
 
