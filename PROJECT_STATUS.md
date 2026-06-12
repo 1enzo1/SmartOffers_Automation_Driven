@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.7.3
-- Ultimo MVP aprovado: MVP7.7.3 - Manual QA4 Execution Readiness Package
+- MVP atual concluido: MVP7.7.4
+- Ultimo MVP aprovado: MVP7.7.4 - Documentation Sync & Evidence Regression Analysis
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -42,6 +42,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.7.1.1 | Concluido/Aprovado | First QA4 Real Call Gate manual e controlado |
 | MVP7.7.2 | Concluido/Aprovado | Real Execution Hardening & Evidence Pack |
 | MVP7.7.3 | Concluido/Aprovado | Manual QA4 Execution Readiness Package |
+| MVP7.7.4 | Concluido/Aprovado | Documentation Sync & Evidence Regression Analysis |
 
 ## MVP7.6
 
@@ -625,6 +626,55 @@ Fechamento:
 - testes existentes devem passar;
 - diff deve permanecer vazio nos caminhos proibidos;
 - worktree deve ficar limpa apos commit/push.
+
+### MVP7.7.4 - Documentation Sync & Evidence Regression Analysis
+
+Status: concluido/aprovado.
+
+Objetivo: sincronizar `README.md` e `PROJECT_STATUS.md` com o estado real atual dos MVPs e registrar uma analise sanitizada da regressao observada nas evidencias QA4 manuais, sem corrigir producao nesta etapa.
+
+Evidencias analisadas localmente:
+
+- `te_120626_091902.zip`: evidencia padrao que funcionou como baseline de API/BD;
+- `te_120626_024118.zip`: evidencia variante que falhou;
+- `te_120626_092954.zip`: evidencia copy que falhou.
+
+Entregas:
+
+- atualizar `README.md` para MVP7.7.3 e MVP7.7.4;
+- atualizar `PROJECT_STATUS.md` com MVP7.7.4;
+- criar `ai/evidence/mvp7-7-4-evidence-regression-analysis.md`;
+- criar `core/utils/evidence_payload_contract.py` como utilitario puro e deterministico;
+- criar `tests/test_evidence_payload_contract.py` com fixtures sinteticas e sanitizadas.
+
+Achados tecnicos:
+
+- a evidencia padrao contem `attributeDetails` em todos os requests inspecionados;
+- cada atributo enviado no padrao possui metadata correspondente;
+- variante e copy possuem `attributes`, mas omitem `attributeDetails`;
+- `eventTime` existe nos tres conjuntos e tem a mesma forma de string;
+- o fluxo `pre` da variante envia uma forma mais ampla que a copy, mas ambos continuam incompletos por falta de metadata;
+- a API retorna erro nas evidencias variante/copy antes de produzir evidencia util de downstream;
+- a causa provavel e payload incompleto nas variantes, nao falha isolada de BD.
+
+Nao escopo:
+
+- corrigir os scripts de execucao real historicos;
+- executar QA4;
+- chamar API real;
+- chamar Oracle/BD real;
+- alterar adapter-run;
+- alterar dry-run;
+- alterar UI/rotas;
+- alterar catalogo seguro;
+- versionar ZIP bruto, host, IP, token, secret, payload real, MSISDN, account, documento ou response body.
+
+Fechamento:
+
+- testes existentes devem passar com `python -m pytest tests -q`;
+- diff deve permanecer vazio em `app.py`, `templates/`, `core/execution/`, `core/simulation/`, `core/generation/` e `core/api_catalog/`;
+- novos documentos/testes nao devem conter dados sensiveis;
+- ZIPs brutos devem permanecer ignorados e nao versionados.
 
 ### MVP7.7 - Primeira chamada real opt-in em QA4
 

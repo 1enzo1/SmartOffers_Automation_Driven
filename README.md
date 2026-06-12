@@ -4,7 +4,7 @@ SmartOffers_Automation_Driven e uma plataforma Flask/Python local-first e mock-f
 
 O produto deve evoluir como um laboratorio seguro de automacao SmartOffers/ACM, nao apenas como um gerador ou simulador de testes. Ele transforma regras de campanha, eventos, APIs sanitizadas, evidencias operacionais e troubleshooting em cenarios deterministicos, dry-runs, adapter-runs mockados, `request_plan` seguro e, em MVP futuro, execucoes reais controladas.
 
-Estado atual: MVP7.6 concluido. A branch `qa/mvp4-integration` e a linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4. A execucao real segue bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs, Kafka, Jenkins ou rede externa.
+Estado atual: MVP7.7.4 concluido. A branch `qa/mvp4-integration` e a linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4. A execucao real segue bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs, Kafka, Jenkins ou rede externa.
 
 ## Objetivo
 
@@ -141,6 +141,8 @@ Ao validar Flask em tarefas automatizadas, suba o processo em background, faca c
 
 `templates/index.html` contem a UI Flask atual em HTML/CSS/JavaScript puro.
 
+`core/utils/evidence_payload_contract.py` contem diagnostico puro e deterministico de payloads de evidencia, sem abrir ZIP bruto, sem chamada real e sem dado sensivel.
+
 ## MVP7.6: SmartOffers request planning mockado
 
 O MVP7.6 faz o `FakeSmartOffersAdapter` consumir o catalogo seguro para montar `request_plan` deterministico apenas em steps `smartoffers.http_plan`.
@@ -176,6 +178,40 @@ Contrato resumido de `request_plan`:
   "planning_mode": "mock_only"
 }
 ```
+
+## MVP7.7.3: Manual QA4 execution readiness package
+
+O MVP7.7.3 criou o pacote final de prontidao para uma futura execucao manual QA4, ainda sem executar QA4, sem chamada real, sem dado real e sem automacao.
+
+Entregas principais:
+
+- pacote de readiness manual QA4;
+- template de roteiro operacional humano;
+- template de aprovacao manual sanitizada;
+- template de evidencia manual sanitizada;
+- testes garantindo placeholders, ausencia de valores reais e manutencao do bloqueio de `adapter-run mode=real`.
+
+## MVP7.7.4: Documentation sync and evidence regression analysis
+
+O MVP7.7.4 sincroniza documentacao e registra a analise sanitizada da regressao entre uma evidencia padrao funcional e evidencias variante/copy que falharam.
+
+Entregas principais:
+
+- `README.md` e `PROJECT_STATUS.md` atualizados com o estado real dos MVPs;
+- analise em `ai/evidence/mvp7-7-4-evidence-regression-analysis.md`;
+- utilitario puro `core/utils/evidence_payload_contract.py`;
+- testes deterministicos em `tests/test_evidence_payload_contract.py`.
+
+Conclusao tecnica do diagnostico:
+
+- a evidencia padrao contem `attributeDetails` em todos os requests inspecionados;
+- cada atributo enviado no padrao possui metadata correspondente;
+- variante e copy possuem `attributes`, mas nao possuem `attributeDetails`;
+- `eventTime` existe nos tres conjuntos com a mesma forma de string;
+- a copy reduz o payload `pre` em relacao a variante;
+- a causa provavel e payload incompleto nas variantes, nao uma falha isolada de BD.
+
+O MVP7.7.4 nao corrige producao, nao altera adapter-run, nao altera dry-run, nao chama QA4 e nao chama BD real.
 
 ## Supervisores e skills
 
