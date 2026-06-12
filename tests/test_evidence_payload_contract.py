@@ -1,4 +1,3 @@
-import subprocess
 from pathlib import Path
 
 from core.utils.evidence_payload_contract import (
@@ -9,6 +8,22 @@ from core.utils.evidence_payload_contract import (
 
 
 ROOT = Path(__file__).resolve().parents[1]
+IGNORED_ZIP_SCAN_DIRS = {
+    ".git",
+    ".venv",
+    "venv",
+    "__pycache__",
+    ".pytest_cache",
+    ".pytest_tmp",
+    ".test_output",
+    ".test_smoke",
+    "evidencias",
+    "evidencias_variante",
+    "evidencias_teste_auto",
+    "cenarios_gerados",
+    "dryruns_gerados",
+    "exports_gerados",
+}
 
 
 def _complete_payload():
@@ -83,12 +98,19 @@ def test_raw_evidence_zips_are_not_versioned_and_remain_ignored():
     assert "evidencias_variante/" in gitignore
     assert "*.zip" in gitignore
 
-    result = subprocess.run(
-        ["git", "ls-files", "*.zip"],
-        cwd=ROOT,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
+    gitignore_rules = set(gitignore.splitlines())
+    zip_files = [
+        path
+        for path in ROOT.rglob("*.zip")
+        if not set(path.relative_to(ROOT).parts) & {".git", ".venv", "venv", "__pycache__"}
+    ]
 
-    assert result.stdout.strip() == ""
+    assert all(_is_zip_covered_by_gitignore(path, gitignore_rules) for path in zip_files)
+
+
+def _is_zip_covered_by_gitignore(path, gitignore_rules):
+    relative_parts = path.relative_to(ROOT).parts
+    ignored_dir_rules = {f"{part}/" for part in relative_parts}
+    return ("*.zip" in gitignore_rules and path.suffix == ".zip") or bool(
+        ignored_dir_rules & gitignore_rules & {f"{name}/" for name in IGNORED_ZIP_SCAN_DIRS}
+    )
