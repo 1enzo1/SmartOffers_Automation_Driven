@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.7.1.1
-- Ultimo MVP aprovado: MVP7.7.1.1 - First QA4 Real Call Gate
+- MVP atual concluido: MVP7.7.2
+- Ultimo MVP aprovado: MVP7.7.2 - Real Execution Hardening & Evidence Pack
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -40,6 +40,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.7.0 | Concluido/Aprovado | Real Execution Readiness Gate deterministico |
 | MVP7.7.1.0 | Concluido/Aprovado | Runtime Secret Contract com fake client obrigatorio |
 | MVP7.7.1.1 | Concluido/Aprovado | First QA4 Real Call Gate manual e controlado |
+| MVP7.7.2 | Concluido/Aprovado | Real Execution Hardening & Evidence Pack |
 
 ## MVP7.6
 
@@ -536,8 +537,51 @@ Fechamento:
 - Self Review final: APROVADO;
 - testes existentes devem passar;
 - mudancas devem ficar restritas a `ai/real-execution/`, `core/real_execution/`, `tests/test_first_qa4_real_call_manual_gate.py` e `PROJECT_STATUS.md`;
-- `urllib.request` permitido somente em `core/real_execution/real_http_client.py`;
+- import HTTP padrao permitido somente em `core/real_execution/real_http_client.py`;
 - validacoes de escopo, imports, evidencia sanitizada, runtime separado, approval, fake/dummy tests, ausencia de mutacao e ausencia de chamada externa automatizada devem passar.
+
+### MVP7.7.2 - Real Execution Hardening & Evidence Pack
+
+Status: concluido/aprovado.
+
+Objetivo: endurecer a camada de execucao real manual criada nos MVPs 7.7.0, 7.7.1.0 e 7.7.1.1, sem executar QA4, sem chamada real e sem dado real.
+
+Entregas:
+
+- criar documento consolidado de hardening/evidencia;
+- criar checklist operacional de execucao manual;
+- criar matriz de guardrails;
+- criar contrato de evidencia sanitizada;
+- criar testes negativos adicionais para isolamento do client real e guardrails;
+- validar que `RealHttpClient` nao e exportado em `core/real_execution/__init__.py`;
+- validar que `execute_first_qa4_call_manual` nao e exportado em `core/real_execution/__init__.py`;
+- validar que o import HTTP padrao aparece somente em `core/real_execution/real_http_client.py`;
+- validar que falhas de guardrail bloqueiam antes do client;
+- validar que `runtime_secrets` nao aparece em evidencia, log ou retorno.
+
+Nao escopo:
+
+- execucao QA4;
+- chamada real;
+- dado real;
+- UI;
+- rota;
+- integracao com adapter-run;
+- alteracao de dry-run;
+- alteracao do catalogo seguro;
+- alteracao de `request_plan`;
+- chamada Oracle, Kafka ou Jenkins;
+- Playwright;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- mudancas devem ficar restritas a `ai/real-execution/`, testes de hardening, utilitarios puros em `core/real_execution/` se necessarios e `PROJECT_STATUS.md`;
+- diff deve permanecer vazio nos caminhos proibidos;
+- worktree deve ficar limpa apos commit/push.
 
 ### MVP7.7 - Primeira chamada real opt-in em QA4
 
