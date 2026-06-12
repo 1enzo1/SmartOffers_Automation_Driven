@@ -30,6 +30,7 @@ from core.legacy_execution import (
     open_legacy_base_folder,
     stream_legacy_execution,
 )
+from core.real_execution.environments import list_sanitized_qa_environments
 from core.simulation import run_dry_run, save_dry_run_report
 from core.templates import get_template, list_template_categories, list_templates
 
@@ -39,7 +40,11 @@ app = Flask(__name__)
 
 @app.route("/")
 def index():
-    return render_template("index.html", scripts=SCRIPTS.keys())
+    return render_template(
+        "index.html",
+        scripts=SCRIPTS.keys(),
+        qa_environments=list_sanitized_qa_environments(),
+    )
 
 
 @app.route("/api/questions")
@@ -202,7 +207,19 @@ def api_export_dry_run(report_id, export_format):
 def executar():
     tipo = request.args.get("tipo")
     analisar = request.args.get("analisar") == "true"
-    return Response(stream_legacy_execution(tipo, analisar), mimetype="text/event-stream")
+    execution_mode = request.args.get("execution_mode") or request.args.get("mode")
+    environment = request.args.get("environment")
+    real_confirmed = request.args.get("confirm_real") == "true"
+    return Response(
+        stream_legacy_execution(
+            tipo,
+            analisar,
+            execution_mode=execution_mode,
+            environment=environment,
+            real_confirmed=real_confirmed,
+        ),
+        mimetype="text/event-stream",
+    )
 
 
 @app.route("/listar_testes")

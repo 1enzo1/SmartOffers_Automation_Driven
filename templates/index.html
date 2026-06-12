@@ -638,6 +638,15 @@ select.runner-select {
     line-height: 1.45;
 }
 
+.execution-real-controls {
+    display: grid;
+    gap: 8px;
+}
+
+.execution-real-controls[hidden] {
+    display: none;
+}
+
 .scenario-filter-group {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -1603,6 +1612,33 @@ pre {
                 <input type="checkbox" id="analisar">
                 <span class="toggle-ui" aria-hidden="true"></span>
             </label>
+
+            <div class="suite-field">
+                <label for="executionMode">Modo de execucao</label>
+                <select id="executionMode" onchange="updateExecutionModeControls()">
+                    <option value="mock" selected>mock</option>
+                    <option value="dry_run">dry_run</option>
+                    <option value="real_qa_manual">real_qa_manual</option>
+                </select>
+            </div>
+
+            <div class="execution-real-controls" id="executionRealControls" hidden>
+                <div class="suite-field">
+                    <label for="executionEnvironment">Ambiente QA</label>
+                    <select id="executionEnvironment">
+                        <option value="">Selecionar...</option>
+                        {% for environment in qa_environments %}
+                        <option value="{{ environment.id }}">{{ environment.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <label class="toggle-pill" for="realExecutionConfirmed">
+                    <span class="sidebar-text">Confirmo execucao real QA manual</span>
+                    <input type="checkbox" id="realExecutionConfirmed">
+                    <span class="toggle-ui" aria-hidden="true"></span>
+                </label>
+            </div>
             <div class="suite-note sidebar-text">Guard real ativo por padrao: bloqueios aparecem como BLOCKED.</div>
 
             <div class="suite-actions">
@@ -3528,9 +3564,40 @@ function finishScenario(kind, numero, status, analysisText){
     }
 }
 
+function getExecutionSelection(options = {}){
+    const modeInput = document.getElementById("executionMode")
+    const environmentInput = document.getElementById("executionEnvironment")
+    const confirmationInput = document.getElementById("realExecutionConfirmed")
+    return {
+        mode: options.executionMode || (modeInput ? modeInput.value : "mock") || "mock",
+        environment: options.executionEnvironment !== undefined
+            ? options.executionEnvironment
+            : (environmentInput ? environmentInput.value : ""),
+        confirmed: options.realConfirmed !== undefined
+            ? options.realConfirmed
+            : Boolean(confirmationInput && confirmationInput.checked),
+    }
+}
+
+function updateExecutionModeControls(){
+    const selection = getExecutionSelection()
+    const controls = document.getElementById("executionRealControls")
+    const environmentInput = document.getElementById("executionEnvironment")
+    const confirmationInput = document.getElementById("realExecutionConfirmed")
+    const isReal = selection.mode === "real_qa_manual"
+
+    if(controls) controls.hidden = !isReal
+    if(environmentInput) environmentInput.disabled = !isReal
+    if(confirmationInput){
+        confirmationInput.disabled = !isReal
+        if(!isReal) confirmationInput.checked = false
+    }
+}
+
 function executar(options = {}){
     const tipo = options.tipo || document.getElementById("tipo").value
     const analisar = options.analisar !== undefined ? options.analisar : document.getElementById("analisar").checked
+    const executionSelection = getExecutionSelection(options)
     const append = options.append === true
 
     if(!tipo){
@@ -3558,12 +3625,26 @@ function executar(options = {}){
     totalSteps = append ? totalSteps : 0
     totalErrors = append ? totalErrors : 0
     executionPaused = false
-    lastExecutionConfig = {tipo, analisar}
+    lastExecutionConfig = {
+        tipo,
+        analisar,
+        executionMode: executionSelection.mode,
+        executionEnvironment: executionSelection.environment,
+        realConfirmed: executionSelection.confirmed,
+    }
     setRunStatus("RUNNING")
     setExecutionControlState("running")
     updateRunnerEmptyState()
 
-    const eventSource = new EventSource(`/executar?tipo=${encodeURIComponent(tipo)}&analisar=${analisar}`)
+    const query = new URLSearchParams({
+        tipo,
+        analisar: String(analisar),
+        execution_mode: executionSelection.mode,
+        environment: executionSelection.environment || "",
+        confirm_real: String(executionSelection.confirmed),
+    })
+    addFeed(`Modo de execucao: ${executionSelection.mode}`, "warn")
+    const eventSource = new EventSource(`/executar?${query.toString()}`)
     currentEventSource = eventSource
 
     eventSource.onmessage = function(event){
@@ -3657,6 +3738,7 @@ applySidebarPreference()
 setExecutionControlState("idle")
 setRunStatus("IDLE")
 updateRunnerEmptyState()
+updateExecutionModeControls()
 updateAdapterPanelForScenario()
 loadQuestions()
 loadTemplates()

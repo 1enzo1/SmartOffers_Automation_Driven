@@ -5,6 +5,7 @@ import sys
 import unicodedata
 from pathlib import Path
 
+from core.legacy_execution.modes import evaluate_execution_mode_request
 from core.utils.evidence_response_contract import analyze_smartoffers_response
 
 
@@ -24,6 +25,9 @@ def stream_legacy_execution(
     tipo,
     analisar,
     allow_legacy_real_script=False,
+    execution_mode=None,
+    environment=None,
+    real_confirmed=False,
     process_factory=None,
 ):
     script = SCRIPTS.get(tipo)
@@ -35,9 +39,32 @@ def stream_legacy_execution(
     try:
         yield f"data:RUN|START|{tipo}\n\n"
 
+        mode_decision = evaluate_execution_mode_request(
+            mode=execution_mode,
+            environment=environment,
+            real_confirmed=real_confirmed,
+        )
+        if not mode_decision["allowed"]:
+            reasons = ",".join(mode_decision["blocked_reasons"])
+            yield f"data:ERROR|Execution mode blocked: {reasons}\n\n"
+            yield f"data:RUN|END|BLOCKED|0|1\n\n"
+            return
+
+        yield (
+            "data:LOG|EXECUTION_MODE|"
+            f"{mode_decision['mode']}|environment={mode_decision['environment'] or 'none'}\n\n"
+        )
+
+        if mode_decision["dry_run_only"]:
+            yield "data:LOG|Dry-run local: no legacy subprocess was started.\n\n"
+            yield "data:RUN|END|PASS|0|0\n\n"
+            return
+
         env = build_legacy_execution_env(
             analisar,
-            allow_legacy_real_script=allow_legacy_real_script,
+            allow_legacy_real_script=mode_decision["allow_legacy_real_script"],
+            execution_mode=mode_decision["mode"],
+            environment=mode_decision["environment"],
         )
         process_factory = process_factory or subprocess.Popen
 
@@ -111,10 +138,17 @@ def stream_legacy_execution(
 def build_legacy_execution_env(
     analisar,
     allow_legacy_real_script=False,
+    execution_mode=None,
+    environment=None,
     base_env=None,
 ):
     env = dict(os.environ if base_env is None else base_env)
     env["ANALISAR_EXECUCAO"] = "1" if analisar else "0"
+    env["SMARTOFFERS_EXECUTION_MODE"] = str(execution_mode or "mock")
+    if environment:
+        env["SMARTOFFERS_QA_ENVIRONMENT"] = str(environment)
+    else:
+        env.pop("SMARTOFFERS_QA_ENVIRONMENT", None)
     env.pop(LEGACY_REAL_SCRIPT_ENV, None)
 
     if allow_legacy_real_script:

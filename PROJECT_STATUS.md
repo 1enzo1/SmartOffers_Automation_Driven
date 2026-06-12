@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.8.0
-- Ultimo MVP aprovado: MVP7.8.0 - Presentation UI Polish & Smoke Test
+- MVP atual concluido: MVP7.8.1
+- Ultimo MVP aprovado: MVP7.8.1 - Execution Mode & Environment Selector
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -47,6 +47,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.7.5.1 | Concluido/Aprovado | Legacy Real Script Safety Wrapper |
 | MVP7.7.5.2 | Concluido/Aprovado | Legacy Evidence Runner Result Semantics Fix |
 | MVP7.8.0 | Concluido/Aprovado | Presentation UI Polish & Smoke Test |
+| MVP7.8.1 | Concluido/Aprovado | Execution Mode & Environment Selector |
 
 ## MVP7.6
 
@@ -805,6 +806,44 @@ Fechamento:
 - testes existentes devem passar com `python -m pytest tests -q`;
 - testes do runner devem usar apenas fixtures sinteticas e subprocess fake;
 - diff deve permanecer seguro e sem dado sensivel novo;
+- worktree deve ficar limpa apos commit/push.
+
+### MVP7.8.1 - Execution Mode & Environment Selector
+
+Status: concluido/aprovado.
+
+Objetivo: adicionar seletor claro de modo de execucao para o runner legado, mantendo defaults seguros e exigindo ambiente QA + confirmacao explicita para qualquer tentativa manual real.
+
+Entregas:
+
+- adicionar modos `dry_run`, `mock` e `real_qa_manual` no runner/orquestrador legado;
+- manter default em `mock`, nunca real;
+- permitir ambiente somente por contrato sanitizado `qa1`, `qa2`, `qa3` e `qa4`;
+- versionar apenas referencias de runtime `SMARTOFFERS_QA*_API_URL`, `SMARTOFFERS_QA*_DB_DSN`, `SMARTOFFERS_QA*_DB_USER` e `SMARTOFFERS_QA*_DB_PASSWORD`;
+- bloquear `real_qa_manual` sem ambiente valido;
+- bloquear `real_qa_manual` sem confirmacao explicita;
+- injetar `SMARTOFFERS_ALLOW_LEGACY_REAL_SCRIPT=YES_I_UNDERSTAND` somente quando `real_qa_manual` estiver confirmado com ambiente valido;
+- adicionar UI leve na sidebar para modo, ambiente e confirmacao;
+- manter `adapter-run mode=real` bloqueado;
+- adicionar testes deterministicas para defaults, validacao, bloqueios e contrato sanitizado.
+
+Nao escopo:
+
+- chamar QA/BD real;
+- executar Oracle, API, Kafka ou Jenkins real nos testes;
+- liberar `adapter-run mode=real`;
+- alterar catalogo seguro;
+- alterar `safe_for_real_execution`;
+- alterar `execution_status`;
+- alterar payload builder;
+- reescrever UI;
+- versionar host, IP, usuario, senha, token, DSN real, payload real, MSISDN, account ou documento.
+
+Fechamento:
+
+- executar `python -m pytest tests -q`;
+- confirmar diff seguro e sem dados sensiveis novos;
+- fazer self review antes de commit/push;
 - worktree deve ficar limpa apos commit/push.
 
 ### MVP7.8.0 - Presentation UI Polish & Smoke Test

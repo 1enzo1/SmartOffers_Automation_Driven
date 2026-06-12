@@ -201,6 +201,9 @@ def test_runner_can_pass_guard_with_explicit_authorization():
             "copy",
             analisar=True,
             allow_legacy_real_script=True,
+            execution_mode="real_qa_manual",
+            environment="qa4",
+            real_confirmed=True,
             process_factory=process_factory,
         )
     )
