@@ -1,6 +1,6 @@
 # First QA4 Call Runbook
 
-Este runbook descreve o fluxo futuro para uma primeira chamada QA4. No MVP7.7.1.0 ele e apenas contrato operacional e usa fake client.
+Este runbook descreve o fluxo futuro para uma primeira chamada QA4. No MVP7.7.1.0 ele era apenas contrato operacional com fake client. No MVP7.7.1.1 ele passa a documentar o gate manual controlado, ainda sem execucao real automatizada.
 
 ## API candidata
 
@@ -11,14 +11,16 @@ A API permanece candidata conceitual. Ela nao esta aprovada para chamada real ne
 ## Fluxo seguro
 
 1. Confirmar opt-in explicito.
-2. Validar runtime seguro injetado.
-3. Validar allowlist real conceitual separada do catalogo sanitizado.
-4. Classificar risco com `classify_adapter_risk`.
-5. Avaliar readiness com `evaluate_real_execution_readiness`.
-6. Confirmar kill switch inativo.
-7. Preparar request sanitizado.
-8. Usar apenas fake client no MVP7.7.1.0.
-9. Registrar log sanitizado.
+2. Separar `runtime_refs` sanitizado de `runtime_secrets` em memoria.
+3. Validar runtime sanitizado e runtime real em memoria.
+4. Validar allowlist real conceitual separada do catalogo sanitizado.
+5. Classificar risco com `classify_adapter_risk`, usando apenas work item sanitizado.
+6. Avaliar readiness com `evaluate_real_execution_readiness`, usando apenas request/policy sanitizados.
+7. Confirmar kill switch inativo.
+8. Validar approval humano sanitizado.
+9. Preparar request sanitizado.
+10. Chamar client manual somente se todos os gates passarem.
+11. Registrar apenas evidencia sanitizada.
 
 ## Rollback e kill switch
 
@@ -27,6 +29,8 @@ A API permanece candidata conceitual. Ela nao esta aprovada para chamada real ne
 - falha de allowlist bloqueia antes do client;
 - risco `blocked` bloqueia antes do client;
 - readiness `blocked` bloqueia antes do client.
+- approval ausente ou divergente bloqueia antes do client;
+- runtime real incompleto bloqueia antes do client.
 
 ## Evidencias exigidas antes do MVP7.7.1.1
 
@@ -36,6 +40,8 @@ A API permanece candidata conceitual. Ela nao esta aprovada para chamada real ne
 - confirmacao de segredo via runtime seguro;
 - evidencia de logs sanitizados;
 - evidencia de que testes unitarios usam somente fake client.
+- evidencia de approval humano sanitizado.
+- evidencia de que `adapter-run mode=real` continua bloqueado.
 
 ## Logs permitidos
 

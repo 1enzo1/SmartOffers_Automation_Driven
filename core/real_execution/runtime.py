@@ -9,6 +9,14 @@ REQUIRED_RUNTIME_KEYS = (
     "CORRELATION_ID",
 )
 
+REQUIRED_RUNTIME_SECRET_KEYS = (
+    "endpoint",
+    "auth",
+    "headers",
+    "body",
+    "correlation_id",
+)
+
 RAW_VALUE_KEYS = (
     "HOST",
     "TOKEN",
@@ -51,6 +59,34 @@ def validate_runtime_contract(runtime):
         "valid": not blocked_reasons,
         "blocked_reasons": blocked_reasons,
         "sanitized_runtime": _sanitized_runtime(runtime_data, not blocked_reasons),
+    }
+
+
+def validate_runtime_secrets_contract(runtime_secrets):
+    """Validate in-memory runtime material presence without returning values."""
+    runtime_data = runtime_secrets if isinstance(runtime_secrets, dict) else {}
+    blocked_reasons = []
+
+    for key in REQUIRED_RUNTIME_SECRET_KEYS:
+        if not runtime_data.get(key):
+            blocked_reasons.append(f"missing_runtime_{key}")
+
+    if runtime_data.get("timeout_seconds") is None:
+        blocked_reasons.append("missing_runtime_timeout")
+
+    blocked_reasons = _dedupe_sorted(blocked_reasons)
+    return {
+        "valid": not blocked_reasons,
+        "blocked_reasons": blocked_reasons,
+        "sanitized_runtime": {
+            "valid": not blocked_reasons,
+            "endpoint_present": bool(runtime_data.get("endpoint")),
+            "auth_present": bool(runtime_data.get("auth")),
+            "headers_present": bool(runtime_data.get("headers")),
+            "body_present": bool(runtime_data.get("body")),
+            "correlation_reference": _mask_correlation(str(runtime_data.get("correlation_id") or "")),
+            "timeout_present": runtime_data.get("timeout_seconds") is not None,
+        },
     }
 
 

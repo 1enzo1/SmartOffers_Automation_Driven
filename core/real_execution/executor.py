@@ -1,9 +1,14 @@
+import re
+
 from core.real_execution.allowlist import build_first_qa4_allowlist, validate_first_qa4_allowlist
 from core.real_execution.http_client import is_fake_client
 from core.real_execution.policy import build_readiness_policy
 from core.real_execution.readiness import evaluate_real_execution_readiness
-from core.real_execution.runtime import validate_runtime_contract
+from core.real_execution.runtime import validate_runtime_contract, validate_runtime_secrets_contract
 from core.risk import classify_adapter_risk
+
+
+_IP_PATTERN = re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b")
 
 
 def prepare_first_qa4_call(request, runtime, policy, client):
@@ -60,6 +65,105 @@ def prepare_first_qa4_call(request, runtime, policy, client):
     )
 
 
+def execute_first_qa4_call_manual(request, runtime_refs, runtime_secrets, policy, client, approval):
+    """Gate a manual QA4 call. Runtime values are only passed to the client."""
+    request_data = request if isinstance(request, dict) else {}
+    runtime_refs_data = runtime_refs if isinstance(runtime_refs, dict) else {}
+    runtime_secrets_data = runtime_secrets if isinstance(runtime_secrets, dict) else {}
+    policy_data = policy if isinstance(policy, dict) else {}
+    approval_data = approval if isinstance(approval, dict) else {}
+
+    blocked_reasons = []
+    approval_result = _validate_manual_approval(approval_data, request_data)
+    runtime_refs_result = validate_runtime_contract(runtime_refs_data)
+    runtime_secrets_result = validate_runtime_secrets_contract(runtime_secrets_data)
+    allowlist = policy_data.get("first_qa4_allowlist") or build_first_qa4_allowlist()
+    allowlist_result = validate_first_qa4_allowlist(request_data, allowlist)
+    risk_result = classify_adapter_risk(_manual_risk_work_item(request_data, allowlist_result))
+    readiness_policy = _readiness_policy(policy_data, allowlist_result)
+    readiness_request = _readiness_request(request_data, risk_result)
+    readiness_result = evaluate_real_execution_readiness(readiness_request, readiness_policy)
+
+    if not _is_real_manual_client(client):
+        blocked_reasons.append("real_manual_client_required")
+    if not approval_result["valid"]:
+        blocked_reasons.extend(approval_result["blocked_reasons"])
+    if not runtime_refs_result["valid"]:
+        blocked_reasons.extend(runtime_refs_result["blocked_reasons"])
+    if not runtime_secrets_result["valid"]:
+        blocked_reasons.extend(runtime_secrets_result["blocked_reasons"])
+    if not allowlist_result["valid"]:
+        blocked_reasons.extend(allowlist_result["blocked_reasons"])
+    if risk_result.get("risk_status") == "blocked":
+        blocked_reasons.append("risk_classifier_blocked")
+    if readiness_result.get("decision") != "ready_for_manual_review":
+        blocked_reasons.append("readiness_not_ready_for_manual_review")
+        blocked_reasons.extend(readiness_result.get("blocked_reasons") or [])
+
+    item = allowlist_result.get("allowlist_item") or {}
+    if request_data.get("timeout_seconds") != item.get("timeout_seconds"):
+        blocked_reasons.append("timeout_not_allowlisted")
+    if request_data.get("retry_count") != 0:
+        blocked_reasons.append("retry_not_allowed")
+    if runtime_secrets_data.get("timeout_seconds") != item.get("timeout_seconds"):
+        blocked_reasons.append("runtime_timeout_not_allowlisted")
+
+    blocked_reasons = _dedupe_sorted(blocked_reasons)
+    if blocked_reasons:
+        return _manual_result(
+            "blocked",
+            blocked_reasons,
+            request_data,
+            approval_result,
+            runtime_refs_result,
+            runtime_secrets_result,
+            allowlist_result,
+            risk_result,
+            readiness_result,
+            client_response=None,
+            send_attempted=False,
+            error=None,
+        )
+
+    sanitized_request = _sanitized_request(request_data, runtime_refs_result, allowlist_result)
+    try:
+        client_response = client.send(
+            sanitized_request,
+            _copy_value(runtime_secrets_data),
+            item.get("timeout_seconds"),
+        )
+    except Exception as exc:
+        return _manual_result(
+            "client_error_after_send",
+            [],
+            request_data,
+            approval_result,
+            runtime_refs_result,
+            runtime_secrets_result,
+            allowlist_result,
+            risk_result,
+            readiness_result,
+            client_response=None,
+            send_attempted=True,
+            error=exc,
+        )
+
+    return _manual_result(
+        "manual_call_completed",
+        [],
+        request_data,
+        approval_result,
+        runtime_refs_result,
+        runtime_secrets_result,
+        allowlist_result,
+        risk_result,
+        readiness_result,
+        client_response=client_response,
+        send_attempted=True,
+        error=None,
+    )
+
+
 def _risk_work_item(request_data):
     return {
         "api_id": request_data.get("api_id"),
@@ -67,6 +171,20 @@ def _risk_work_item(request_data):
         "environment": request_data.get("environment"),
         "planning_mode": "first_qa4_fake_only",
         "evidence_layer": "read-only readiness",
+    }
+
+
+def _manual_risk_work_item(request_data, allowlist_result):
+    return {
+        "api_id": request_data.get("api_id"),
+        "method": request_data.get("method"),
+        "environment": request_data.get("environment"),
+        "timeout_seconds": request_data.get("timeout_seconds"),
+        "retry_count": request_data.get("retry_count"),
+        "manual_intent": "first_qa4_call_gate",
+        "allowlist_status": "valid" if allowlist_result.get("valid") else "blocked",
+        "risk_status": request_data.get("risk_status"),
+        "planning_mode": "manual_gate_only",
     }
 
 
@@ -115,6 +233,141 @@ def _sanitized_request(request_data, runtime_result, allowlist_result):
         "correlation_reference": runtime.get("correlation_reference"),
         "source": request_data.get("source") or "mvp7.7.1.0",
     }
+
+
+def _validate_manual_approval(approval_data, request_data):
+    blocked_reasons = []
+    required = (
+        "approver_ref",
+        "ticket_ref",
+        "approved_api_id",
+        "approved_environment",
+        "approved_at_ref",
+    )
+    if approval_data.get("approved") is not True:
+        blocked_reasons.append("approval_missing")
+    if approval_data.get("risk_acceptance") is not True:
+        blocked_reasons.append("risk_acceptance_missing")
+    for key in required:
+        if not approval_data.get(key):
+            blocked_reasons.append(f"missing_{key}")
+    if approval_data.get("approved_api_id") != request_data.get("api_id"):
+        blocked_reasons.append("approved_api_id_mismatch")
+    if approval_data.get("approved_environment") != "QA4":
+        blocked_reasons.append("approved_environment_not_qa4")
+    if approval_data.get("approved_environment") != request_data.get("environment"):
+        blocked_reasons.append("approved_environment_mismatch")
+    if _contains_sensitive_approval_text(approval_data):
+        blocked_reasons.append("approval_contains_sensitive_text")
+
+    return {
+        "valid": not blocked_reasons,
+        "blocked_reasons": _dedupe_sorted(blocked_reasons),
+        "sanitized_approval": {
+            "approver_reference": _mask_ref(str(approval_data.get("approver_ref") or "")),
+            "ticket_reference": _mask_ref(str(approval_data.get("ticket_ref") or "")),
+            "approved_api_id": approval_data.get("approved_api_id"),
+            "approved_environment": approval_data.get("approved_environment"),
+            "approved_at_reference": _mask_ref(str(approval_data.get("approved_at_ref") or "")),
+        },
+    }
+
+
+def _contains_sensitive_approval_text(approval_data):
+    text = " ".join(str(value).lower() for value in approval_data.values())
+    forbidden = (
+        "://",
+        "token",
+        "secret",
+        "credential",
+        "password",
+        "bearer",
+        "cookie",
+    )
+    return any(term in text for term in forbidden) or bool(_IP_PATTERN.search(text))
+
+
+def _is_real_manual_client(client):
+    return bool(getattr(client, "is_real_manual_client", False))
+
+
+def _manual_result(
+    decision,
+    blocked_reasons,
+    request_data,
+    approval_result,
+    runtime_refs_result,
+    runtime_secrets_result,
+    allowlist_result,
+    risk_result,
+    readiness_result,
+    client_response,
+    send_attempted,
+    error,
+):
+    real_call_executed = send_attempted and client_response is not None
+    evidence = {
+        "api_id": request_data.get("api_id"),
+        "method": request_data.get("method"),
+        "environment": request_data.get("environment"),
+        "decision": decision,
+        "approval_reference": (approval_result.get("sanitized_approval") or {}).get("approver_reference"),
+        "ticket_reference": (approval_result.get("sanitized_approval") or {}).get("ticket_reference"),
+        "correlation_reference": (runtime_refs_result.get("sanitized_runtime") or {}).get("correlation_reference"),
+        "status_code": (client_response or {}).get("status_code"),
+        "elapsed_ms": (client_response or {}).get("elapsed_ms"),
+        "real_call_executed": real_call_executed,
+        "body_recorded": False,
+        "error": _sanitize_error(error),
+    }
+    return {
+        "decision": decision,
+        "allowed": decision == "manual_call_completed",
+        "blocked_reasons": list(blocked_reasons),
+        "evidence": evidence,
+        "sanitized_log": dict(evidence),
+        "approval": approval_result.get("sanitized_approval"),
+        "runtime_refs": runtime_refs_result.get("sanitized_runtime"),
+        "allowlist": allowlist_result.get("allowlist_item"),
+        "risk": risk_result,
+        "readiness": readiness_result,
+        "client_response": _sanitized_real_client_response(client_response),
+        "real_call_executed": real_call_executed,
+        "next_step": _manual_next_step(decision),
+    }
+
+
+def _sanitized_real_client_response(client_response):
+    if not client_response:
+        return {}
+    return {
+        "status_code": client_response.get("status_code"),
+        "ok": client_response.get("ok") is True,
+        "elapsed_ms": client_response.get("elapsed_ms"),
+        "body_recorded": False,
+    }
+
+
+def _sanitize_error(error):
+    if error is None:
+        return None
+    return error.__class__.__name__
+
+
+def _mask_ref(value):
+    if not value:
+        return ""
+    if len(value) <= 6:
+        return "***"
+    return f"{value[:3]}***{value[-3:]}"
+
+
+def _manual_next_step(decision):
+    if decision == "manual_call_completed":
+        return "Review sanitized evidence and keep adapter-run real mode blocked."
+    if decision == "client_error_after_send":
+        return "Review sanitized client error evidence without recording response details."
+    return "Keep the manual QA4 call blocked and correct guardrail failures."
 
 
 def _result(
@@ -174,3 +427,11 @@ def _next_step(decision):
 
 def _dedupe_sorted(items):
     return sorted(set(item for item in items if item))
+
+
+def _copy_value(value):
+    if isinstance(value, dict):
+        return {key: _copy_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_copy_value(item) for item in value]
+    return value

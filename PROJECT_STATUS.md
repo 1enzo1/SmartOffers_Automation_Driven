@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.7.1.0
-- Ultimo MVP aprovado: MVP7.7.1.0 - Runtime Secret Contract
+- MVP atual concluido: MVP7.7.1.1
+- Ultimo MVP aprovado: MVP7.7.1.1 - First QA4 Real Call Gate
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -39,6 +39,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.6.7 | Concluido/Aprovado | Adapter Risk Classifier deterministico |
 | MVP7.7.0 | Concluido/Aprovado | Real Execution Readiness Gate deterministico |
 | MVP7.7.1.0 | Concluido/Aprovado | Runtime Secret Contract com fake client obrigatorio |
+| MVP7.7.1.1 | Concluido/Aprovado | First QA4 Real Call Gate manual e controlado |
 
 ## MVP7.6
 
@@ -495,6 +496,48 @@ Fechamento:
 - testes existentes devem passar;
 - mudancas devem ficar restritas a `ai/real-execution/`, `core/real_execution/`, `tests/test_real_execution_runtime_contract.py`, `tests/test_first_qa4_call_executor.py` e `PROJECT_STATUS.md`;
 - validacoes de escopo, imports proibidos, logs sanitizados, fake client obrigatorio, determinismo, ausencia de mutacao e ausencia de chamada externa devem passar.
+
+### MVP7.7.1.1 - First QA4 Real Call Gate
+
+Status: concluido/aprovado.
+
+Objetivo: criar gate manual controlado para uma futura primeira chamada real em QA4, sem executar chamada real durante implementacao, testes, CI ou Self Review.
+
+Entregas:
+
+- criar contrato documental em `ai/real-execution/first-real-call-manual-contract.md`;
+- criar `core/real_execution/real_http_client.py` como client real isolado e nao exportado;
+- preservar `prepare_first_qa4_call(...)` como fluxo fake/readiness;
+- criar `execute_first_qa4_call_manual(...)` como fluxo manual controlado;
+- separar `runtime_refs` sanitizado de `runtime_secrets` em memoria;
+- garantir que `runtime_secrets` nao vai para risk classifier, readiness, logs, evidencia ou retorno;
+- exigir approval manual sanitizado;
+- bloquear antes do client quando approval, kill switch, readiness, risk classifier, allowlist, timeout, retry ou runtime falham;
+- manter `adapter-run mode=real` bloqueado;
+- criar testes dedicados em `tests/test_first_qa4_real_call_manual_gate.py`.
+
+Nao escopo:
+
+- execucao real durante implementacao, testes, CI ou Self Review;
+- UI;
+- rota;
+- integracao com adapter-run;
+- alteracao de dry-run;
+- alteracao do catalogo seguro;
+- alteracao de `request_plan`;
+- chamada Oracle, Kafka ou Jenkins;
+- Playwright;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`;
+- versionamento de endpoint real, endereco de rede real, material de autenticacao, credencial, cabecalho real, massa real, linha, conta, documento ou corpo bruto.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
+- mudancas devem ficar restritas a `ai/real-execution/`, `core/real_execution/`, `tests/test_first_qa4_real_call_manual_gate.py` e `PROJECT_STATUS.md`;
+- `urllib.request` permitido somente em `core/real_execution/real_http_client.py`;
+- validacoes de escopo, imports, evidencia sanitizada, runtime separado, approval, fake/dummy tests, ausencia de mutacao e ausencia de chamada externa automatizada devem passar.
 
 ### MVP7.7 - Primeira chamada real opt-in em QA4
 
