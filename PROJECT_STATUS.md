@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.7.4
-- Ultimo MVP aprovado: MVP7.7.4 - Documentation Sync & Evidence Regression Analysis
+- MVP atual concluido: MVP7.7.5
+- Ultimo MVP aprovado: MVP7.7.5 - Evidence Payload Builder Fix
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -43,6 +43,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.7.2 | Concluido/Aprovado | Real Execution Hardening & Evidence Pack |
 | MVP7.7.3 | Concluido/Aprovado | Manual QA4 Execution Readiness Package |
 | MVP7.7.4 | Concluido/Aprovado | Documentation Sync & Evidence Regression Analysis |
+| MVP7.7.5 | Concluido/Aprovado | Evidence Payload Builder Fix |
 
 ## MVP7.6
 
@@ -675,6 +676,46 @@ Fechamento:
 - diff deve permanecer vazio em `app.py`, `templates/`, `core/execution/`, `core/simulation/`, `core/generation/` e `core/api_catalog/`;
 - novos documentos/testes nao devem conter dados sensiveis;
 - ZIPs brutos devem permanecer ignorados e nao versionados.
+
+### MVP7.7.5 - Evidence Payload Builder Fix
+
+Status: concluido/aprovado.
+
+Objetivo: corrigir a montagem dos payloads de evidencia variante/copy para preservar metadata dos atributos, sem executar QA4, sem chamar BD real e sem alterar adapter-run, dry-run, UI/rotas ou catalogo seguro.
+
+Entregas:
+
+- criar `core/utils/evidence_payload_builders.py` com builders puros para payload POS e PRE;
+- atualizar `test_campaign_api_variante.py` para usar builder com `attributeDetails`;
+- atualizar `test_campaign_api_variante_copy.py` para usar builder com `attributeDetails`;
+- restaurar o payload `pre` da copy para a forma completa de 20 atributos;
+- criar `tests/test_evidence_payload_builders.py` com fixtures sinteticas e deterministicas;
+- validar que o comparador do MVP7.7.4 nao classifica payloads corrigidos como regressao.
+
+Achados da correcao:
+
+- payload POS passa a ter 14 atributos e 14 metadados;
+- payload PRE passa a ter 20 atributos e 20 metadados;
+- cada chave de `attributes` possui chave equivalente em `attributeDetails`;
+- testes novos nao importam os scripts historicos com chamadas reais no topo do arquivo.
+
+Nao escopo:
+
+- execucao QA4;
+- chamada API real;
+- chamada Oracle/BD real;
+- alteracao de UI/rotas;
+- alteracao de dry-run;
+- alteracao de adapter-run real mode;
+- alteracao do catalogo seguro;
+- versionamento de ZIP bruto, host, IP, token, secret, payload real, MSISDN, account, documento ou response body.
+
+Fechamento:
+
+- testes existentes devem passar com `python -m pytest tests -q`;
+- `adapter-run mode=real` deve continuar bloqueado;
+- diff deve permanecer seguro e sem dado sensivel novo;
+- worktree deve ficar limpa apos commit/push.
 
 ### MVP7.7 - Primeira chamada real opt-in em QA4
 

@@ -8,6 +8,7 @@ import oracledb
 import os
 from core.utils.evidence_paths import build_path, create_run_path, get_base_path
 from core.utils.evidence_analysis import analisar_teste, salvar_analise
+from core.utils.evidence_payload_builders import build_postpaid_payload, build_prepaid_payload
 
 BASE_PATH = get_base_path("evidencias_variante")
 RUN_PATH = create_run_path(BASE_PATH)
@@ -73,69 +74,20 @@ def gerar_msisdn():
 # ==========================
 
 def montar_payload_pos(msisdn, offer):
-
-    account = msisdn[3:]
-    external_id = f"NEXT_{account}"
-
-    payload = {
-        "operation": "processEvent",
-        "extEventId": 986557550,
-        "eventTime": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
-        "attributes": {
-            "70060213": "1",
-            "349876894": offer,
-            "425747132": "EMAIL",
-            "447500851": account,
-            "908881601": "1",
-            "1576075623": "DD",
-            "1597489127": external_id,
-            "1666101552": "1",
-            "1667261676": msisdn,
-            "1794057286": "1791234567",
-            "1840045565": "5",
-            "1997035279": "5",
-            "2020041941": "2",
-            "2118173840": "365123987"
-        }
-    }
-
-    return payload, external_id
+    return build_postpaid_payload(
+        msisdn,
+        offer,
+        event_time=datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    )
 
 
 def montar_payload_pre(msisdn):
-
-    account = msisdn[3:]
-    external_id = f"NGIN_{account}"
-
-    payload = {
-        "operation": "processEvent",
-        "extEventId": 866231225,
-        "eventTime": datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
-        "attributes": {
-            "29905344": "8",
-            "427862433": "11",
-            "447500851": account,
-            "569463775": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "741842957": "1",
-            "908881601": "2",
-            "1068616960": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "1095579373": "SP",
-            "1190622368": "559",
-            "1358620105": "3",
-            "1581479658": "S",
-            "1597489127": external_id,
-            "1650737577": "1",
-            "1667261676": msisdn,
-            "1760625139": "1",
-            "1944018544": "NGIN",
-            "1957846968": "0000000D",
-            "1966426172": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "2020041941": "1",
-            "2047205742": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        }
-    }
-
-    return payload, external_id
+    attribute_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return build_prepaid_payload(
+        msisdn,
+        event_time=datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+        attribute_time=attribute_time,
+    )
 
 
 # ==========================
