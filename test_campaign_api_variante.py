@@ -5,7 +5,6 @@ import os
 import time
 from datetime import datetime
 import oracledb
-import os
 from core.utils.evidence_paths import build_path, create_run_path, get_base_path
 from core.utils.evidence_analysis import analisar_teste, salvar_analise
 from core.utils.evidence_payload_builders import build_postpaid_payload, build_prepaid_payload
@@ -13,8 +12,6 @@ from core.utils.evidence_payload_builders import build_postpaid_payload, build_p
 BASE_PATH = get_base_path("evidencias_variante")
 RUN_PATH = create_run_path(BASE_PATH)
 ANALISAR_EXECUCAO = os.getenv("ANALISAR_EXECUCAO", "0") == "1"
-
-URL = "http://10.129.174.95:8084/ws/integration/online/process"
 
 HEADERS = {
     "content-type": "application/json"
@@ -40,15 +37,13 @@ PLANOS = [
 ("104376082",26000)
 ]
 
-# ===== ORACLE CONFIG =====
-
-DB_HOST="10.129.174.97"
-DB_PORT=1521
-DB_SERVICE="SMARTDB"
-DB_USER="acm"
-DB_PASS="acm"
 LEGACY_REAL_SCRIPT_ENV = "SMARTOFFERS_ALLOW_LEGACY_REAL_SCRIPT"
 LEGACY_REAL_SCRIPT_CONFIRMATION = "YES_I_UNDERSTAND"
+API_URL_ENV = "SMARTOFFERS_API_URL"
+DB_DSN_ENV = "SMARTOFFERS_DB_DSN"
+DB_USER_ENV = "SMARTOFFERS_DB_USER"
+DB_PASSWORD_ENV = "SMARTOFFERS_DB_PASSWORD"
+ORACLE_CLIENT_LIB_DIR_ENV = "SMARTOFFERS_ORACLE_CLIENT_LIB_DIR"
 
 # ==========================
 
@@ -62,17 +57,26 @@ def ensure_legacy_real_script_allowed():
         )
 
 
-def conectar_db():
-    oracledb.init_oracle_client(
-        lib_dir=r"C:\Users\322249\OneDrive - OPEN LABS S.A\Documentos\PosPagoSazonal\auto\instantclient-basic-windows.x64-21.20.0.0.0dbru\instantclient_21_20"
-    )
+def get_required_runtime_env(name):
+    value = os.getenv(name)
+    if value is None or value.strip() == "":
+        raise SystemExit(f"Config runtime ausente: {name}")
+    return value
 
-    dsn = oracledb.makedsn(DB_HOST, DB_PORT, service_name=DB_SERVICE)
+
+def get_smartoffers_api_url():
+    return get_required_runtime_env(API_URL_ENV)
+
+
+def conectar_db():
+    oracle_client_lib_dir = os.getenv(ORACLE_CLIENT_LIB_DIR_ENV)
+    if oracle_client_lib_dir:
+        oracledb.init_oracle_client(lib_dir=oracle_client_lib_dir)
 
     return oracledb.connect(
-        user=DB_USER,
-        password=DB_PASS,
-        dsn=dsn
+        user=get_required_runtime_env(DB_USER_ENV),
+        password=get_required_runtime_env(DB_PASSWORD_ENV),
+        dsn=get_required_runtime_env(DB_DSN_ENV),
     )
 
 
@@ -222,7 +226,7 @@ def executar_pos(tipo,numero,conn):
 
     payload, external_id = montar_payload_pos(msisdn,offer)
 
-    r = requests.post(URL,json=payload,headers=HEADERS)
+    r = requests.post(get_smartoffers_api_url(),json=payload,headers=HEADERS)
 
     salvar_json(f"{pasta}/01_request.json",payload)
     salvar_json(f"{pasta}/01_response.json",r.json())
@@ -265,7 +269,7 @@ def executar_pre(numero,conn):
 
     payload, external_id = montar_payload_pre(msisdn)
 
-    r = requests.post(URL,json=payload,headers=HEADERS)
+    r = requests.post(get_smartoffers_api_url(),json=payload,headers=HEADERS)
 
     salvar_json(f"{pasta}/01_request.json",payload)
     salvar_json(f"{pasta}/01_response.json",r.json())

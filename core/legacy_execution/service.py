@@ -6,6 +6,10 @@ import unicodedata
 from pathlib import Path
 
 from core.legacy_execution.modes import evaluate_execution_mode_request
+from core.legacy_execution.runtime_config import (
+    build_runtime_config_log,
+    resolve_legacy_runtime_config,
+)
 from core.utils.evidence_response_contract import analyze_smartoffers_response
 
 
@@ -60,11 +64,22 @@ def stream_legacy_execution(
             yield "data:RUN|END|PASS|0|0\n\n"
             return
 
+        runtime_config = None
+        if mode_decision["allow_legacy_real_script"]:
+            runtime_config = resolve_legacy_runtime_config(mode_decision["environment_contract"])
+            yield f"data:LOG|{build_runtime_config_log(runtime_config)}\n\n"
+            if not runtime_config["valid"]:
+                reasons = ",".join(runtime_config["blocked_reasons"])
+                yield f"data:ERROR|Runtime config blocked: {reasons}\n\n"
+                yield f"data:RUN|END|BLOCKED|0|1\n\n"
+                return
+
         env = build_legacy_execution_env(
             analisar,
             allow_legacy_real_script=mode_decision["allow_legacy_real_script"],
             execution_mode=mode_decision["mode"],
             environment=mode_decision["environment"],
+            runtime_config=runtime_config,
         )
         process_factory = process_factory or subprocess.Popen
 
@@ -140,6 +155,7 @@ def build_legacy_execution_env(
     allow_legacy_real_script=False,
     execution_mode=None,
     environment=None,
+    runtime_config=None,
     base_env=None,
 ):
     env = dict(os.environ if base_env is None else base_env)
@@ -151,8 +167,10 @@ def build_legacy_execution_env(
         env.pop("SMARTOFFERS_QA_ENVIRONMENT", None)
     env.pop(LEGACY_REAL_SCRIPT_ENV, None)
 
-    if allow_legacy_real_script:
+    normalized_runtime_env = (runtime_config or {}).get("normalized_env") or {}
+    if allow_legacy_real_script and normalized_runtime_env:
         env[LEGACY_REAL_SCRIPT_ENV] = LEGACY_REAL_SCRIPT_CONFIRMATION
+        env.update(normalized_runtime_env)
 
     return env
 

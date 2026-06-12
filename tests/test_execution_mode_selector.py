@@ -74,7 +74,8 @@ def test_real_without_confirmation_is_blocked_and_does_not_start_process():
     assert _last_run_end(events) == "RUN|END|BLOCKED|0|1"
 
 
-def test_real_with_confirmation_injects_legacy_guard_with_fake_process():
+def test_real_with_confirmation_injects_legacy_guard_with_fake_process(monkeypatch):
+    _set_fake_qa_runtime(monkeypatch, "qa4")
     process_factory, captured = _fake_process_factory([], returncode=0)
 
     events = _collect_events(
@@ -91,7 +92,63 @@ def test_real_with_confirmation_injects_legacy_guard_with_fake_process():
     assert captured["env"][service.LEGACY_REAL_SCRIPT_ENV] == service.LEGACY_REAL_SCRIPT_CONFIRMATION
     assert captured["env"]["SMARTOFFERS_EXECUTION_MODE"] == EXECUTION_MODE_REAL_QA_MANUAL
     assert captured["env"]["SMARTOFFERS_QA_ENVIRONMENT"] == "qa4"
+    assert captured["env"]["SMARTOFFERS_API_URL"] == "fake-qa4-api-url"
+    assert captured["env"]["SMARTOFFERS_DB_DSN"] == "fake-qa4-db-dsn"
+    assert captured["env"]["SMARTOFFERS_DB_USER"] == "fake-qa4-db-user"
+    assert captured["env"]["SMARTOFFERS_DB_PASSWORD"] == "fake-qa4-db-password"
     assert _last_run_end(events) == "RUN|END|PASS|0|0"
+
+
+def test_real_qa_without_local_config_is_blocked(monkeypatch):
+    for name in (
+        "SMARTOFFERS_QA4_API_URL",
+        "SMARTOFFERS_QA4_DB_DSN",
+        "SMARTOFFERS_QA4_DB_USER",
+        "SMARTOFFERS_QA4_DB_PASSWORD",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    def fail_if_started(*args, **kwargs):
+        raise AssertionError("process must not start without complete runtime config")
+
+    events = _collect_events(
+        service.stream_legacy_execution(
+            "copy",
+            analisar=False,
+            execution_mode=EXECUTION_MODE_REAL_QA_MANUAL,
+            environment="qa4",
+            real_confirmed=True,
+            process_factory=fail_if_started,
+        )
+    )
+
+    assert any("Runtime config blocked" in event for event in events)
+    assert any("missing_runtime_ref:SMARTOFFERS_QA4_API_URL" in event for event in events)
+    assert _last_run_end(events) == "RUN|END|BLOCKED|0|1"
+
+
+def test_runtime_config_log_uses_refs_not_values(monkeypatch):
+    _set_fake_qa_runtime(monkeypatch, "qa2")
+    process_factory, captured = _fake_process_factory([], returncode=0)
+
+    events = _collect_events(
+        service.stream_legacy_execution(
+            "variante",
+            analisar=False,
+            execution_mode=EXECUTION_MODE_REAL_QA_MANUAL,
+            environment="qa2",
+            real_confirmed=True,
+            process_factory=process_factory,
+        )
+    )
+
+    runtime_logs = [event for event in events if "RUNTIME_CONFIG|" in event]
+    assert runtime_logs
+    assert "SMARTOFFERS_QA2_API_URL" in runtime_logs[0]
+    assert "SMARTOFFERS_QA2_DB_DSN" in runtime_logs[0]
+    assert "fake-qa2-api-url" not in runtime_logs[0]
+    assert "fake-qa2-db-password" not in runtime_logs[0]
+    assert captured["env"]["SMARTOFFERS_API_URL"] == "fake-qa2-api-url"
 
 
 def test_legacy_allow_flag_without_real_mode_does_not_inject_guard():
@@ -111,6 +168,19 @@ def test_legacy_allow_flag_without_real_mode_does_not_inject_guard():
     assert _last_run_end(events) == "RUN|END|PASS|0|0"
 
 
+def test_build_env_does_not_inject_guard_without_resolved_runtime_config():
+    env = service.build_legacy_execution_env(
+        analisar=False,
+        allow_legacy_real_script=True,
+        execution_mode=EXECUTION_MODE_REAL_QA_MANUAL,
+        environment="qa4",
+        base_env={},
+    )
+
+    assert service.LEGACY_REAL_SCRIPT_ENV not in env
+    assert "SMARTOFFERS_API_URL" not in env
+
+
 def test_dry_run_mode_does_not_start_legacy_process():
     def fail_if_started(*args, **kwargs):
         raise AssertionError("dry_run must not start a subprocess")
@@ -126,6 +196,31 @@ def test_dry_run_mode_does_not_start_legacy_process():
 
     assert "RUN|END|PASS|0|0" in events
     assert any("Dry-run local" in event for event in events)
+
+
+def test_mock_mode_does_not_require_runtime_config(monkeypatch):
+    for name in (
+        "SMARTOFFERS_QA1_API_URL",
+        "SMARTOFFERS_QA1_DB_DSN",
+        "SMARTOFFERS_QA1_DB_USER",
+        "SMARTOFFERS_QA1_DB_PASSWORD",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    process_factory, captured = _fake_process_factory([], returncode=0)
+
+    events = _collect_events(
+        service.stream_legacy_execution(
+            "padrao",
+            analisar=False,
+            execution_mode="mock",
+            environment="qa1",
+            process_factory=process_factory,
+        )
+    )
+
+    assert service.LEGACY_REAL_SCRIPT_ENV not in captured["env"]
+    assert "SMARTOFFERS_API_URL" not in captured["env"]
+    assert _last_run_end(events) == "RUN|END|PASS|0|0"
 
 
 def test_qa1_qa2_qa3_qa4_exist_in_sanitized_contract():
@@ -202,6 +297,14 @@ def _fake_process_factory(lines, returncode=0):
         return _FakeProcess(lines, returncode)
 
     return factory, captured
+
+
+def _set_fake_qa_runtime(monkeypatch, environment):
+    prefix = environment.upper()
+    monkeypatch.setenv(f"SMARTOFFERS_{prefix}_API_URL", f"fake-{environment}-api-url")
+    monkeypatch.setenv(f"SMARTOFFERS_{prefix}_DB_DSN", f"fake-{environment}-db-dsn")
+    monkeypatch.setenv(f"SMARTOFFERS_{prefix}_DB_USER", f"fake-{environment}-db-user")
+    monkeypatch.setenv(f"SMARTOFFERS_{prefix}_DB_PASSWORD", f"fake-{environment}-db-password")
 
 
 class _FakeProcess:

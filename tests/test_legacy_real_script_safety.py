@@ -59,6 +59,48 @@ def test_legacy_scripts_keep_manual_execution_path_when_guard_is_set(monkeypatch
         assert any(call == "pre" or call[0] == "pos" for call in calls if call != "connect")
 
 
+def test_legacy_scripts_read_normalized_runtime_env(monkeypatch):
+    for script_name in LEGACY_SCRIPTS:
+        module = _load_script_with_blocking_fakes(script_name, monkeypatch)
+        calls = []
+
+        monkeypatch.setenv("SMARTOFFERS_API_URL", "fake-normalized-api-url")
+        monkeypatch.setenv("SMARTOFFERS_DB_DSN", "fake-normalized-db-dsn")
+        monkeypatch.setenv("SMARTOFFERS_DB_USER", "fake-normalized-db-user")
+        monkeypatch.setenv("SMARTOFFERS_DB_PASSWORD", "fake-normalized-db-password")
+        monkeypatch.setenv("SMARTOFFERS_ORACLE_CLIENT_LIB_DIR", "fake-oracle-client-dir")
+
+        fake_oracledb = types.SimpleNamespace(
+            init_oracle_client=lambda **kwargs: calls.append(("init", kwargs)),
+            connect=lambda **kwargs: calls.append(("connect", kwargs)) or object(),
+        )
+        monkeypatch.setattr(module, "oracledb", fake_oracledb)
+
+        assert module.get_smartoffers_api_url() == "fake-normalized-api-url"
+        module.conectar_db()
+
+        assert calls[0] == ("init", {"lib_dir": "fake-oracle-client-dir"})
+        assert calls[1] == (
+            "connect",
+            {
+                "user": "fake-normalized-db-user",
+                "password": "fake-normalized-db-password",
+                "dsn": "fake-normalized-db-dsn",
+            },
+        )
+
+
+def test_legacy_scripts_fail_fast_when_normalized_runtime_env_is_missing(monkeypatch):
+    for script_name in LEGACY_SCRIPTS:
+        module = _load_script_with_blocking_fakes(script_name, monkeypatch)
+        monkeypatch.delenv("SMARTOFFERS_API_URL", raising=False)
+
+        with pytest.raises(SystemExit) as exc_info:
+            module.get_smartoffers_api_url()
+
+        assert "Config runtime ausente: SMARTOFFERS_API_URL" in str(exc_info.value)
+
+
 def test_legacy_scripts_guard_before_db_connection_in_main():
     for script_name in LEGACY_SCRIPTS:
         tree = _parse_script(script_name)
