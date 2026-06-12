@@ -7,8 +7,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.7.2
-- Ultimo MVP aprovado: MVP7.7.2 - Real Execution Hardening & Evidence Pack
+- MVP atual concluido: MVP7.7.3
+- Ultimo MVP aprovado: MVP7.7.3 - Manual QA4 Execution Readiness Package
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
@@ -41,6 +41,7 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 | MVP7.7.1.0 | Concluido/Aprovado | Runtime Secret Contract com fake client obrigatorio |
 | MVP7.7.1.1 | Concluido/Aprovado | First QA4 Real Call Gate manual e controlado |
 | MVP7.7.2 | Concluido/Aprovado | Real Execution Hardening & Evidence Pack |
+| MVP7.7.3 | Concluido/Aprovado | Manual QA4 Execution Readiness Package |
 
 ## MVP7.6
 
@@ -580,6 +581,48 @@ Fechamento:
 - Self Review final: APROVADO;
 - testes existentes devem passar;
 - mudancas devem ficar restritas a `ai/real-execution/`, testes de hardening, utilitarios puros em `core/real_execution/` se necessarios e `PROJECT_STATUS.md`;
+- diff deve permanecer vazio nos caminhos proibidos;
+- worktree deve ficar limpa apos commit/push.
+
+### MVP7.7.3 - Manual QA4 Execution Readiness Package
+
+Status: concluido/aprovado.
+
+Objetivo: criar o pacote final para orientar uma futura execucao manual QA4, sem executar QA4, sem chamada real, sem dado real e sem automacao.
+
+Entregas:
+
+- criar `ai/real-execution/manual-qa4-readiness-package.md`;
+- criar `ai/real-execution/manual-qa4-operator-script-template.md`;
+- criar `ai/real-execution/manual-qa4-approval-template.md`;
+- criar `ai/real-execution/manual-qa4-evidence-template.md`;
+- manter todos os templates somente com placeholders sanitizados;
+- validar por teste que os templates existem, permanecem ASCII, usam placeholders e nao contem formatos com aparencia de valor real;
+- validar que `RealHttpClient` e `execute_first_qa4_call_manual` continuam fora do `__init__.py`;
+- validar que o import HTTP padrao permanece isolado no client real;
+- validar que `adapter-run mode=real` continua bloqueado.
+
+Nao escopo:
+
+- execucao QA4;
+- chamada real;
+- dado real;
+- automacao;
+- UI;
+- rota;
+- integracao com adapter-run;
+- alteracao de dry-run;
+- alteracao do catalogo seguro;
+- alteracao de `request_plan`;
+- chamada Oracle, Kafka ou Jenkins;
+- Playwright;
+- MCP/App SDK;
+- `chatgpt-app-submission.json`.
+
+Fechamento:
+
+- Self Review final: APROVADO;
+- testes existentes devem passar;
 - diff deve permanecer vazio nos caminhos proibidos;
 - worktree deve ficar limpa apos commit/push.
 
