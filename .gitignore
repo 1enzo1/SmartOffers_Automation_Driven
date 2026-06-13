@@ -5,6 +5,23 @@ evidencias_teste_auto/
 cenarios_gerados/
 dryruns_gerados/
 exports_gerados/
+
+# Local runtime secrets and sensitive connection exports
+local_secrets/
+.env.local
+*.local.env
+smartoffers_runtime_local.ps1
+*.dbp
+.dbeaver/
+**/.dbeaver/
+.dbeaver-data-sources.xml
+*dbeaver*data-sources*.xml
+*DBeaver*data-sources*.xml
+*connection*.zip
+*connections*.zip
+*evidence*.zip
+*evidencia*.zip
+
 *.zip
 __pycache__/
 .pytest_tmp/
