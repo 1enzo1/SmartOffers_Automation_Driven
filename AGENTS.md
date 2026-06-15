@@ -12,7 +12,9 @@ A branch `qa/mvp4-integration` e a branch base evolutiva atual, apesar do nome h
 
 ## Direcao de Dominio
 
-Nao tratar o projeto apenas como gerador de testes. Toda evolucao deve preservar a direcao de laboratorio seguro SmartOffers/ACM, com geracao deterministica, planejamento mockado, evidencia esperada, classificacao de risco e preparacao gradual para execucao real controlada.
+Nao tratar o projeto apenas como gerador de testes. Toda evolucao deve preservar a direcao de laboratorio seguro SmartOffers/ACM, local-first e mock-first, com geracao deterministica, planejamento mockado, evidencia esperada, classificacao de risco e preparacao gradual para execucao real controlada.
+
+Execucao real continua bloqueada por padrao. Qualquer futura execucao real exige MVP especifico, opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados, bloqueio de producao e testes cobrindo allow/deny.
 
 Supervisores, skills, ontologia, playbooks e safety do produto devem ser introduzidos primeiro como contratos Markdown em `ai/`, sem LLM externo e sem execucao real.
 
@@ -35,8 +37,10 @@ Supervisores, skills, ontologia, playbooks e safety do produto devem ser introdu
 - Nao chamar Jenkins real.
 - Nao executar subprocessos reais para dry-run.
 - Nao habilitar `mode=real` sem MVP explicito.
+- Nao habilitar execucao real sem opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados e bloqueio de producao.
 - Nao alterar `safe_for_real_execution` sem MVP especifico.
 - Nao alterar `execution_status` do catalogo para liberar execucao real sem MVP especifico.
+- Nao versionar runtime secrets, `.env`, `.dbp`, export DBeaver sensivel ou ZIP bruto de conexao/evidencia.
 - Nao adicionar React agora.
 - Nao criar build step frontend.
 - Nao reestruturar o projeto inteiro sem necessidade.

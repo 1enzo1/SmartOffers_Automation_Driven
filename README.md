@@ -4,7 +4,7 @@ SmartOffers_Automation_Driven e uma plataforma Flask/Python local-first e mock-f
 
 O produto deve evoluir como um laboratorio seguro de automacao SmartOffers/ACM, nao apenas como um gerador ou simulador de testes. Ele transforma regras de campanha, eventos, APIs sanitizadas, evidencias operacionais e troubleshooting em cenarios deterministicos, dry-runs, adapter-runs mockados, `request_plan` seguro e, em MVP futuro, execucoes reais controladas.
 
-Estado atual: MVP7.7.4 concluido. A branch `qa/mvp4-integration` e a linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4. A execucao real segue bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs, Kafka, Jenkins ou rede externa.
+Estado atual: MVP7.8.2 concluido, com protecao local de runtime secrets registrada no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`. A branch `qa/mvp4-integration` e a linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4. A execucao real segue bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs, Kafka, Jenkins ou rede externa.
 
 ## Objetivo
 
@@ -30,7 +30,21 @@ Nao iniciar novo MVP a partir de `main` sem confirmacao explicita. Antes de qual
 
 O projeto nao deve ser tratado apenas como ferramenta de testes. A direcao correta e um laboratorio seguro de automacao SmartOffers/ACM com geracao deterministica, planejamento mockado, evidencias esperadas, classificacao de risco, supervisores de dominio, playbooks operacionais e preparacao gradual para adapters reais.
 
-A execucao real continua bloqueada por padrao. Qualquer evolucao para `mode=real` exige MVP especifico, opt-in explicito, ambiente permitido, API liberada por policy, logs sanitizados, timeout, bloqueio de producao e testes cobrindo cenarios permitidos e negados.
+A execucao real continua bloqueada por padrao. Qualquer evolucao para `mode=real` exige MVP especifico, opt-in explicito, ambiente permitido, allowlist de API/operacao, timeout obrigatorio, logs sanitizados, bloqueio de producao e testes cobrindo cenarios permitidos e negados.
+
+## Roadmap ajustado
+
+- MVP7.6.1 - Guardrails e documentacao de arquitetura
+- MVP7.6.2 - Ontologia SmartOffers
+- MVP7.6.3 - Playbooks operacionais
+- MVP7.6.4 - Evidence Planner
+- MVP7.6.5 - AI Supervisors Foundation
+- MVP7.6.6 - Scenario Intelligence Layer
+- MVP7.6.7 - Adapter Risk Classifier
+- MVP7.7 - Primeira chamada real opt-in em QA4
+- MVP8 - Runner controlado com fila/status
+- MVP9 - IA auxiliar local-first
+- MVP10 - Frontend moderno
 
 ## Stack
 
@@ -264,6 +278,13 @@ APIsUtilizaveis.zip
 QA4_Copy.json
 .env
 .env.*
+.env.local
+*.local.env
+local_secrets/
+smartoffers_runtime_local.ps1
+*.dbp
+*.zip
+DBeaver exports sensiveis
 *.local
 .test_smoke/
 ```

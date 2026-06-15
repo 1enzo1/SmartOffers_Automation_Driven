@@ -9,12 +9,19 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Produto atual: `SmartOffers_Automation_Driven`
 - MVP atual concluido: MVP7.8.2
 - Ultimo MVP aprovado: MVP7.8.2 - Real QA Runtime Binding & Legacy Config Externalization
+- Protecao local de runtime secrets: concluida no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
 - Execucao real: bloqueada
 - Catalogo de APIs: sanitizado e versionado em `core/api_catalog/catalog.json`
 - Dados brutos de ambiente/API: nao versionados
 - PortalQA: referencia historica, nao orienta a arquitetura atual
+
+## Direcao atual do produto
+
+O projeto evoluiu de ferramenta de geracao/mock de testes para laboratorio seguro SmartOffers/ACM. A direcao atual e local-first e mock-first: geracao deterministica, dry-run mockado, adapters mockados, catalogo seguro de APIs, runtime secrets externos ao Git e preparacao gradual para execucao real controlada.
+
+A execucao real continua bloqueada por padrao. Qualquer MVP futuro que tente chamada real deve exigir opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados, bloqueio de producao e testes de allow/deny antes de qualquer client real ser acionado.
 
 ## MVPs concluidos
 
@@ -116,9 +123,21 @@ post-vivo-next-habilitacao-de-linha-a79ab2e31c
 9. Marcar Ready for review apenas sem threads abertas.
 10. Mergear na branch base correta.
 
-## Proximos MVPs
+## Roadmap ajustado
 
-### MVP7.6.1 - Guardrails e alinhamento da linha evolutiva
+- MVP7.6.1 - Guardrails e documentacao de arquitetura
+- MVP7.6.2 - Ontologia SmartOffers
+- MVP7.6.3 - Playbooks operacionais
+- MVP7.6.4 - Evidence Planner
+- MVP7.6.5 - AI Supervisors Foundation
+- MVP7.6.6 - Scenario Intelligence Layer
+- MVP7.6.7 - Adapter Risk Classifier
+- MVP7.7 - Primeira chamada real opt-in em QA4
+- MVP8 - Runner controlado com fila/status
+- MVP9 - IA auxiliar local-first
+- MVP10 - Frontend moderno
+
+### MVP7.6.1 - Guardrails e documentacao de arquitetura
 
 Objetivo: corrigir o mapa de produto e registrar guardrails para que o projeto evolua como laboratorio seguro SmartOffers/ACM.
 

@@ -2,27 +2,28 @@
 
 ## Produto
 
-SmartOffers_Automation_Driven e um laboratorio seguro de automacao SmartOffers/ACM. A arquitetura atual e local-first e mock-first: gera cenarios, salva JSONs, simula execucao, executa adapter-run mockado, exporta evidencias QA/DET e monta `request_plan` deterministico a partir de catalogo seguro.
+`SmartOffers_Automation_Driven` e o produto principal atual. PortalQA ficou como referencia historica e nao deve orientar a arquitetura.
 
-O MVP7.6.1 nao muda codigo funcional. Este documento registra a arquitetura atual e a direcao futura.
+O produto e um laboratorio seguro de automacao SmartOffers/ACM, local-first e mock-first. Ele gera cenarios deterministicos, salva JSONs, simula execucao por dry-run mockado, executa adapter-run mockado, exporta artefatos QA/DET e monta `request_plan` a partir de catalogo seguro.
 
 ## Linha base
 
-- Branch evolutiva atual: `qa/mvp4-integration`
-- MVP concluido: MVP7.6
-- Execucao real: bloqueada
-- Catalogo de APIs: sanitizado e versionado
-- UI: Flask com HTML/CSS/JavaScript puro
-- Testes: Pytest
-- Frontend moderno: fora do escopo atual
+- Branch evolutiva atual: `qa/mvp4-integration`, apesar do nome historico.
+- Estado atual: MVP7.8.2 concluido.
+- Runtime secrets locais: protegidos por `.gitignore` e template sanitizado desde o commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`.
+- Execucao real: bloqueada por padrao.
+- Catalogo de APIs: sanitizado, versionado e `mock_only`.
+- UI: Flask com HTML/CSS/JavaScript puro.
+- Testes: Pytest.
+- Frontend moderno: roadmap futuro.
 
 ## Componentes atuais
 
-`app.py` expoe as rotas Flask e conecta generation, simulation, execution, exporters, api_catalog e legacy_execution.
+`app.py` expoe as rotas Flask e conecta geracao, simulacao, execucao, exporters, catalogo de APIs e runner legado.
 
 `core/generation/` cria cenarios deterministicos a partir de respostas e templates.
 
-`core/simulation/` executa dry-run local usando o JSON salvo, sem Oracle, APIs, Kafka, Jenkins, rede ou subprocessos reais.
+`core/simulation/` executa dry-run local usando JSON salvo, sem Oracle, APIs, Kafka, Jenkins, rede ou subprocessos reais.
 
 `core/execution/` normaliza steps, queries, checkpoints e evidencias para adapter-run mockado.
 
@@ -30,33 +31,35 @@ O MVP7.6.1 nao muda codigo funcional. Este documento registra a arquitetura atua
 
 `core/api_catalog/` guarda catalogo sanitizado e policy `mock_only` para planejamento de request.
 
+`core/legacy_execution/` mantem o runner legado protegido por modo, ambiente, confirmacao explicita e runtime config externo ao Git.
+
 `core/exporters/` gera artefatos JSON, DOCX e XLSX para cenarios e dry-runs.
 
-`templates/index.html` contem a experiencia atual em HTML/CSS/JavaScript puro.
+`ai/` contem contratos conceituais e operacionais para ontologia, playbooks, evidencia, risco, real execution, skills e supervisores.
 
-## Camada de dominio futura
+## Guardrails de execucao real
 
-`ai/` e reservado para contratos conceituais e operacionais do produto:
+`mode=real` e qualquer caminho equivalente continuam bloqueados por padrao. Uma futura execucao real so pode existir em MVP especifico e deve exigir:
 
-- `ai/knowledge/`: ontologia SmartOffers;
-- `ai/playbooks/`: troubleshooting e roteiros operacionais;
-- `ai/safety/`: regras de risco e bloqueio;
-- `ai/skills/`: habilidades reutilizaveis do produto;
-- `ai/supervisors/`: responsabilidades de supervisores.
+- opt-in explicito;
+- ambiente permitido;
+- allowlist de API/operacao;
+- timeout obrigatorio;
+- logs sanitizados;
+- runtime secrets fora do Git;
+- bloqueio de producao;
+- testes cobrindo allow e deny.
 
-No MVP7.6.1, `ai/` nao contem Python funcional, LLM externo, chamadas reais, MCP/App SDK ou execucao.
+Esses controles nao liberam execucao real por si so. Eles sao pre-condicoes para revisao e implementacao futura.
 
 ## Fronteiras de compatibilidade
 
-O MVP7.6.1 nao altera:
+Mudancas documentais e de guardrail nao devem alterar:
 
-- rotas;
+- rotas Flask;
 - schema de cenarios;
-- `execution_steps`;
-- `validation_steps`;
-- `queries`;
-- `checkpoints`;
-- `evidence_files`;
+- JSONs existentes;
+- geracao deterministica;
 - dry-run;
 - adapter-run;
 - `request_plan`;
@@ -67,13 +70,16 @@ Qualquer campo novo em JSON deve ser opcional e precisa de MVP proprio.
 
 ## Direcao de extensao
 
-A sequencia correta antes de execucao real e:
+A sequencia de evolucao preservada e:
 
-1. registrar guardrails e alinhamento;
-2. criar ontologia SmartOffers;
-3. criar playbooks operacionais;
-4. criar evidence planner;
-5. criar supervisores;
-6. criar scenario intelligence;
-7. criar adapter risk classifier;
-8. somente depois avaliar `mode=real` opt-in em QA4.
+1. guardrails e documentacao de arquitetura;
+2. ontologia SmartOffers;
+3. playbooks operacionais;
+4. evidence planner;
+5. supervisores e skills;
+6. scenario intelligence;
+7. adapter risk classifier;
+8. primeira chamada real opt-in em QA4;
+9. runner controlado com fila/status;
+10. IA auxiliar local-first;
+11. frontend moderno.

@@ -13,7 +13,7 @@ O produto atual e `SmartOffers_Automation_Driven`. PortalQA e uma referencia his
 
 A branch `qa/mvp4-integration` e a linha evolutiva atual, apesar do nome historico. Antes de novo MVP, confirme que a branch contem o merge do MVP7.6 ou posterior.
 
-O projeto e uma plataforma Flask/Python para:
+O projeto e um laboratorio seguro SmartOffers/ACM, local-first e mock-first, implementado como plataforma Flask/Python para:
 
 - gerar cenarios SmartOffers/ACM;
 - salvar cenarios em JSON;
@@ -21,11 +21,11 @@ O projeto e uma plataforma Flask/Python para:
 - simular execucao via dry-run mockado;
 - executar adapter-run local/mockado;
 - exportar artefatos QA/DET em DOCX, XLSX e JSON;
-- evoluir para automacao real controlada no futuro.
+- evoluir para automacao real controlada no futuro, sempre bloqueada por padrao.
 
 A direcao de produto e evoluir de ferramenta de testes para laboratorio seguro SmartOffers/ACM, com supervisores de dominio, skills reutilizaveis, ontologia SmartOffers, playbooks operacionais, evidence planner, risk classifier e execucao real somente em MVP especifico.
 
-Na fase MVP7.6.1, o escopo e documentacao, guardrails e estrutura Markdown. Nao implementar execucao real, LLM externo, MCP/App SDK, novos endpoints ou novos campos de JSON.
+No estado atual, MVP7.8.2 ja externaliza runtime config e o commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71` adicionou protecao local para runtime secrets. Nao implementar execucao real, LLM externo, MCP/App SDK, novos endpoints ou novos campos de JSON fora de MVP explicito.
 
 ## Stack atual
 
@@ -62,8 +62,10 @@ Nao fazer:
 - nao chamar Jenkins real;
 - nao executar subprocessos reais para dry-run;
 - nao habilitar `mode=real` sem MVP explicito;
+- nao habilitar execucao real sem opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados e bloqueio de producao;
 - nao alterar `safe_for_real_execution` sem MVP especifico;
 - nao alterar `execution_status` do catalogo para liberar execucao real sem MVP especifico;
+- nao versionar runtime secrets, `.env`, `.dbp`, export DBeaver sensivel ou ZIP bruto de conexao/evidencia;
 - nao adicionar React agora;
 - nao criar build step frontend;
 - nao reestruturar o projeto inteiro sem necessidade;
