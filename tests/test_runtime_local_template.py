@@ -6,6 +6,11 @@ ROOT = Path(__file__).resolve().parents[1]
 
 REQUIRED_GITIGNORE_PATTERNS = {
     "local_secrets/",
+    "local_backlog/",
+    ".env",
+    ".env.*",
+    "!.env.example",
+    "!*.env.example",
     ".env.local",
     "*.local.env",
     "smartoffers_runtime_local.ps1",

@@ -8,6 +8,11 @@ exports_gerados/
 
 # Local runtime secrets and sensitive connection exports
 local_secrets/
+local_backlog/
+.env
+.env.*
+!.env.example
+!*.env.example
 .env.local
 *.local.env
 smartoffers_runtime_local.ps1
