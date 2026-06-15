@@ -108,7 +108,7 @@ post-vivo-next-habilitacao-de-linha-a79ab2e31c
 - `request_plan` usa placeholders de host, nao hosts reais.
 - `mode=real` permanece bloqueado no endpoint de adapter-run.
 - Fluxos mockados nao devem chamar rede, Oracle, Kafka, Jenkins nem subprocessos reais.
-- MVP7.7 depende da sequencia 7.6.x antes de qualquer chamada real opt-in.
+- Qualquer passo real posterior ao MVP7.8.2 depende de opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados, bloqueio de producao e testes allow/deny.
 
 ## Fluxo recomendado de desenvolvimento
 
@@ -125,17 +125,29 @@ post-vivo-next-habilitacao-de-linha-a79ab2e31c
 
 ## Roadmap ajustado
 
-- MVP7.6.1 - Guardrails e documentacao de arquitetura
-- MVP7.6.2 - Ontologia SmartOffers
-- MVP7.6.3 - Playbooks operacionais
-- MVP7.6.4 - Evidence Planner
-- MVP7.6.5 - AI Supervisors Foundation
-- MVP7.6.6 - Scenario Intelligence Layer
-- MVP7.6.7 - Adapter Risk Classifier
-- MVP7.7 - Primeira chamada real opt-in em QA4
-- MVP8 - Runner controlado com fila/status
-- MVP9 - IA auxiliar local-first
-- MVP10 - Frontend moderno
+O roadmap futuro parte do estado atual MVP7.8.2. Os MVPs 7.6.x e 7.7.x abaixo permanecem registrados como historico concluido/aprovado, nao como pendencia futura.
+
+- MVP7.8.3 - Runtime Preflight & First QA4 Real Smoke
+- MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy
+- MVP7.8.5 - Real Campaign Scenario Pack 01
+- MVP7.8.6 - Evidence Comparison & Runner Hardening
+- MVP7.9.0 - SmartOffers Real Regression Suite v0
+- v0.1 estavel interna
+
+Prioridade de ambientes:
+
+- QA4 e prioridade para o primeiro smoke real controlado;
+- QA1 vem depois somente se a config local estiver completa;
+- QA2/QA3 entram apenas apos QA4 estar estavel.
+
+Estimativas:
+
+- real QA4 executavel: 2 a 3 dias uteis;
+- sanity real padrao/variante/copy: 4 a 5 dias uteis;
+- primeiros cenarios reais: 7 a 10 dias uteis;
+- v0.1 estavel interna: 15 a 20 dias uteis.
+
+## Historico detalhado de MVPs concluidos
 
 ### MVP7.6.1 - Guardrails e documentacao de arquitetura
 
@@ -936,36 +948,6 @@ Fechamento:
 - executar `python -m pytest tests -q`;
 - manter diff seguro e sem dado sensivel novo;
 - worktree deve ficar limpa apos commit/push.
-
-### MVP7.7 - Primeira chamada real opt-in em QA4
-
-Objetivo: permitir a primeira chamada real controlada em QA4, somente com opt-in e guardrails.
-
-MVP7.7 depende de ontologia SmartOffers, playbooks operacionais, evidence planner, supervisores de dominio, risk classifier, policy explicita de allow/deny e testes cobrindo cenarios permitidos e negados.
-
-Condicoes esperadas:
-
-```txt
-mode=real
-environment=QA4
-REAL_EXECUTION_ENABLED=true
-API explicitamente liberada
-timeout configurado
-logs sanitizados
-producao bloqueada
-```
-
-### MVP8 - Runner controlado / filas
-
-Objetivo: evoluir execucao para modelo assincrono/controlado, com fila e acompanhamento de status.
-
-### MVP9 - IA auxiliar local-first
-
-Objetivo: incorporar IA auxiliar com uso controlado, apoiada por knowledge base, playbooks e supervisores.
-
-### MVP10 - Frontend moderno
-
-Objetivo: avaliar uma UI mais robusta somente quando o backend estiver maduro o suficiente.
 
 ## Documentos
 

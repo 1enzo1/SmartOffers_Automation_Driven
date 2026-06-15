@@ -6,7 +6,9 @@ O `SmartOffers_Automation_Driven` esta em MVP7.8.2 concluido na branch evolutiva
 
 PortalQA ficou como referencia historica e nao deve orientar a arquitetura atual.
 
-O produto ja possui geracao deterministica, dry-run mockado, adapters mockados, catalogo seguro de APIs e protecao local para runtime secrets. A execucao real permanece bloqueada por padrao.
+O produto ja possui geracao deterministica, dry-run mockado, adapters mockados, catalogo seguro de APIs, runtime binding para QA manual e protecao local para runtime secrets. A execucao real permanece bloqueada por padrao.
+
+Runtime secrets locais estao protegidos por template e `.gitignore`; a protecao local foi registrada no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`.
 
 ## Direcao
 
@@ -14,62 +16,39 @@ O produto evoluiu de gerador/simulador de testes para laboratorio seguro de auto
 
 A preparacao para execucao real deve permanecer gradual e controlada. Qualquer chamada real futura exige opt-in explicito, ambiente permitido, allowlist, timeout obrigatorio, logs sanitizados, bloqueio de producao e testes cobrindo caminhos permitidos e negados.
 
-## Sequencia ajustada
+## Roadmap futuro atual
 
-### MVP7.6.1 - Guardrails e documentacao de arquitetura
+Os MVPs 7.6.x e 7.7.x sao historico concluido/aprovado. O plano futuro parte do MVP7.8.2:
 
-Registrar direcao de produto, branch evolutiva, limites de seguranca, arquitetura atual e estrutura Markdown inicial para `ai/`.
+- MVP7.8.3 - Runtime Preflight & First QA4 Real Smoke
+- MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy
+- MVP7.8.5 - Real Campaign Scenario Pack 01
+- MVP7.8.6 - Evidence Comparison & Runner Hardening
+- MVP7.9.0 - SmartOffers Real Regression Suite v0
+- v0.1 estavel interna
 
-### MVP7.6.2 - Ontologia SmartOffers
+## Prioridade de ambientes
 
-Criar vocabulario interno do produto para cliente, campanha, evento, metricas, caracteristicas, auditoria, processamento, integracoes e evidencias.
+QA4 e a prioridade para o primeiro smoke real controlado e para estabilizar o caminho real.
 
-### MVP7.6.3 - Playbooks operacionais
+QA1 vem depois somente se houver config local completa para API, DSN, usuario, senha e client Oracle.
 
-Criar roteiros seguros de troubleshooting para sintomas operacionais SmartOffers/ACM.
+QA2/QA3 entram apenas apos QA4 estar estavel, com os mesmos guardrails e sem promover execucao real por padrao.
 
-### MVP7.6.4 - Evidence Planner
+## Estimativas
 
-Preparar plano deterministico de evidencias por camada, sem consultar Oracle real ou sistemas externos.
+- real QA4 executavel: 2 a 3 dias uteis;
+- sanity real padrao/variante/copy: 4 a 5 dias uteis;
+- primeiros cenarios reais: 7 a 10 dias uteis;
+- v0.1 estavel interna: 15 a 20 dias uteis.
 
-### MVP7.6.5 - AI Supervisors Foundation
+## Guardrails permanentes
 
-Criar supervisores do produto como contratos de dominio, sem LLM externo e sem integracoes reais.
-
-### MVP7.6.6 - Scenario Intelligence Layer
-
-Adicionar analise deterministica de cenario com dominio, fluxo principal, camadas de evidencia esperadas, risco e supervisores sugeridos.
-
-### MVP7.6.7 - Adapter Risk Classifier
-
-Classificar risco antes de qualquer adapter-run real futuro, mantendo producao, mutacoes e operacoes destrutivas bloqueadas.
-
-### MVP7.7 - Primeira chamada real opt-in em QA4
-
-Permitir uma primeira chamada real somente em QA4, somente com opt-in e guardrails aprovados.
-
-Condicoes minimas:
-
-- `mode=real`;
-- ambiente permitido;
-- opt-in explicito;
-- allowlist de API/operacao;
-- timeout obrigatorio;
-- logs sanitizados;
-- producao bloqueada;
-- testes cobrindo allow e deny.
-
-### MVP8 - Runner controlado com fila/status
-
-Evoluir execucao para modelo controlado, com fila, status, auditoria e cancelamento seguro.
-
-### MVP9 - IA auxiliar local-first
-
-Incorporar IA auxiliar com governanca, apoiada por knowledge base, playbooks, supervisores e politica local-first.
-
-### MVP10 - Frontend moderno
-
-Avaliar uma UI moderna somente quando backend, contratos e guardrails estiverem maduros o suficiente.
+- `mode=real` e caminhos equivalentes continuam bloqueados por padrao.
+- Execucao real exige opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados e bloqueio de producao.
+- Runtime secrets devem permanecer fora do Git.
+- Catalogo seguro deve continuar com `execution_status=blocked` e `safe_for_real_execution=false` ate MVP especifico.
+- QA, BD, API, Kafka e Jenkins reais nao devem ser chamados por testes automatizados ou dry-run.
 
 ## Supervisores previstos
 
