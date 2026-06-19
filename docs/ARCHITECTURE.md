@@ -9,7 +9,7 @@ O produto e um laboratorio seguro de automacao SmartOffers/ACM, local-first e mo
 ## Linha base
 
 - Branch evolutiva atual: `qa/mvp4-integration`, apesar do nome historico.
-- Estado atual: MVP7.8.2 concluido.
+- Estado atual: MVP7.8.3A concluido.
 - Runtime secrets locais: protegidos por `.gitignore` e template sanitizado desde o commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`.
 - Execucao real: bloqueada por padrao.
 - Catalogo de APIs: sanitizado, versionado e `mock_only`.
@@ -31,7 +31,7 @@ O produto e um laboratorio seguro de automacao SmartOffers/ACM, local-first e mo
 
 `core/api_catalog/` guarda catalogo sanitizado e policy `mock_only` para planejamento de request.
 
-`core/legacy_execution/` mantem o runner legado protegido por modo, ambiente, confirmacao explicita e runtime config externo ao Git.
+`core/legacy_execution/` mantem o runner legado protegido por modo, ambiente, confirmacao explicita, preflight sanitizado e runtime config externo ao Git.
 
 `core/exporters/` gera artefatos JSON, DOCX e XLSX para cenarios e dry-runs.
 

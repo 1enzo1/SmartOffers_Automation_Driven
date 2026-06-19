@@ -7,8 +7,9 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.8.2
-- Ultimo MVP aprovado: MVP7.8.2 - Real QA Runtime Binding & Legacy Config Externalization
+- MVP atual concluido: MVP7.8.3A
+- Ultimo MVP aprovado: MVP7.8.3A - Runtime Preflight seguro para execucao QA manual
+- Estado funcional anterior: MVP7.8.2 - Real QA Runtime Binding & Legacy Config Externalization
 - Protecao local de runtime secrets: concluida no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
@@ -56,6 +57,7 @@ A execucao real continua bloqueada por padrao. Qualquer MVP futuro que tente cha
 | MVP7.8.0 | Concluido/Aprovado | Presentation UI Polish & Smoke Test |
 | MVP7.8.1 | Concluido/Aprovado | Execution Mode & Environment Selector |
 | MVP7.8.2 | Concluido/Aprovado | Real QA Runtime Binding & Legacy Config Externalization |
+| MVP7.8.3A | Concluido/Aprovado | Runtime Preflight seguro para execucao QA manual |
 
 ## MVP7.6
 
@@ -108,7 +110,7 @@ post-vivo-next-habilitacao-de-linha-a79ab2e31c
 - `request_plan` usa placeholders de host, nao hosts reais.
 - `mode=real` permanece bloqueado no endpoint de adapter-run.
 - Fluxos mockados nao devem chamar rede, Oracle, Kafka, Jenkins nem subprocessos reais.
-- Qualquer passo real posterior ao MVP7.8.2 depende de opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados, bloqueio de producao e testes allow/deny.
+- Qualquer passo real posterior ao MVP7.8.3A depende de opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados, bloqueio de producao e testes allow/deny.
 
 ## Fluxo recomendado de desenvolvimento
 
@@ -125,9 +127,9 @@ post-vivo-next-habilitacao-de-linha-a79ab2e31c
 
 ## Roadmap ajustado
 
-O roadmap futuro parte do estado atual MVP7.8.2. Os MVPs 7.6.x e 7.7.x abaixo permanecem registrados como historico concluido/aprovado, nao como pendencia futura.
+O roadmap futuro parte do estado atual MVP7.8.3A. Os MVPs 7.6.x e 7.7.x abaixo permanecem registrados como historico concluido/aprovado, nao como pendencia futura.
 
-- MVP7.8.3 - Runtime Preflight & First QA4 Real Smoke
+- MVP7.8.3B - First QA4 Real Smoke manual
 - MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy
 - MVP7.8.5 - Real Campaign Scenario Pack 01
 - MVP7.8.6 - Evidence Comparison & Runner Hardening
@@ -911,6 +913,43 @@ Fechamento:
 - executar `git diff --check`;
 - confirmar ausencia de dados sensiveis novos;
 - fazer self review antes de commit/push;
+- worktree deve ficar limpa apos commit/push.
+
+### MVP7.8.3A - Runtime Preflight seguro para execucao QA manual
+
+Status: concluido/aprovado.
+
+Objetivo: consolidar um preflight deterministico e sanitizado antes de qualquer subprocesso legado em `real_qa_manual`.
+
+Entregas:
+
+- adicionar resultado de preflight `READY`/`BLOCKED` em `core/legacy_execution/runtime_config.py`;
+- retornar somente ambiente, nomes de refs verificadas e nomes de refs ausentes;
+- manter valores reais de env fora de retorno, logs, testes e documentacao;
+- exigir refs completas de API, DSN, usuario, senha e client Oracle antes de liberar subprocesso legado;
+- executar o preflight antes de iniciar subprocesso legado em `real_qa_manual`;
+- bloquear subprocesso quando faltar config local minima para QA manual;
+- manter `mock` e `dry_run` sem exigir preflight real;
+- manter `adapter-run mode=real` bloqueado;
+- manter o guard `SMARTOFFERS_ALLOW_LEGACY_REAL_SCRIPT=YES_I_UNDERSTAND`.
+
+Nao escopo:
+
+- executar QA4;
+- chamar API real;
+- chamar Oracle/BD real;
+- chamar Kafka ou Jenkins;
+- alterar payload builder;
+- alterar UI;
+- liberar `adapter-run mode=real`;
+- versionar `.env`, `.dbp`, ZIP, DBeaver export, `local_secrets/`, `local_backlog/`, host, IP, token, secret, DSN real, payload real, MSISDN, account ou response body.
+
+Fechamento:
+
+- testes de preflight devem usar env fake e subprocess fake;
+- `python -m pytest tests -q` deve passar;
+- `git diff --check` deve passar;
+- diff deve permanecer sanitizado e sem chamada real;
 - worktree deve ficar limpa apos commit/push.
 
 ### MVP7.8.0 - Presentation UI Polish & Smoke Test

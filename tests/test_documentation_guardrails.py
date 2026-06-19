@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 ROADMAP_ITEMS = [
-    "MVP7.8.3 - Runtime Preflight & First QA4 Real Smoke",
+    "MVP7.8.3B - First QA4 Real Smoke manual",
     "MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy",
     "MVP7.8.5 - Real Campaign Scenario Pack 01",
     "MVP7.8.6 - Evidence Comparison & Runner Hardening",
@@ -91,8 +91,9 @@ def test_current_real_execution_plan_is_documented():
     docs = "\n".join([_read("README.md"), _read("PROJECT_STATUS.md"), _read("docs/ROADMAP.md")])
 
     required_fragments = [
-        "MVP atual concluido: MVP7.8.2",
-        "Ultimo MVP aprovado: MVP7.8.2 - Real QA Runtime Binding & Legacy Config Externalization",
+        "MVP atual concluido: MVP7.8.3A",
+        "Ultimo MVP aprovado: MVP7.8.3A - Runtime Preflight seguro para execucao QA manual",
+        "Estado funcional anterior: MVP7.8.2 - Real QA Runtime Binding & Legacy Config Externalization",
         "de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71",
         "QA4 e prioridade",
         "QA1 vem depois",

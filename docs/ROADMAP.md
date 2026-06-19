@@ -2,7 +2,7 @@
 
 ## Estado atual
 
-O `SmartOffers_Automation_Driven` esta em MVP7.8.2 concluido na branch evolutiva `qa/mvp4-integration`. A branch tem nome historico ligado ao MVP4, mas representa a linha atual do produto.
+O `SmartOffers_Automation_Driven` esta em MVP7.8.3A concluido na branch evolutiva `qa/mvp4-integration`. A branch tem nome historico ligado ao MVP4, mas representa a linha atual do produto.
 
 PortalQA ficou como referencia historica e nao deve orientar a arquitetura atual.
 
@@ -18,9 +18,9 @@ A preparacao para execucao real deve permanecer gradual e controlada. Qualquer c
 
 ## Roadmap futuro atual
 
-Os MVPs 7.6.x e 7.7.x sao historico concluido/aprovado. O plano futuro parte do MVP7.8.2:
+Os MVPs 7.6.x e 7.7.x sao historico concluido/aprovado. O plano futuro parte do MVP7.8.3A:
 
-- MVP7.8.3 - Runtime Preflight & First QA4 Real Smoke
+- MVP7.8.3B - First QA4 Real Smoke manual
 - MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy
 - MVP7.8.5 - Real Campaign Scenario Pack 01
 - MVP7.8.6 - Evidence Comparison & Runner Hardening

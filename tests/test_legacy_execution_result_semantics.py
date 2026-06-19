@@ -198,6 +198,7 @@ def test_runner_can_pass_guard_with_explicit_authorization(monkeypatch):
     monkeypatch.setenv("SMARTOFFERS_QA4_DB_DSN", "fake-qa4-db-dsn")
     monkeypatch.setenv("SMARTOFFERS_QA4_DB_USER", "fake-qa4-db-user")
     monkeypatch.setenv("SMARTOFFERS_QA4_DB_PASSWORD", "fake-qa4-db-password")
+    monkeypatch.setenv("SMARTOFFERS_ORACLE_CLIENT_LIB_DIR", "fake-oracle-client-dir")
     process_factory, captured = _fake_process_factory([], returncode=0)
 
     events = _collect_events(

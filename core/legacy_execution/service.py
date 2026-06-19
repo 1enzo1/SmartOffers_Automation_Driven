@@ -8,6 +8,7 @@ from pathlib import Path
 from core.legacy_execution.modes import evaluate_execution_mode_request
 from core.legacy_execution.runtime_config import (
     build_runtime_config_log,
+    build_runtime_preflight_log,
     resolve_legacy_runtime_config,
 )
 from core.utils.evidence_response_contract import analyze_smartoffers_response
@@ -67,10 +68,12 @@ def stream_legacy_execution(
         runtime_config = None
         if mode_decision["allow_legacy_real_script"]:
             runtime_config = resolve_legacy_runtime_config(mode_decision["environment_contract"])
+            runtime_preflight = runtime_config["preflight"]
+            yield f"data:LOG|{build_runtime_preflight_log(runtime_preflight)}\n\n"
             yield f"data:LOG|{build_runtime_config_log(runtime_config)}\n\n"
-            if not runtime_config["valid"]:
+            if runtime_preflight["status"] != "READY":
                 reasons = ",".join(runtime_config["blocked_reasons"])
-                yield f"data:ERROR|Runtime config blocked: {reasons}\n\n"
+                yield f"data:ERROR|Runtime preflight blocked: {reasons}\n\n"
                 yield f"data:RUN|END|BLOCKED|0|1\n\n"
                 return
 

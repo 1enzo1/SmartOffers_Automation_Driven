@@ -10,7 +10,14 @@ from core.legacy_execution.modes import (
     EXECUTION_MODE_REAL_QA_MANUAL,
     evaluate_execution_mode_request,
 )
-from core.real_execution.environments import list_sanitized_qa_environments
+from core.legacy_execution.runtime_config import (
+    ORACLE_CLIENT_LIB_DIR_ENV,
+    preflight_legacy_runtime_config,
+)
+from core.real_execution.environments import (
+    get_sanitized_qa_environment,
+    list_sanitized_qa_environments,
+)
 
 
 def test_default_execution_mode_is_not_real():
@@ -53,6 +60,66 @@ def test_invalid_environment_is_blocked():
     assert decision["allowed"] is False
     assert decision["status"] == "BLOCKED"
     assert "invalid_environment" in decision["blocked_reasons"]
+
+
+def test_runtime_preflight_qa4_complete_fake_env_returns_ready(monkeypatch):
+    _set_fake_qa_runtime(monkeypatch, "qa4")
+    monkeypatch.setenv(ORACLE_CLIENT_LIB_DIR_ENV, "fake-oracle-client-dir")
+
+    preflight = preflight_legacy_runtime_config(get_sanitized_qa_environment("qa4"))
+
+    assert preflight == {
+        "status": "READY",
+        "environment": "qa4",
+        "missing_refs": [],
+        "checked_refs": [
+            "SMARTOFFERS_ORACLE_CLIENT_LIB_DIR",
+            "SMARTOFFERS_QA4_API_URL",
+            "SMARTOFFERS_QA4_DB_DSN",
+            "SMARTOFFERS_QA4_DB_PASSWORD",
+            "SMARTOFFERS_QA4_DB_USER",
+        ],
+    }
+
+
+def test_runtime_preflight_qa4_missing_env_returns_blocked(monkeypatch):
+    for name in (
+        "SMARTOFFERS_QA4_API_URL",
+        "SMARTOFFERS_QA4_DB_DSN",
+        "SMARTOFFERS_QA4_DB_USER",
+        "SMARTOFFERS_QA4_DB_PASSWORD",
+        ORACLE_CLIENT_LIB_DIR_ENV,
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    preflight = preflight_legacy_runtime_config(get_sanitized_qa_environment("qa4"))
+
+    assert preflight["status"] == "BLOCKED"
+    assert preflight["environment"] == "qa4"
+    assert preflight["missing_refs"] == [
+        "SMARTOFFERS_ORACLE_CLIENT_LIB_DIR",
+        "SMARTOFFERS_QA4_API_URL",
+        "SMARTOFFERS_QA4_DB_DSN",
+        "SMARTOFFERS_QA4_DB_PASSWORD",
+        "SMARTOFFERS_QA4_DB_USER",
+    ]
+    assert ORACLE_CLIENT_LIB_DIR_ENV in preflight["checked_refs"]
+
+
+def test_runtime_preflight_returns_refs_never_values(monkeypatch):
+    _set_fake_qa_runtime(monkeypatch, "qa4")
+    monkeypatch.setenv(ORACLE_CLIENT_LIB_DIR_ENV, "fake-oracle-client-dir")
+
+    preflight = preflight_legacy_runtime_config(get_sanitized_qa_environment("qa4"))
+    rendered = repr(preflight)
+
+    assert "SMARTOFFERS_QA4_API_URL" in rendered
+    assert "SMARTOFFERS_QA4_DB_PASSWORD" in rendered
+    assert "fake-qa4-api-url" not in rendered
+    assert "fake-qa4-db-dsn" not in rendered
+    assert "fake-qa4-db-user" not in rendered
+    assert "fake-qa4-db-password" not in rendered
+    assert "fake-oracle-client-dir" not in rendered
 
 
 def test_real_without_confirmation_is_blocked_and_does_not_start_process():
@@ -105,6 +172,7 @@ def test_real_qa_without_local_config_is_blocked(monkeypatch):
         "SMARTOFFERS_QA4_DB_DSN",
         "SMARTOFFERS_QA4_DB_USER",
         "SMARTOFFERS_QA4_DB_PASSWORD",
+        ORACLE_CLIENT_LIB_DIR_ENV,
     ):
         monkeypatch.delenv(name, raising=False)
 
@@ -122,7 +190,7 @@ def test_real_qa_without_local_config_is_blocked(monkeypatch):
         )
     )
 
-    assert any("Runtime config blocked" in event for event in events)
+    assert any("Runtime preflight blocked" in event for event in events)
     assert any("missing_runtime_ref:SMARTOFFERS_QA4_API_URL" in event for event in events)
     assert _last_run_end(events) == "RUN|END|BLOCKED|0|1"
 
@@ -305,6 +373,7 @@ def _set_fake_qa_runtime(monkeypatch, environment):
     monkeypatch.setenv(f"SMARTOFFERS_{prefix}_DB_DSN", f"fake-{environment}-db-dsn")
     monkeypatch.setenv(f"SMARTOFFERS_{prefix}_DB_USER", f"fake-{environment}-db-user")
     monkeypatch.setenv(f"SMARTOFFERS_{prefix}_DB_PASSWORD", f"fake-{environment}-db-password")
+    monkeypatch.setenv(ORACLE_CLIENT_LIB_DIR_ENV, "fake-oracle-client-dir")
 
 
 class _FakeProcess:
