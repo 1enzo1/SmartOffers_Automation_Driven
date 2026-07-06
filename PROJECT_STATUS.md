@@ -7,9 +7,9 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.8.3A
-- Ultimo MVP aprovado: MVP7.8.3A - Runtime Preflight seguro para execucao QA manual
-- Estado funcional anterior: MVP7.8.2 - Real QA Runtime Binding & Legacy Config Externalization
+- MVP atual concluido: MVP7.8.3A.1
+- Ultimo MVP aprovado: MVP7.8.3A.1 - Multi-resource Runtime Contract
+- Estado funcional anterior: MVP7.8.3A - Runtime Preflight seguro para execucao QA manual
 - Protecao local de runtime secrets: concluida no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`
 - PR do MVP7.6: `#12`
 - Merge commit do MVP7.6: `5c0566ff3ad32cb18480c714dd703ce78f10b8eb`
@@ -58,6 +58,7 @@ A execucao real continua bloqueada por padrao. Qualquer MVP futuro que tente cha
 | MVP7.8.1 | Concluido/Aprovado | Execution Mode & Environment Selector |
 | MVP7.8.2 | Concluido/Aprovado | Real QA Runtime Binding & Legacy Config Externalization |
 | MVP7.8.3A | Concluido/Aprovado | Runtime Preflight seguro para execucao QA manual |
+| MVP7.8.3A.1 | Concluido/Aprovado | Multi-resource Runtime Contract |
 
 ## MVP7.6
 
@@ -110,7 +111,7 @@ post-vivo-next-habilitacao-de-linha-a79ab2e31c
 - `request_plan` usa placeholders de host, nao hosts reais.
 - `mode=real` permanece bloqueado no endpoint de adapter-run.
 - Fluxos mockados nao devem chamar rede, Oracle, Kafka, Jenkins nem subprocessos reais.
-- Qualquer passo real posterior ao MVP7.8.3A depende de opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados, bloqueio de producao e testes allow/deny.
+- Qualquer passo real posterior ao MVP7.8.3A.1 depende de opt-in explicito, ambiente permitido, allowlist, timeout, logs sanitizados, bloqueio de producao e testes allow/deny.
 
 ## Fluxo recomendado de desenvolvimento
 
@@ -127,7 +128,7 @@ post-vivo-next-habilitacao-de-linha-a79ab2e31c
 
 ## Roadmap ajustado
 
-O roadmap futuro parte do estado atual MVP7.8.3A. Os MVPs 7.6.x e 7.7.x abaixo permanecem registrados como historico concluido/aprovado, nao como pendencia futura.
+O roadmap futuro parte do estado atual MVP7.8.3A.1. Os MVPs 7.6.x e 7.7.x abaixo permanecem registrados como historico concluido/aprovado, nao como pendencia futura.
 
 - MVP7.8.3B - First QA4 Real Smoke manual
 - MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy
@@ -914,6 +915,50 @@ Fechamento:
 - confirmar ausencia de dados sensiveis novos;
 - fazer self review antes de commit/push;
 - worktree deve ficar limpa apos commit/push.
+
+### MVP7.8.3A.1 - Multi-resource Runtime Contract
+
+Status: concluido/aprovado.
+
+Objetivo: implementar contrato explicito multi-recurso para QA4 e preflight seletivo por perfil/fluxo, seguindo a decisao arquitetural C.
+
+Perfil oficial inicial:
+
+- `qa4_first_smoke_api_acm_custom_ro`
+
+Recursos exigidos pelo perfil:
+
+- `SMARTOFFERS_QA4_API_URL`
+- `SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN`
+- `SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER`
+- `SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD`
+- `SMARTOFFERS_ORACLE_CLIENT_LIB_DIR`
+
+Entregas:
+
+- adicionar contrato sanitizado em `core/real_execution/runtime_profiles.py`;
+- associar QA4 ao perfil oficial sem remover compatibilidade com contratos antigos por ambiente;
+- resolver preflight por perfil/fluxo quando `resources` estiver presente;
+- retornar somente ambiente, perfil, fluxo, recursos, refs verificadas e refs ausentes;
+- normalizar refs do perfil para envs legadas apenas quando o preflight estiver `READY`;
+- atualizar UI para exibir perfil runtime em `real_qa_manual`;
+- atualizar template local e testes para ACM_CUSTOM read-only.
+
+Nao escopo:
+
+- chamar QA4 real;
+- chamar API real;
+- conectar Oracle/BD real;
+- chamar Kafka ou Jenkins;
+- liberar `adapter-run mode=real`;
+- alterar catalogo seguro, `safe_for_real_execution` ou `execution_status`;
+- versionar host, IP, token, secret, DSN real, payload real, MSISDN, account, documento ou response body.
+
+Fechamento:
+
+- `python -m pytest tests -q`;
+- `git diff --check`;
+- confirmar que logs, docs e testes contem apenas referencias sanitizadas.
 
 ### MVP7.8.3A - Runtime Preflight seguro para execucao QA manual
 

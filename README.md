@@ -4,7 +4,7 @@ SmartOffers_Automation_Driven e uma plataforma Flask/Python local-first e mock-f
 
 O produto deve evoluir como um laboratorio seguro de automacao SmartOffers/ACM, nao apenas como um gerador ou simulador de testes. Ele transforma regras de campanha, eventos, APIs sanitizadas, evidencias operacionais e troubleshooting em cenarios deterministicos, dry-runs, adapter-runs mockados, `request_plan` seguro e, em MVP futuro, execucoes reais controladas.
 
-Estado atual: MVP7.8.3A concluido, com preflight sanitizado para execucao QA manual e protecao local de runtime secrets registrada no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`. A branch `qa/mvp4-integration` e a linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4. A execucao real segue bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs, Kafka, Jenkins ou rede externa.
+Estado atual: MVP7.8.3A.1 concluido, com contrato runtime multi-recurso para o perfil `qa4_first_smoke_api_acm_custom_ro`, preflight sanitizado para execucao QA manual e protecao local de runtime secrets registrada no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`. A branch `qa/mvp4-integration` e a linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4. A execucao real segue bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs, Kafka, Jenkins ou rede externa.
 
 ## Objetivo
 
@@ -34,7 +34,7 @@ A execucao real continua bloqueada por padrao. Qualquer evolucao para `mode=real
 
 ## Roadmap ajustado
 
-O roadmap futuro parte do estado atual MVP7.8.3A. Os MVPs 7.6.x e 7.7.x ficam como historico concluido, nao como trabalho pendente.
+O roadmap futuro parte do estado atual MVP7.8.3A.1. Os MVPs 7.6.x e 7.7.x ficam como historico concluido, nao como trabalho pendente.
 
 - MVP7.8.3B - First QA4 Real Smoke manual
 - MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy

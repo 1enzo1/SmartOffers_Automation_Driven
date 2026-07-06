@@ -1633,6 +1633,16 @@ pre {
                     </select>
                 </div>
 
+                <div class="suite-field">
+                    <label for="runtimeProfile">Perfil runtime</label>
+                    <select id="runtimeProfile">
+                        <option value="">Default por ambiente</option>
+                        {% for profile in runtime_profiles %}
+                        <option value="{{ profile.id }}" data-environment="{{ profile.environment }}">{{ profile.id }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
                 <label class="toggle-pill" for="realExecutionConfirmed">
                     <span class="sidebar-text">Confirmo execucao real QA manual</span>
                     <input type="checkbox" id="realExecutionConfirmed">
@@ -3567,12 +3577,16 @@ function finishScenario(kind, numero, status, analysisText){
 function getExecutionSelection(options = {}){
     const modeInput = document.getElementById("executionMode")
     const environmentInput = document.getElementById("executionEnvironment")
+    const runtimeProfileInput = document.getElementById("runtimeProfile")
     const confirmationInput = document.getElementById("realExecutionConfirmed")
     return {
         mode: options.executionMode || (modeInput ? modeInput.value : "mock") || "mock",
         environment: options.executionEnvironment !== undefined
             ? options.executionEnvironment
             : (environmentInput ? environmentInput.value : ""),
+        runtimeProfile: options.runtimeProfile !== undefined
+            ? options.runtimeProfile
+            : (runtimeProfileInput ? runtimeProfileInput.value : ""),
         confirmed: options.realConfirmed !== undefined
             ? options.realConfirmed
             : Boolean(confirmationInput && confirmationInput.checked),
@@ -3583,11 +3597,13 @@ function updateExecutionModeControls(){
     const selection = getExecutionSelection()
     const controls = document.getElementById("executionRealControls")
     const environmentInput = document.getElementById("executionEnvironment")
+    const runtimeProfileInput = document.getElementById("runtimeProfile")
     const confirmationInput = document.getElementById("realExecutionConfirmed")
     const isReal = selection.mode === "real_qa_manual"
 
     if(controls) controls.hidden = !isReal
     if(environmentInput) environmentInput.disabled = !isReal
+    if(runtimeProfileInput) runtimeProfileInput.disabled = !isReal
     if(confirmationInput){
         confirmationInput.disabled = !isReal
         if(!isReal) confirmationInput.checked = false
@@ -3630,6 +3646,7 @@ function executar(options = {}){
         analisar,
         executionMode: executionSelection.mode,
         executionEnvironment: executionSelection.environment,
+        runtimeProfile: executionSelection.runtimeProfile,
         realConfirmed: executionSelection.confirmed,
     }
     setRunStatus("RUNNING")
@@ -3641,6 +3658,7 @@ function executar(options = {}){
         analisar: String(analisar),
         execution_mode: executionSelection.mode,
         environment: executionSelection.environment || "",
+        runtime_profile: executionSelection.runtimeProfile || "",
         confirm_real: String(executionSelection.confirmed),
     })
     addFeed(`Modo de execucao: ${executionSelection.mode}`, "warn")

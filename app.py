@@ -31,6 +31,7 @@ from core.legacy_execution import (
     stream_legacy_execution,
 )
 from core.real_execution.environments import list_sanitized_qa_environments
+from core.real_execution.runtime_profiles import list_sanitized_runtime_profiles
 from core.simulation import run_dry_run, save_dry_run_report
 from core.templates import get_template, list_template_categories, list_templates
 
@@ -44,6 +45,7 @@ def index():
         "index.html",
         scripts=SCRIPTS.keys(),
         qa_environments=list_sanitized_qa_environments(),
+        runtime_profiles=list_sanitized_runtime_profiles(),
     )
 
 
@@ -209,6 +211,7 @@ def executar():
     analisar = request.args.get("analisar") == "true"
     execution_mode = request.args.get("execution_mode") or request.args.get("mode")
     environment = request.args.get("environment")
+    runtime_profile = request.args.get("runtime_profile")
     real_confirmed = request.args.get("confirm_real") == "true"
     return Response(
         stream_legacy_execution(
@@ -216,6 +219,7 @@ def executar():
             analisar,
             execution_mode=execution_mode,
             environment=environment,
+            runtime_profile=runtime_profile,
             real_confirmed=real_confirmed,
         ),
         mimetype="text/event-stream",
