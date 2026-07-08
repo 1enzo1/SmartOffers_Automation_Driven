@@ -1,5 +1,7 @@
 from copy import deepcopy
 
+from core.real_execution.runtime_profiles import SMARTOFFERS_BASIC_SMOKE
+
 
 QA_ENVIRONMENT_CONTRACT = {
     "qa1": {
@@ -33,6 +35,8 @@ QA_ENVIRONMENT_CONTRACT = {
         "db_dsn_ref": "SMARTOFFERS_QA4_DB_DSN",
         "db_user_ref": "SMARTOFFERS_QA4_DB_USER",
         "db_password_ref": "SMARTOFFERS_QA4_DB_PASSWORD",
+        "default_runtime_profile_id": SMARTOFFERS_BASIC_SMOKE,
+        "runtime_profile_ids": [SMARTOFFERS_BASIC_SMOKE],
     },
 }
 

@@ -91,9 +91,13 @@ def test_current_real_execution_plan_is_documented():
     docs = "\n".join([_read("README.md"), _read("PROJECT_STATUS.md"), _read("docs/ROADMAP.md")])
 
     required_fragments = [
-        "MVP atual concluido: MVP7.8.3A",
-        "Ultimo MVP aprovado: MVP7.8.3A - Runtime Preflight seguro para execucao QA manual",
-        "Estado funcional anterior: MVP7.8.2 - Real QA Runtime Binding & Legacy Config Externalization",
+        "MVP atual concluido: MVP7.8.3A.1",
+        "Ultimo MVP aprovado: MVP7.8.3A.1 - Multi-resource Runtime Contract",
+        "Estado funcional anterior: MVP7.8.3A - Runtime Preflight seguro para execucao QA manual",
+        "smartoffers_basic_smoke",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
+        "SMARTOFFERS_QA4_DB_*",
+        "legado",
         "de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71",
         "QA4 e prioridade",
         "QA1 vem depois",

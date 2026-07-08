@@ -195,9 +195,12 @@ def test_runner_does_not_pass_guard_without_explicit_authorization(monkeypatch):
 
 def test_runner_can_pass_guard_with_explicit_authorization(monkeypatch):
     monkeypatch.setenv("SMARTOFFERS_QA4_API_URL", "fake-qa4-api-url")
-    monkeypatch.setenv("SMARTOFFERS_QA4_DB_DSN", "fake-qa4-db-dsn")
-    monkeypatch.setenv("SMARTOFFERS_QA4_DB_USER", "fake-qa4-db-user")
-    monkeypatch.setenv("SMARTOFFERS_QA4_DB_PASSWORD", "fake-qa4-db-password")
+    monkeypatch.setenv("SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN", "fake-qa4-acm-custom-db-dsn")
+    monkeypatch.setenv("SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER", "fake-qa4-acm-custom-db-user")
+    monkeypatch.setenv(
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD",
+        "fake-qa4-acm-custom-db-password",
+    )
     monkeypatch.setenv("SMARTOFFERS_ORACLE_CLIENT_LIB_DIR", "fake-oracle-client-dir")
     process_factory, captured = _fake_process_factory([], returncode=0)
 
@@ -216,6 +219,7 @@ def test_runner_can_pass_guard_with_explicit_authorization(monkeypatch):
     assert captured["env"][service.LEGACY_REAL_SCRIPT_ENV] == service.LEGACY_REAL_SCRIPT_CONFIRMATION
     assert captured["env"]["ANALISAR_EXECUCAO"] == "1"
     assert captured["env"]["SMARTOFFERS_API_URL"] == "fake-qa4-api-url"
+    assert captured["env"]["SMARTOFFERS_DB_DSN"] == "fake-qa4-acm-custom-db-dsn"
     assert _last_run_end(events) == "RUN|END|PASS|0|0"
 
 

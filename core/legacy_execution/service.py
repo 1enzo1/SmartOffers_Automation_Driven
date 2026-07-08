@@ -32,6 +32,7 @@ def stream_legacy_execution(
     allow_legacy_real_script=False,
     execution_mode=None,
     environment=None,
+    runtime_profile=None,
     real_confirmed=False,
     process_factory=None,
 ):
@@ -47,6 +48,7 @@ def stream_legacy_execution(
         mode_decision = evaluate_execution_mode_request(
             mode=execution_mode,
             environment=environment,
+            runtime_profile=runtime_profile,
             real_confirmed=real_confirmed,
         )
         if not mode_decision["allowed"]:
@@ -57,7 +59,8 @@ def stream_legacy_execution(
 
         yield (
             "data:LOG|EXECUTION_MODE|"
-            f"{mode_decision['mode']}|environment={mode_decision['environment'] or 'none'}\n\n"
+            f"{mode_decision['mode']}|environment={mode_decision['environment'] or 'none'}|"
+            f"profile={mode_decision['runtime_profile'] or 'none'}\n\n"
         )
 
         if mode_decision["dry_run_only"]:
@@ -67,7 +70,7 @@ def stream_legacy_execution(
 
         runtime_config = None
         if mode_decision["allow_legacy_real_script"]:
-            runtime_config = resolve_legacy_runtime_config(mode_decision["environment_contract"])
+            runtime_config = resolve_legacy_runtime_config(mode_decision["runtime_contract"])
             runtime_preflight = runtime_config["preflight"]
             yield f"data:LOG|{build_runtime_preflight_log(runtime_preflight)}\n\n"
             yield f"data:LOG|{build_runtime_config_log(runtime_config)}\n\n"
@@ -82,6 +85,7 @@ def stream_legacy_execution(
             allow_legacy_real_script=mode_decision["allow_legacy_real_script"],
             execution_mode=mode_decision["mode"],
             environment=mode_decision["environment"],
+            runtime_profile=mode_decision["runtime_profile"],
             runtime_config=runtime_config,
         )
         process_factory = process_factory or subprocess.Popen
@@ -158,6 +162,7 @@ def build_legacy_execution_env(
     allow_legacy_real_script=False,
     execution_mode=None,
     environment=None,
+    runtime_profile=None,
     runtime_config=None,
     base_env=None,
 ):
@@ -168,6 +173,10 @@ def build_legacy_execution_env(
         env["SMARTOFFERS_QA_ENVIRONMENT"] = str(environment)
     else:
         env.pop("SMARTOFFERS_QA_ENVIRONMENT", None)
+    if runtime_profile:
+        env["SMARTOFFERS_RUNTIME_PROFILE"] = str(runtime_profile)
+    else:
+        env.pop("SMARTOFFERS_RUNTIME_PROFILE", None)
     env.pop(LEGACY_REAL_SCRIPT_ENV, None)
 
     normalized_runtime_env = (runtime_config or {}).get("normalized_env") or {}
