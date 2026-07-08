@@ -924,7 +924,7 @@ Objetivo: implementar contrato explicito multi-recurso para QA4 e preflight sele
 
 Perfil oficial inicial:
 
-- `qa4_first_smoke_api_acm_custom_ro`
+- `smartoffers_basic_smoke`
 
 Recursos exigidos pelo perfil:
 
@@ -941,6 +941,8 @@ Entregas:
 - resolver preflight por perfil/fluxo quando `resources` estiver presente;
 - retornar somente ambiente, perfil, fluxo, recursos, refs verificadas e refs ausentes;
 - normalizar refs do perfil para envs legadas apenas quando o preflight estiver `READY`;
+- aceitar `SMARTOFFERS_QA4_DB_*` somente como alias legado/deprecado para ACM_CUSTOM quando as refs explicitas `SMARTOFFERS_QA4_ACM_CUSTOM_DB_*` estiverem ausentes;
+- manter FTM Engine, ACMV4 e BDA fora do perfil inicial para nao criar bloqueio artificial no primeiro smoke;
 - atualizar UI para exibir perfil runtime em `real_qa_manual`;
 - atualizar template local e testes para ACM_CUSTOM read-only.
 

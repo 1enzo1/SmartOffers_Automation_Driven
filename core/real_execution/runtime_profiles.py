@@ -1,14 +1,14 @@
 from copy import deepcopy
 
 
-QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO = "qa4_first_smoke_api_acm_custom_ro"
+SMARTOFFERS_BASIC_SMOKE = "smartoffers_basic_smoke"
 
 RUNTIME_PROFILE_CONTRACTS = {
-    QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO: {
-        "id": QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO,
-        "label": "QA4 first smoke API + ACM_CUSTOM RO",
+    SMARTOFFERS_BASIC_SMOKE: {
+        "id": SMARTOFFERS_BASIC_SMOKE,
+        "label": "SmartOffers basic smoke QA4",
         "environment": "qa4",
-        "flow": "first_smoke_api",
+        "flow": "smartoffers_basic_smoke",
         "access_profile": "acm_custom_read_only",
         "resources": [
             {
@@ -34,6 +34,11 @@ RUNTIME_PROFILE_CONTRACTS = {
                     "user": "SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER",
                     "password": "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD",
                 },
+                "legacy_refs": {
+                    "dsn": ["SMARTOFFERS_QA4_DB_DSN"],
+                    "user": ["SMARTOFFERS_QA4_DB_USER"],
+                    "password": ["SMARTOFFERS_QA4_DB_PASSWORD"],
+                },
                 "normalized_env": {
                     "dsn": "SMARTOFFERS_DB_DSN",
                     "user": "SMARTOFFERS_DB_USER",
@@ -57,7 +62,7 @@ RUNTIME_PROFILE_CONTRACTS = {
 }
 
 DEFAULT_RUNTIME_PROFILE_BY_ENVIRONMENT = {
-    "qa4": QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO,
+    "qa4": SMARTOFFERS_BASIC_SMOKE,
 }
 
 

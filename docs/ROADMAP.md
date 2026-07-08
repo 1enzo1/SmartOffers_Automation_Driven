@@ -6,7 +6,7 @@ O `SmartOffers_Automation_Driven` esta em MVP7.8.3A.1 concluido na branch evolut
 
 PortalQA ficou como referencia historica e nao deve orientar a arquitetura atual.
 
-O produto ja possui geracao deterministica, dry-run mockado, adapters mockados, catalogo seguro de APIs, runtime binding para QA manual, contrato runtime multi-recurso para `qa4_first_smoke_api_acm_custom_ro` e protecao local para runtime secrets. A execucao real permanece bloqueada por padrao.
+O produto ja possui geracao deterministica, dry-run mockado, adapters mockados, catalogo seguro de APIs, runtime binding para QA manual, contrato runtime multi-recurso para `smartoffers_basic_smoke` e protecao local para runtime secrets. A execucao real permanece bloqueada por padrao.
 
 Runtime secrets locais estao protegidos por template e `.gitignore`; a protecao local foi registrada no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`.
 

@@ -13,12 +13,13 @@ from core.legacy_execution.modes import (
 from core.legacy_execution.runtime_config import (
     ORACLE_CLIENT_LIB_DIR_ENV,
     preflight_legacy_runtime_config,
+    resolve_legacy_runtime_config,
 )
 from core.real_execution.environments import (
     list_sanitized_qa_environments,
 )
 from core.real_execution.runtime_profiles import (
-    QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO,
+    SMARTOFFERS_BASIC_SMOKE,
     get_sanitized_runtime_profile,
     list_sanitized_runtime_profiles,
 )
@@ -74,15 +75,15 @@ def test_real_qa4_defaults_to_official_runtime_profile():
     )
 
     assert decision["allowed"] is True
-    assert decision["runtime_profile"] == QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO
-    assert decision["runtime_contract"]["id"] == QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO
+    assert decision["runtime_profile"] == SMARTOFFERS_BASIC_SMOKE
+    assert decision["runtime_contract"]["id"] == SMARTOFFERS_BASIC_SMOKE
 
 
 def test_runtime_profile_must_match_selected_environment():
     decision = evaluate_execution_mode_request(
         mode=EXECUTION_MODE_REAL_QA_MANUAL,
         environment="qa2",
-        runtime_profile=QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO,
+        runtime_profile=SMARTOFFERS_BASIC_SMOKE,
         real_confirmed=True,
     )
 
@@ -108,15 +109,16 @@ def test_runtime_preflight_qa4_complete_fake_env_returns_ready(monkeypatch):
     _set_fake_qa4_profile_runtime(monkeypatch)
 
     preflight = preflight_legacy_runtime_config(
-        get_sanitized_runtime_profile(QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO)
+        get_sanitized_runtime_profile(SMARTOFFERS_BASIC_SMOKE)
     )
 
     assert preflight == {
         "status": "READY",
         "environment": "qa4",
-        "profile": QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO,
-        "flow": "first_smoke_api",
+        "profile": SMARTOFFERS_BASIC_SMOKE,
+        "flow": "smartoffers_basic_smoke",
         "resources": ["smartoffers_api", "acm_custom_db", "oracle_client"],
+        "legacy_alias_refs_used": [],
         "missing_refs": [],
         "checked_refs": [
             "SMARTOFFERS_QA4_API_URL",
@@ -134,17 +136,20 @@ def test_runtime_preflight_qa4_missing_env_returns_blocked(monkeypatch):
         "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
         "SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER",
         "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD",
+        "SMARTOFFERS_QA4_DB_DSN",
+        "SMARTOFFERS_QA4_DB_USER",
+        "SMARTOFFERS_QA4_DB_PASSWORD",
         ORACLE_CLIENT_LIB_DIR_ENV,
     ):
         monkeypatch.delenv(name, raising=False)
 
     preflight = preflight_legacy_runtime_config(
-        get_sanitized_runtime_profile(QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO)
+        get_sanitized_runtime_profile(SMARTOFFERS_BASIC_SMOKE)
     )
 
     assert preflight["status"] == "BLOCKED"
     assert preflight["environment"] == "qa4"
-    assert preflight["profile"] == QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO
+    assert preflight["profile"] == SMARTOFFERS_BASIC_SMOKE
     assert preflight["missing_refs"] == [
         "SMARTOFFERS_QA4_API_URL",
         "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
@@ -155,11 +160,56 @@ def test_runtime_preflight_qa4_missing_env_returns_blocked(monkeypatch):
     assert ORACLE_CLIENT_LIB_DIR_ENV in preflight["checked_refs"]
 
 
+def test_runtime_preflight_accepts_qa4_db_legacy_aliases_when_explicit_refs_absent(monkeypatch):
+    monkeypatch.setenv("SMARTOFFERS_QA4_API_URL", "fake-qa4-api-url")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_DSN", "fake-legacy-qa4-db-dsn")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_USER", "fake-legacy-qa4-db-user")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_PASSWORD", "fake-legacy-qa4-db-password")
+    monkeypatch.setenv(ORACLE_CLIENT_LIB_DIR_ENV, "fake-oracle-client-dir")
+    for name in (
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD",
+    ):
+        monkeypatch.delenv(name, raising=False)
+
+    runtime_config = resolve_legacy_runtime_config(
+        get_sanitized_runtime_profile(SMARTOFFERS_BASIC_SMOKE)
+    )
+
+    assert runtime_config["preflight"]["status"] == "READY"
+    assert runtime_config["preflight"]["legacy_alias_refs_used"] == [
+        "SMARTOFFERS_QA4_DB_DSN",
+        "SMARTOFFERS_QA4_DB_USER",
+        "SMARTOFFERS_QA4_DB_PASSWORD",
+    ]
+    assert runtime_config["normalized_env"]["SMARTOFFERS_DB_DSN"] == "fake-legacy-qa4-db-dsn"
+    rendered = repr(runtime_config["preflight"])
+    assert "fake-legacy-qa4-db-dsn" not in rendered
+    assert "fake-legacy-qa4-db-user" not in rendered
+    assert "fake-legacy-qa4-db-password" not in rendered
+
+
+def test_runtime_preflight_prefers_explicit_acm_custom_refs_over_legacy_aliases(monkeypatch):
+    _set_fake_qa4_profile_runtime(monkeypatch)
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_DSN", "fake-legacy-qa4-db-dsn")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_USER", "fake-legacy-qa4-db-user")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_PASSWORD", "fake-legacy-qa4-db-password")
+
+    runtime_config = resolve_legacy_runtime_config(
+        get_sanitized_runtime_profile(SMARTOFFERS_BASIC_SMOKE)
+    )
+
+    assert runtime_config["preflight"]["status"] == "READY"
+    assert runtime_config["preflight"]["legacy_alias_refs_used"] == []
+    assert runtime_config["normalized_env"]["SMARTOFFERS_DB_DSN"] == "fake-qa4-acm-custom-db-dsn"
+
+
 def test_runtime_preflight_returns_refs_never_values(monkeypatch):
     _set_fake_qa4_profile_runtime(monkeypatch)
 
     preflight = preflight_legacy_runtime_config(
-        get_sanitized_runtime_profile(QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO)
+        get_sanitized_runtime_profile(SMARTOFFERS_BASIC_SMOKE)
     )
     rendered = repr(preflight)
 
@@ -209,7 +259,7 @@ def test_real_with_confirmation_injects_legacy_guard_with_fake_process(monkeypat
     assert captured["env"][service.LEGACY_REAL_SCRIPT_ENV] == service.LEGACY_REAL_SCRIPT_CONFIRMATION
     assert captured["env"]["SMARTOFFERS_EXECUTION_MODE"] == EXECUTION_MODE_REAL_QA_MANUAL
     assert captured["env"]["SMARTOFFERS_QA_ENVIRONMENT"] == "qa4"
-    assert captured["env"]["SMARTOFFERS_RUNTIME_PROFILE"] == QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO
+    assert captured["env"]["SMARTOFFERS_RUNTIME_PROFILE"] == SMARTOFFERS_BASIC_SMOKE
     assert captured["env"]["SMARTOFFERS_API_URL"] == "fake-qa4-api-url"
     assert captured["env"]["SMARTOFFERS_DB_DSN"] == "fake-qa4-acm-custom-db-dsn"
     assert captured["env"]["SMARTOFFERS_DB_USER"] == "fake-qa4-acm-custom-db-user"
@@ -371,9 +421,9 @@ def test_sanitized_contract_versions_only_environment_refs():
 
 def test_official_runtime_profile_versions_only_multi_resource_refs():
     profiles = list_sanitized_runtime_profiles("qa4")
-    profile = get_sanitized_runtime_profile(QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO)
+    profile = get_sanitized_runtime_profile(SMARTOFFERS_BASIC_SMOKE)
 
-    assert [entry["id"] for entry in profiles] == [QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO]
+    assert [entry["id"] for entry in profiles] == [SMARTOFFERS_BASIC_SMOKE]
     assert profile["environment"] == "qa4"
     assert profile["access_profile"] == "acm_custom_read_only"
     assert [resource["id"] for resource in profile["resources"]] == [
@@ -394,7 +444,14 @@ def test_official_runtime_profile_versions_only_multi_resource_refs():
     ):
         assert ref in rendered
 
-    assert "SMARTOFFERS_QA4_DB_DSN" not in rendered
+    assert profile["resources"][1]["legacy_refs"] == {
+        "dsn": ["SMARTOFFERS_QA4_DB_DSN"],
+        "user": ["SMARTOFFERS_QA4_DB_USER"],
+        "password": ["SMARTOFFERS_QA4_DB_PASSWORD"],
+    }
+    assert "SMARTOFFERS_QA4_FTM_ENGINE_URL" not in rendered
+    assert "SMARTOFFERS_QA4_ACMV4_DB_" not in rendered
+    assert "SMARTOFFERS_QA4_BDA_DB_" not in rendered
     assert "://" not in rendered
     assert not re.search(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", rendered)
 
@@ -435,7 +492,7 @@ def test_home_renders_execution_mode_and_environment_selector(app_client_factory
     assert '<option value="real_qa_manual">real_qa_manual</option>' in html
     assert 'id="executionEnvironment"' in html
     assert 'id="runtimeProfile"' in html
-    assert f'value="{QA4_FIRST_SMOKE_API_ACM_CUSTOM_RO}"' in html
+    assert f'value="{SMARTOFFERS_BASIC_SMOKE}"' in html
     for environment in ("qa1", "qa2", "qa3", "qa4"):
         assert f'value="{environment}"' in html
 

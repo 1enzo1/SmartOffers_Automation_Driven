@@ -6,11 +6,11 @@ Ele define preflight seletivo por perfil/fluxo para execucao QA manual futura. E
 
 ## Perfil oficial inicial
 
-`qa4_first_smoke_api_acm_custom_ro`
+`smartoffers_basic_smoke`
 
 Objetivo do perfil:
 
-- representar o primeiro smoke QA4 aprovado;
+- representar o primeiro smoke QA4 aprovado pelo caminho minimo controlado;
 - exigir SmartOffers API;
 - exigir ACM_CUSTOM com acesso read-only;
 - exigir Oracle client local;
@@ -18,7 +18,7 @@ Objetivo do perfil:
 
 ## Recursos obrigatorios
 
-O perfil `qa4_first_smoke_api_acm_custom_ro` exige somente referencias de runtime:
+O perfil `smartoffers_basic_smoke` exige somente referencias de runtime:
 
 - `SMARTOFFERS_QA4_API_URL`
 - `SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN`
@@ -26,7 +26,27 @@ O perfil `qa4_first_smoke_api_acm_custom_ro` exige somente referencias de runtim
 - `SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD`
 - `SMARTOFFERS_ORACLE_CLIENT_LIB_DIR`
 
+O perfil nao exige:
+
+- `SMARTOFFERS_QA4_FTM_ENGINE_URL`
+- `SMARTOFFERS_QA4_ACMV4_DB_*`
+- `SMARTOFFERS_QA4_BDA_DB_*`
+
+Esses recursos ficam para perfis/fluxos futuros, porque o primeiro smoke nao deve ser bloqueado por dependencias que ainda nao usa.
+
 Esses nomes sao referencias locais. O repositorio nao deve conter URL, host, IP, DSN, usuario real, senha real, token, cookie, payload real, MSISDN, account, documento ou response body bruto.
+
+## Alias legado temporario
+
+`SMARTOFFERS_QA4_DB_DSN`, `SMARTOFFERS_QA4_DB_USER` e `SMARTOFFERS_QA4_DB_PASSWORD` podem ser aceitos temporariamente como alias legado para ACM_CUSTOM.
+
+Regras:
+
+- nao sao o contrato oficial novo;
+- devem ser tratados como legado/deprecado;
+- nao sobrescrevem `SMARTOFFERS_QA4_ACM_CUSTOM_DB_*` quando as refs explicitas existem;
+- nao expandem para ACMV4 ou BDA;
+- devem ser removidos em fase futura apos estabilizacao do contrato multi-resource.
 
 ## Preflight
 

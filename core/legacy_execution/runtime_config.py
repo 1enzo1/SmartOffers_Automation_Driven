@@ -78,11 +78,13 @@ def _resolve_resource_runtime_config(contract, env):
     resolved_refs = {}
     checked_refs = []
     resources = []
+    legacy_alias_refs_used = []
 
     for resource in contract.get("resources") or []:
         resource_id = str(resource.get("id") or "")
         resource_refs = {}
         refs = resource.get("refs") or {}
+        legacy_refs = resource.get("legacy_refs") or {}
         normalized_refs = resource.get("normalized_env") or {}
 
         for ref_key, ref_name in refs.items():
@@ -94,15 +96,19 @@ def _resolve_resource_runtime_config(contract, env):
             resource_refs[ref_key] = ref_name
 
             normalized_key = normalized_refs.get(ref_key)
-            if normalized_key:
-                resolved_refs[normalized_key] = ref_name
-
-            value = env.get(ref_name)
+            value, resolved_ref = _resolve_runtime_value(
+                env,
+                ref_name,
+                legacy_refs.get(ref_key) or [],
+                checked_refs,
+                legacy_alias_refs_used,
+            )
             if value is None or str(value).strip() == "":
                 missing_refs.append(ref_name)
                 continue
 
             if normalized_key:
+                resolved_refs[normalized_key] = resolved_ref
                 normalized_env[normalized_key] = str(value)
 
         resources.append(
@@ -116,6 +122,7 @@ def _resolve_resource_runtime_config(contract, env):
 
     missing_refs = _ordered_unique(missing_refs)
     checked_refs = _ordered_unique(checked_refs)
+    legacy_alias_refs_used = _ordered_unique(legacy_alias_refs_used)
     resource_ids = [resource["id"] for resource in resources if resource["id"]]
     preflight = {
         "status": RUNTIME_PREFLIGHT_READY if not missing_refs else RUNTIME_PREFLIGHT_BLOCKED,
@@ -123,6 +130,7 @@ def _resolve_resource_runtime_config(contract, env):
         "profile": contract.get("id") or "",
         "flow": contract.get("flow") or "",
         "resources": resource_ids,
+        "legacy_alias_refs_used": legacy_alias_refs_used,
         "missing_refs": missing_refs,
         "checked_refs": checked_refs,
     }
@@ -137,6 +145,7 @@ def _resolve_resource_runtime_config(contract, env):
             "flow": contract.get("flow") or "",
             "resources": resources,
             "resource_ids": resource_ids,
+            "legacy_alias_refs_used": legacy_alias_refs_used,
             "resolved_refs": resolved_refs,
             "checked_refs": checked_refs,
             "missing_refs": missing_refs,
@@ -154,6 +163,7 @@ def build_runtime_config_log(runtime_config):
     environment = sanitized.get("environment") or "none"
     profile = sanitized.get("profile") or "none"
     resources = ",".join(sanitized.get("resource_ids") or [])
+    aliases = ",".join(sanitized.get("legacy_alias_refs_used") or [])
     resolved_refs = sanitized.get("resolved_refs") or {}
     ref_text = ",".join(
         f"{normalized_key}<-{resolved_refs[normalized_key]}"
@@ -163,6 +173,7 @@ def build_runtime_config_log(runtime_config):
     return (
         f"RUNTIME_CONFIG|environment={environment}|"
         f"profile={profile}|resources={resources or 'none'}|"
+        f"legacy_alias_refs_used={aliases or 'none'}|"
         f"refs={ref_text or 'none'}|missing={missing_refs or 'none'}"
     )
 
@@ -171,14 +182,32 @@ def build_runtime_preflight_log(runtime_preflight):
     environment = runtime_preflight.get("environment") or "none"
     profile = runtime_preflight.get("profile") or "none"
     resources = ",".join(runtime_preflight.get("resources") or [])
+    aliases = ",".join(runtime_preflight.get("legacy_alias_refs_used") or [])
     checked_refs = ",".join(runtime_preflight.get("checked_refs") or [])
     missing_refs = ",".join(runtime_preflight.get("missing_refs") or [])
     status = runtime_preflight.get("status") or RUNTIME_PREFLIGHT_BLOCKED
     return (
         f"RUNTIME_PREFLIGHT|status={status}|environment={environment}|"
         f"profile={profile}|resources={resources or 'none'}|"
+        f"legacy_alias_refs_used={aliases or 'none'}|"
         f"checked_refs={checked_refs or 'none'}|missing={missing_refs or 'none'}"
     )
+
+
+def _resolve_runtime_value(env, primary_ref, legacy_alias_refs, checked_refs, alias_refs_used):
+    value = env.get(primary_ref)
+    if value is not None and str(value).strip() != "":
+        return value, primary_ref
+
+    for alias_ref in legacy_alias_refs:
+        checked_refs.append(alias_ref)
+        alias_value = env.get(alias_ref)
+        if alias_value is None or str(alias_value).strip() == "":
+            continue
+        alias_refs_used.append(alias_ref)
+        return alias_value, alias_ref
+
+    return value, primary_ref
 
 
 def _ordered_unique(items):
