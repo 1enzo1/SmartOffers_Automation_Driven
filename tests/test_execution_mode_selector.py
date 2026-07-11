@@ -1,3 +1,4 @@
+import json
 import re
 
 import pytest
@@ -12,6 +13,8 @@ from core.legacy_execution.modes import (
 )
 from core.legacy_execution.runtime_config import (
     ORACLE_CLIENT_LIB_DIR_ENV,
+    build_runtime_config_log,
+    build_runtime_preflight_log,
     preflight_legacy_runtime_config,
     resolve_legacy_runtime_config,
 )
@@ -20,6 +23,7 @@ from core.real_execution.environments import (
 )
 from core.real_execution.runtime_profiles import (
     SMARTOFFERS_BASIC_SMOKE,
+    SMARTOFFERS_QA4_FULL_SMOKE,
     get_sanitized_runtime_profile,
     list_sanitized_runtime_profiles,
 )
@@ -160,6 +164,74 @@ def test_runtime_preflight_qa4_missing_env_returns_blocked(monkeypatch):
     assert ORACLE_CLIENT_LIB_DIR_ENV in preflight["checked_refs"]
 
 
+def test_runtime_preflight_qa4_full_profile_complete_fake_env_returns_ready(monkeypatch):
+    _set_fake_qa4_full_profile_runtime(monkeypatch)
+
+    preflight = preflight_legacy_runtime_config(
+        get_sanitized_runtime_profile(SMARTOFFERS_QA4_FULL_SMOKE)
+    )
+
+    assert preflight == {
+        "status": "READY",
+        "environment": "qa4",
+        "profile": SMARTOFFERS_QA4_FULL_SMOKE,
+        "flow": "smartoffers_qa4_full_smoke",
+        "resources": [
+            "smartoffers_api",
+            "acm_custom_db",
+            "acm_db",
+            "bda_db",
+            "oracle_client",
+        ],
+        "legacy_alias_refs_used": [],
+        "missing_refs": [],
+        "checked_refs": [
+            "SMARTOFFERS_QA4_API_URL",
+            "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
+            "SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER",
+            "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD",
+            "SMARTOFFERS_QA4_ACM_DB_DSN",
+            "SMARTOFFERS_QA4_ACM_DB_USER",
+            "SMARTOFFERS_QA4_ACM_DB_PASSWORD",
+            "SMARTOFFERS_QA4_BDA_DB_DSN",
+            "SMARTOFFERS_QA4_BDA_DB_USER",
+            "SMARTOFFERS_QA4_BDA_DB_PASSWORD",
+            "SMARTOFFERS_ORACLE_CLIENT_LIB_DIR",
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    ("resource_prefix", "resource_name", "ref_suffix"),
+    [
+        ("SMARTOFFERS_QA4_ACM_DB", "acm", "DSN"),
+        ("SMARTOFFERS_QA4_ACM_DB", "acm", "USER"),
+        ("SMARTOFFERS_QA4_ACM_DB", "acm", "PASSWORD"),
+        ("SMARTOFFERS_QA4_BDA_DB", "bda", "DSN"),
+        ("SMARTOFFERS_QA4_BDA_DB", "bda", "USER"),
+        ("SMARTOFFERS_QA4_BDA_DB", "bda", "PASSWORD"),
+    ],
+)
+def test_runtime_preflight_qa4_full_profile_blocks_incomplete_independent_database(
+    monkeypatch, resource_prefix, resource_name, ref_suffix
+):
+    _set_fake_qa4_full_profile_runtime(monkeypatch)
+    monkeypatch.delenv(f"{resource_prefix}_{ref_suffix}")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_DSN", "fake-legacy-qa4-db-dsn")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_USER", "fake-legacy-qa4-db-user")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_PASSWORD", "fake-legacy-qa4-db-password")
+
+    preflight = preflight_legacy_runtime_config(
+        get_sanitized_runtime_profile(SMARTOFFERS_QA4_FULL_SMOKE)
+    )
+
+    assert preflight["status"] == "BLOCKED"
+    assert preflight["missing_refs"] == [f"{resource_prefix}_{ref_suffix}"]
+    assert preflight["legacy_alias_refs_used"] == []
+    assert "SMARTOFFERS_QA4_DB_USER" not in preflight["checked_refs"]
+    assert resource_name in preflight["missing_refs"][0].lower()
+
+
 def test_runtime_preflight_accepts_qa4_db_legacy_aliases_when_explicit_refs_absent(monkeypatch):
     monkeypatch.setenv("SMARTOFFERS_QA4_API_URL", "fake-qa4-api-url")
     monkeypatch.setenv("SMARTOFFERS_QA4_DB_DSN", "fake-legacy-qa4-db-dsn")
@@ -188,6 +260,94 @@ def test_runtime_preflight_accepts_qa4_db_legacy_aliases_when_explicit_refs_abse
     assert "fake-legacy-qa4-db-dsn" not in rendered
     assert "fake-legacy-qa4-db-user" not in rendered
     assert "fake-legacy-qa4-db-password" not in rendered
+
+
+def test_runtime_preflight_full_profile_accepts_only_acm_custom_legacy_aliases(monkeypatch):
+    _set_fake_qa4_full_profile_runtime(monkeypatch)
+    for name in (
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_DSN", "fake-legacy-qa4-db-dsn")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_USER", "fake-legacy-qa4-db-user")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_PASSWORD", "fake-legacy-qa4-db-password")
+
+    preflight = preflight_legacy_runtime_config(
+        get_sanitized_runtime_profile(SMARTOFFERS_QA4_FULL_SMOKE)
+    )
+
+    assert preflight["status"] == "READY"
+    assert preflight["legacy_alias_refs_used"] == [
+        "SMARTOFFERS_QA4_DB_DSN",
+        "SMARTOFFERS_QA4_DB_USER",
+        "SMARTOFFERS_QA4_DB_PASSWORD",
+    ]
+    assert preflight["missing_refs"] == []
+    assert all("ACM_DB" not in ref and "BDA_DB" not in ref for ref in preflight["legacy_alias_refs_used"])
+
+
+def test_runtime_preflight_full_profile_prefers_explicit_acm_custom_refs(monkeypatch):
+    _set_fake_qa4_full_profile_runtime(monkeypatch)
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_DSN", "fake-legacy-qa4-db-dsn")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_USER", "fake-legacy-qa4-db-user")
+    monkeypatch.setenv("SMARTOFFERS_QA4_DB_PASSWORD", "fake-legacy-qa4-db-password")
+
+    runtime_config = resolve_legacy_runtime_config(
+        get_sanitized_runtime_profile(SMARTOFFERS_QA4_FULL_SMOKE)
+    )
+
+    assert runtime_config["preflight"]["status"] == "READY"
+    assert runtime_config["preflight"]["legacy_alias_refs_used"] == []
+    assert runtime_config["normalized_env"]["SMARTOFFERS_DB_DSN"] == (
+        "fake-qa4-acm-custom-db-dsn"
+    )
+
+
+@pytest.mark.parametrize(
+    "profile_id",
+    [SMARTOFFERS_BASIC_SMOKE, SMARTOFFERS_QA4_FULL_SMOKE],
+)
+def test_runtime_profiles_and_logs_never_expose_fake_values(monkeypatch, profile_id):
+    if profile_id == SMARTOFFERS_BASIC_SMOKE:
+        _set_fake_qa4_profile_runtime(monkeypatch)
+        fake_values = [
+            "fake-qa4-api-url",
+            "fake-qa4-acm-custom-db-dsn",
+            "fake-qa4-acm-custom-db-user",
+            "fake-qa4-acm-custom-db-password",
+            "fake-oracle-client-dir",
+        ]
+    else:
+        _set_fake_qa4_full_profile_runtime(monkeypatch)
+        fake_values = [
+            "fake-qa4-api-url",
+            "fake-qa4-acm-custom-db-dsn",
+            "fake-qa4-acm-custom-db-user",
+            "fake-qa4-acm-custom-db-password",
+            "fake-qa4-acm-db-dsn",
+            "fake-qa4-acm-db-user",
+            "fake-qa4-acm-db-password",
+            "fake-qa4-bda-db-dsn",
+            "fake-qa4-bda-db-user",
+            "fake-qa4-bda-db-password",
+            "fake-oracle-client-dir",
+        ]
+
+    profile = get_sanitized_runtime_profile(profile_id)
+    runtime_config = resolve_legacy_runtime_config(profile)
+    rendered = "\n".join(
+        [
+            json.dumps(profile, sort_keys=True),
+            repr(runtime_config["preflight"]),
+            build_runtime_config_log(runtime_config),
+            build_runtime_preflight_log(runtime_config["preflight"]),
+        ]
+    )
+
+    assert runtime_config["preflight"]["status"] == "READY"
+    assert all(value not in rendered for value in fake_values)
 
 
 def test_runtime_preflight_prefers_explicit_acm_custom_refs_over_legacy_aliases(monkeypatch):
@@ -419,22 +579,26 @@ def test_sanitized_contract_versions_only_environment_refs():
         assert not any(pattern.search(value) for value in values for pattern in raw_patterns)
 
 
-def test_official_runtime_profile_versions_only_multi_resource_refs():
+def test_runtime_profiles_version_only_independent_multi_resource_refs():
     profiles = list_sanitized_runtime_profiles("qa4")
-    profile = get_sanitized_runtime_profile(SMARTOFFERS_BASIC_SMOKE)
+    basic_profile = get_sanitized_runtime_profile(SMARTOFFERS_BASIC_SMOKE)
+    full_profile = get_sanitized_runtime_profile(SMARTOFFERS_QA4_FULL_SMOKE)
 
-    assert [entry["id"] for entry in profiles] == [SMARTOFFERS_BASIC_SMOKE]
-    assert profile["environment"] == "qa4"
-    assert profile["access_profile"] == "acm_custom_read_only"
-    assert [resource["id"] for resource in profile["resources"]] == [
+    assert [entry["id"] for entry in profiles] == [
+        SMARTOFFERS_BASIC_SMOKE,
+        SMARTOFFERS_QA4_FULL_SMOKE,
+    ]
+    assert basic_profile["environment"] == "qa4"
+    assert basic_profile["access_profile"] == "acm_custom_read_only"
+    assert [resource["id"] for resource in basic_profile["resources"]] == [
         "smartoffers_api",
         "acm_custom_db",
         "oracle_client",
     ]
-    assert profile["resources"][1]["schema"] == "ACM_CUSTOM"
-    assert profile["resources"][1]["access"] == "read_only"
+    assert basic_profile["resources"][1]["schema"] == "ACM_CUSTOM"
+    assert basic_profile["resources"][1]["access"] == "read_only"
 
-    rendered = repr(profile)
+    rendered = repr(basic_profile)
     for ref in (
         "SMARTOFFERS_QA4_API_URL",
         "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
@@ -444,7 +608,7 @@ def test_official_runtime_profile_versions_only_multi_resource_refs():
     ):
         assert ref in rendered
 
-    assert profile["resources"][1]["legacy_refs"] == {
+    assert basic_profile["resources"][1]["legacy_refs"] == {
         "dsn": ["SMARTOFFERS_QA4_DB_DSN"],
         "user": ["SMARTOFFERS_QA4_DB_USER"],
         "password": ["SMARTOFFERS_QA4_DB_PASSWORD"],
@@ -454,6 +618,34 @@ def test_official_runtime_profile_versions_only_multi_resource_refs():
     assert "SMARTOFFERS_QA4_BDA_DB_" not in rendered
     assert "://" not in rendered
     assert not re.search(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", rendered)
+
+    assert full_profile["environment"] == "qa4"
+    assert full_profile["access_profile"] == "qa4_full_smoke_read_only"
+    assert [resource["id"] for resource in full_profile["resources"]] == [
+        "smartoffers_api",
+        "acm_custom_db",
+        "acm_db",
+        "bda_db",
+        "oracle_client",
+    ]
+    assert full_profile["resources"][2]["schema"] == "ACM"
+    assert full_profile["resources"][3]["schema"] == "BDA"
+    assert "legacy_refs" not in full_profile["resources"][2]
+    assert "legacy_refs" not in full_profile["resources"][3]
+
+    full_rendered = repr(full_profile)
+    for ref in (
+        "SMARTOFFERS_QA4_ACM_DB_DSN",
+        "SMARTOFFERS_QA4_ACM_DB_USER",
+        "SMARTOFFERS_QA4_ACM_DB_PASSWORD",
+        "SMARTOFFERS_QA4_BDA_DB_DSN",
+        "SMARTOFFERS_QA4_BDA_DB_USER",
+        "SMARTOFFERS_QA4_BDA_DB_PASSWORD",
+    ):
+        assert ref in full_rendered
+    assert "SMARTOFFERS_QA4_FTM_ENGINE_URL" not in full_rendered
+    assert "://" not in full_rendered
+    assert not re.search(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b", full_rendered)
 
 
 def test_adapter_run_real_mode_still_blocked():
@@ -526,6 +718,16 @@ def _set_fake_qa4_profile_runtime(monkeypatch):
         "fake-qa4-acm-custom-db-password",
     )
     monkeypatch.setenv(ORACLE_CLIENT_LIB_DIR_ENV, "fake-oracle-client-dir")
+
+
+def _set_fake_qa4_full_profile_runtime(monkeypatch):
+    _set_fake_qa4_profile_runtime(monkeypatch)
+    monkeypatch.setenv("SMARTOFFERS_QA4_ACM_DB_DSN", "fake-qa4-acm-db-dsn")
+    monkeypatch.setenv("SMARTOFFERS_QA4_ACM_DB_USER", "fake-qa4-acm-db-user")
+    monkeypatch.setenv("SMARTOFFERS_QA4_ACM_DB_PASSWORD", "fake-qa4-acm-db-password")
+    monkeypatch.setenv("SMARTOFFERS_QA4_BDA_DB_DSN", "fake-qa4-bda-db-dsn")
+    monkeypatch.setenv("SMARTOFFERS_QA4_BDA_DB_USER", "fake-qa4-bda-db-user")
+    monkeypatch.setenv("SMARTOFFERS_QA4_BDA_DB_PASSWORD", "fake-qa4-bda-db-password")
 
 
 class _FakeProcess:

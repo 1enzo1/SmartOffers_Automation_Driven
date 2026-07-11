@@ -2,6 +2,7 @@ from copy import deepcopy
 
 
 SMARTOFFERS_BASIC_SMOKE = "smartoffers_basic_smoke"
+SMARTOFFERS_QA4_FULL_SMOKE = "smartoffers_qa4_full_smoke"
 
 RUNTIME_PROFILE_CONTRACTS = {
     SMARTOFFERS_BASIC_SMOKE: {
@@ -43,6 +44,95 @@ RUNTIME_PROFILE_CONTRACTS = {
                     "dsn": "SMARTOFFERS_DB_DSN",
                     "user": "SMARTOFFERS_DB_USER",
                     "password": "SMARTOFFERS_DB_PASSWORD",
+                },
+            },
+            {
+                "id": "oracle_client",
+                "kind": "oracle_client",
+                "access": "local_client_library",
+                "required": True,
+                "refs": {
+                    "lib_dir": "SMARTOFFERS_ORACLE_CLIENT_LIB_DIR",
+                },
+                "normalized_env": {
+                    "lib_dir": "SMARTOFFERS_ORACLE_CLIENT_LIB_DIR",
+                },
+            },
+        ],
+    },
+    SMARTOFFERS_QA4_FULL_SMOKE: {
+        "id": SMARTOFFERS_QA4_FULL_SMOKE,
+        "label": "SmartOffers full smoke QA4",
+        "environment": "qa4",
+        "flow": "smartoffers_qa4_full_smoke",
+        "access_profile": "qa4_full_smoke_read_only",
+        "resources": [
+            {
+                "id": "smartoffers_api",
+                "kind": "api",
+                "access": "manual_smoke",
+                "required": True,
+                "refs": {
+                    "url": "SMARTOFFERS_QA4_API_URL",
+                },
+                "normalized_env": {
+                    "url": "SMARTOFFERS_API_URL",
+                },
+            },
+            {
+                "id": "acm_custom_db",
+                "kind": "oracle_database",
+                "schema": "ACM_CUSTOM",
+                "access": "read_only",
+                "required": True,
+                "refs": {
+                    "dsn": "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
+                    "user": "SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER",
+                    "password": "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD",
+                },
+                "legacy_refs": {
+                    "dsn": ["SMARTOFFERS_QA4_DB_DSN"],
+                    "user": ["SMARTOFFERS_QA4_DB_USER"],
+                    "password": ["SMARTOFFERS_QA4_DB_PASSWORD"],
+                },
+                "normalized_env": {
+                    "dsn": "SMARTOFFERS_DB_DSN",
+                    "user": "SMARTOFFERS_DB_USER",
+                    "password": "SMARTOFFERS_DB_PASSWORD",
+                },
+            },
+            {
+                "id": "acm_db",
+                "kind": "oracle_database",
+                "schema": "ACM",
+                "access": "read_only",
+                "required": True,
+                "refs": {
+                    "dsn": "SMARTOFFERS_QA4_ACM_DB_DSN",
+                    "user": "SMARTOFFERS_QA4_ACM_DB_USER",
+                    "password": "SMARTOFFERS_QA4_ACM_DB_PASSWORD",
+                },
+                "normalized_env": {
+                    "dsn": "SMARTOFFERS_ACM_DB_DSN",
+                    "user": "SMARTOFFERS_ACM_DB_USER",
+                    "password": "SMARTOFFERS_ACM_DB_PASSWORD",
+                },
+            },
+            {
+                "id": "bda_db",
+                "kind": "oracle_database",
+                "schema": "BDA",
+                "access": "read_only",
+                "required": True,
+                "refs": {
+                    "dsn": "SMARTOFFERS_QA4_BDA_DB_DSN",
+                    "user": "SMARTOFFERS_QA4_BDA_DB_USER",
+                    "password": "SMARTOFFERS_QA4_BDA_DB_PASSWORD",
+                },
+                "normalized_env": {
+                    "dsn": "SMARTOFFERS_BDA_DB_DSN",
+                    "user": "SMARTOFFERS_BDA_DB_USER",
+                    "password": "SMARTOFFERS_BDA_DB_PASSWORD",
                 },
             },
             {

@@ -29,10 +29,34 @@ O perfil `smartoffers_basic_smoke` exige somente referencias de runtime:
 O perfil nao exige:
 
 - `SMARTOFFERS_QA4_FTM_ENGINE_URL`
-- `SMARTOFFERS_QA4_ACMV4_DB_*`
+- `SMARTOFFERS_QA4_ACM_DB_*`
 - `SMARTOFFERS_QA4_BDA_DB_*`
 
-Esses recursos ficam para perfis/fluxos futuros, porque o primeiro smoke nao deve ser bloqueado por dependencias que ainda nao usa.
+Esses recursos nao pertencem ao perfil basico, porque o primeiro smoke nao deve ser bloqueado por dependencias que ainda nao usa.
+
+## Perfil completo QA4
+
+`smartoffers_qa4_full_smoke` foi adicionado no MVP7.8.3A.2 como contrato complementar sanitizado. Ele exige recursos logicos independentes para:
+
+- SmartOffers API;
+- ACM_CUSTOM read-only;
+- ACM read-only;
+- BDA read-only;
+- Oracle client local.
+
+O perfil completo exige, alem das refs de API e Oracle Client:
+
+- `SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN`
+- `SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER`
+- `SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD`
+- `SMARTOFFERS_QA4_ACM_DB_DSN`
+- `SMARTOFFERS_QA4_ACM_DB_USER`
+- `SMARTOFFERS_QA4_ACM_DB_PASSWORD`
+- `SMARTOFFERS_QA4_BDA_DB_DSN`
+- `SMARTOFFERS_QA4_BDA_DB_USER`
+- `SMARTOFFERS_QA4_BDA_DB_PASSWORD`
+
+ACM, ACM_CUSTOM e BDA permanecem recursos independentes mesmo quando usam o mesmo endpoint Oracle. FTM Engine permanece fora dos perfis basico e completo.
 
 Esses nomes sao referencias locais. O repositorio nao deve conter URL, host, IP, DSN, usuario real, senha real, token, cookie, payload real, MSISDN, account, documento ou response body bruto.
 
@@ -45,7 +69,7 @@ Regras:
 - nao sao o contrato oficial novo;
 - devem ser tratados como legado/deprecado;
 - nao sobrescrevem `SMARTOFFERS_QA4_ACM_CUSTOM_DB_*` quando as refs explicitas existem;
-- nao expandem para ACMV4 ou BDA;
+- nao atendem refs de ACM ou BDA;
 - devem ser removidos em fase futura apos estabilizacao do contrato multi-resource.
 
 ## Preflight
