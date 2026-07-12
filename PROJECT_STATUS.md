@@ -7,8 +7,9 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 - Branch base atual: `qa/mvp4-integration`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual concluido: MVP7.8.3A.1
-- Ultimo MVP aprovado: MVP7.8.3A.1 - Multi-resource Runtime Contract
+- MVP atual em planejamento controlado: MVP7.8.3B - First QA4 Real Smoke Manual
+- Ultimo MVP aprovado: MVP7.8.3A.2 - Basic and Full QA4 Smoke Profiles
+- MVP7.8.3B: Execution Plan, guardrails mockados e executor manual em revisao; execucao real permanece bloqueada sem `EXECUTION_APPROVED` e `OPERATIONAL_EXECUTION_RELEASED`
 - Estado funcional anterior: MVP7.8.3A - Runtime Preflight seguro para execucao QA manual
 - Protecao local de runtime secrets: concluida no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`
 - PR do MVP7.6: `#12`

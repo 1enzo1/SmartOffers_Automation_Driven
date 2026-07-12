@@ -24,6 +24,7 @@ _REQUIRED_TIMEOUTS = (
     "read_timeout_seconds",
     "total_checkpoint_timeout_seconds",
 )
+_MANUAL_EXECUTION_MODE = "manual"
 
 
 def build_manual_smoke_plan(request):
@@ -54,6 +55,7 @@ def build_manual_smoke_plan(request):
 
 def _planning_blocked_reasons(request_data, profile):
     reasons = []
+    allowed_resources = _PROFILE_RESOURCES.get(profile, ())
 
     if request_data.get("environment") != "qa4":
         reasons.append("environment_not_qa4")
@@ -61,6 +63,18 @@ def _planning_blocked_reasons(request_data, profile):
         reasons.append("profile_not_allowlisted")
     if profile == "smartoffers_qa4_full_smoke" and request_data.get("basic_smoke_ok") is not True:
         reasons.append("basic_smoke_not_confirmed")
+    if not _requested_resources_match_profile(request_data, allowed_resources):
+        reasons.append("resource_allowlist_violation")
+    if request_data.get("destination_allowlisted") is not True:
+        reasons.append("destination_not_allowlisted")
+    if request_data.get("redirect_detected") is not False:
+        reasons.append("redirect_not_allowed")
+    if request_data.get("execution_mode") != _MANUAL_EXECUTION_MODE:
+        reasons.append("execution_mode_not_manual")
+    if request_data.get("automated_execution") is not False:
+        reasons.append("automated_execution_not_disabled")
+    if request_data.get("requested_integrations") not in (None, (), []):
+        reasons.append("integration_not_allowlisted")
     if request_data.get("attempts_per_checkpoint") != 1:
         reasons.append("attempts_must_equal_one")
     if request_data.get("retry_count") != 0:
@@ -86,6 +100,15 @@ def _planning_blocked_reasons(request_data, profile):
             reasons.append(f"invalid_{name}")
 
     return sorted(set(reasons))
+
+
+def _requested_resources_match_profile(request_data, allowed_resources):
+    requested_resources = request_data.get("resource_ids")
+    if requested_resources is None:
+        return True
+    if not isinstance(requested_resources, (list, tuple)):
+        return False
+    return tuple(requested_resources) == allowed_resources
 
 
 def _sanitized_timeouts(request_data):

@@ -21,6 +21,11 @@ def _request(**overrides):
         "environment": "qa4",
         "profile": "smartoffers_basic_smoke",
         "basic_smoke_ok": False,
+        "destination_allowlisted": True,
+        "redirect_detected": False,
+        "execution_mode": "manual",
+        "automated_execution": False,
+        "requested_integrations": [],
         "attempts_per_checkpoint": 1,
         "retry_count": 0,
         "automatic_fallback": False,
@@ -99,6 +104,58 @@ def test_environment_retry_fallback_and_credentials_are_denied():
         "automatic_fallback_not_disabled",
         "credential_guessing_not_disabled",
         "alternative_password_not_disabled",
+    }
+
+
+def test_destination_outside_allowlist_and_redirect_are_denied():
+    result = build_manual_smoke_plan(
+        _request(
+            environment="production",
+            destination_allowlisted=False,
+            redirect_detected=True,
+        )
+    )
+
+    assert result["planning_status"] == "BLOCKED"
+    assert set(result["blocked_reasons"]) >= {
+        "environment_not_qa4",
+        "destination_not_allowlisted",
+        "redirect_not_allowed",
+    }
+
+
+def test_resource_allowlist_requires_exact_profile_resources():
+    result = build_manual_smoke_plan(
+        _request(resource_ids=["smartoffers_api", "unapproved_resource"])
+    )
+
+    assert result["planning_status"] == "BLOCKED"
+    assert "resource_allowlist_violation" in result["blocked_reasons"]
+
+
+def test_resource_allowlist_accepts_declared_basic_resources_only():
+    result = build_manual_smoke_plan(
+        _request(resource_ids=["smartoffers_api", "acm_custom_db", "oracle_client"])
+    )
+
+    assert result["planning_status"] == "READY_FOR_ARCHITECT_REVIEW"
+    assert result["resources"] == ["smartoffers_api", "acm_custom_db", "oracle_client"]
+
+
+def test_automated_execution_and_prohibited_integrations_are_denied():
+    result = build_manual_smoke_plan(
+        _request(
+            execution_mode="automated",
+            automated_execution=True,
+            requested_integrations=["kafka", "jenkins", "ftm_engine"],
+        )
+    )
+
+    assert result["planning_status"] == "BLOCKED"
+    assert set(result["blocked_reasons"]) >= {
+        "execution_mode_not_manual",
+        "automated_execution_not_disabled",
+        "integration_not_allowlisted",
     }
 
 
