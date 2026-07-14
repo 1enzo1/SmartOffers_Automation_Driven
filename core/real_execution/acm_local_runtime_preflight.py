@@ -49,6 +49,7 @@ def preflight_acm_local_runtime(request, environ=None):
         "profile": ACM_PROFILE,
         "resource_id": ACM_RESOURCE_ID,
         "allowlist_validation": allowlist_validation,
+        "refs_validation": "READY" if not missing_refs else "BLOCKED",
         "sql_hash_validation": sql_hash_validation,
         "fingerprint_validation": fingerprint_validation,
         "checked_refs": checked_refs,

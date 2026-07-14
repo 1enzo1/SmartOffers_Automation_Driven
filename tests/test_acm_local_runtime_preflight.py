@@ -55,6 +55,7 @@ def test_acm_preflight_returns_ready_only_for_complete_matching_runtime():
         "profile": ACM_PROFILE,
         "resource_id": ACM_RESOURCE_ID,
         "allowlist_validation": "MATCH",
+        "refs_validation": "READY",
         "sql_hash_validation": "MATCH",
         "fingerprint_validation": "MATCH",
         "checked_refs": list(ACM_REQUIRED_REFS),
@@ -70,6 +71,7 @@ def test_acm_preflight_blocks_each_missing_required_ref(missing_ref):
     result = preflight_acm_local_runtime(_request(), runtime)
 
     assert result["status"] == ACM_RUNTIME_BLOCKED
+    assert result["refs_validation"] == "BLOCKED"
     assert result["missing_refs"] == [missing_ref]
 
 

@@ -49,6 +49,9 @@ MATCH
 DENIED
 ```
 
+`refs_validation=READY` means every ACM-only ref is present. Any missing ACM
+ref returns `refs_validation=BLOCKED`.
+
 `ACM_RUNTIME_READY` requires a matching allowlist, every ACM-only ref present,
 `sql_hash_validation=MATCH` and `fingerprint_validation=MATCH`. It does not
 authorize an ACM connection. A separate ACM operational release is required
