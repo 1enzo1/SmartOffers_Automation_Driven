@@ -45,10 +45,16 @@ _FORBIDDEN_SQL = re.compile(
 
 
 class _Blocked(Exception):
-    def __init__(self, category, stop_reason="IMMEDIATE_STOP"):
+    def __init__(
+        self,
+        category,
+        stop_reason="IMMEDIATE_STOP",
+        fingerprint_validation="DENIED",
+    ):
         super().__init__(category)
         self.category = category
         self.stop_reason = stop_reason
+        self.fingerprint_validation = fingerprint_validation
 
 
 class _ArgumentParser(argparse.ArgumentParser):
@@ -106,11 +112,13 @@ def run_acm_manual_smoke(arguments, environ=None, driver=None, clock=None):
     started = monotonic()
     connection = None
     cursor = None
+    fingerprint_validation = "DENIED"
 
     try:
         _validate_arguments(args)
         runtime = _load_runtime(environment)
-        _validate_preflight(environment)
+        preflight = _validate_preflight(environment)
+        fingerprint_validation = preflight["fingerprint_validation"]
         _ensure_total_timeout(started, args, monotonic)
         query = _validate_read_only_sql(runtime["query"])
         _ensure_total_timeout(started, args, monotonic)
@@ -142,13 +150,20 @@ def run_acm_manual_smoke(arguments, environ=None, driver=None, clock=None):
             query_hash_validation="MATCH",
             read_only_validation="PASS",
             preflight_validation="MATCH",
+            fingerprint_validation=fingerprint_validation,
         )
     except _Blocked as error:
+        error_fingerprint_validation = (
+            error.fingerprint_validation
+            if error.fingerprint_validation == "MATCH"
+            else fingerprint_validation
+        )
         return _result(
             status="BLOCKED",
             error_category=error.category,
             stop_reason=error.stop_reason,
             elapsed_ms=_elapsed_ms(started, monotonic),
+            fingerprint_validation=error_fingerprint_validation,
         )
     except Exception as error:
         return _result(
@@ -156,6 +171,7 @@ def run_acm_manual_smoke(arguments, environ=None, driver=None, clock=None):
             error_category=_classify_oracle_error(error),
             stop_reason="IMMEDIATE_STOP",
             elapsed_ms=_elapsed_ms(started, monotonic),
+            fingerprint_validation=fingerprint_validation,
         )
     finally:
         if connection is not None:
@@ -212,12 +228,23 @@ def _validate_preflight(environment):
         environment,
     )
     if result["status"] == ACM_RUNTIME_READY:
-        return
+        return result
     if result["missing_refs"]:
-        raise _Blocked("CONFIG_MISSING")
+        raise _Blocked(
+            "CONFIG_MISSING",
+            fingerprint_validation=result["fingerprint_validation"],
+        )
+    if result["fingerprint_validation"] == "DENIED":
+        raise _Blocked("FINGERPRINT_DENIED", fingerprint_validation="DENIED")
     if result["sql_hash_validation"] == "DENIED":
-        raise _Blocked("QUERY_HASH_MISMATCH")
-    raise _Blocked("ALLOWLIST_MISMATCH")
+        raise _Blocked(
+            "QUERY_HASH_MISMATCH",
+            fingerprint_validation=result["fingerprint_validation"],
+        )
+    raise _Blocked(
+        "ALLOWLIST_MISMATCH",
+        fingerprint_validation=result["fingerprint_validation"],
+    )
 
 
 def _load_runtime(environment):
@@ -305,6 +332,7 @@ def _result(
     query_hash_validation="DENIED",
     read_only_validation="DENIED",
     preflight_validation="DENIED",
+    fingerprint_validation="DENIED",
 ):
     return {
         "execution_id": uuid.uuid4().hex,
@@ -328,6 +356,7 @@ def _result(
         "query_hash_validation": query_hash_validation,
         "read_only_validation": read_only_validation,
         "preflight_validation": preflight_validation,
+        "fingerprint_validation": fingerprint_validation,
         "api_checkpoint": "OMITTED",
         "sanitized_error_category": error_category,
         "stop_reason": stop_reason,

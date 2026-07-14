@@ -125,6 +125,7 @@ def test_acm_contract_uses_one_connection_cursor_execute_and_defensive_rollback(
     assert driver.connection.rollback_calls == 1
     assert driver.connection.commit_calls == 0
     assert driver.connection.close_calls == 1
+    assert result["fingerprint_validation"] == "MATCH"
     assert "not-recorded" not in repr(result)
 
 
@@ -193,7 +194,8 @@ def test_hash_fingerprint_and_acm_custom_refs_block_before_driver():
     runtime = _runtime()
     runtime["SMARTOFFERS_QA4_ACM_DESTINATION_FINGERPRINT"] = "different-fake-fingerprint"
     result = run_acm_manual_smoke(_args(), environ=runtime, driver=driver)
-    assert result["sanitized_error_category"] == "ALLOWLIST_MISMATCH"
+    assert result["sanitized_error_category"] == "FINGERPRINT_DENIED"
+    assert result["fingerprint_validation"] == "DENIED"
     assert driver.connect_calls == []
 
     custom_only = {
@@ -240,6 +242,19 @@ def test_non_single_result_blocks_and_closes_read_only_session(cursor):
     result = run_acm_manual_smoke(_args(), environ=_runtime(), driver=driver)
 
     assert result["sanitized_error_category"] == "READ_ONLY_POLICY_VIOLATION"
+    assert len(driver.connect_calls) == 1
+    assert connection.rollback_calls == 1
+    assert connection.close_calls == 1
+
+
+def test_zero_rows_blocks_and_closes_read_only_session():
+    connection = FakeConnection(cursor=FakeCursor(rows=[None]))
+    driver = FakeDriver(connection=connection)
+
+    result = run_acm_manual_smoke(_args(), environ=_runtime(), driver=driver)
+
+    assert result["status"] == "BLOCKED"
+    assert result["sanitized_error_category"] == "ORACLE_CLIENT_ERROR"
     assert len(driver.connect_calls) == 1
     assert connection.rollback_calls == 1
     assert connection.close_calls == 1

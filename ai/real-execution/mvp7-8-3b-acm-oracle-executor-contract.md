@@ -26,4 +26,7 @@ execute call. It rejects zero or multiple columns, zero rows and more than one
 row, never commits, rolls back defensively and closes resources in `finally`.
 
 Output is one sanitized JSON object with no runtime values, SQL, result value,
-host, DSN, credential, hash or fingerprint.
+host, DSN, credential, hash or fingerprint. It includes
+`fingerprint_validation=MATCH|DENIED`; a denied fingerprint returns
+`sanitized_error_category=FINGERPRINT_DENIED` without changing the blocked
+execution behavior.
