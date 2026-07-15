@@ -1,6 +1,32 @@
 {
   "apis": [
     {
+      "api_id": "smartoffers_api_health_readiness_01",
+      "name": "SmartOffers API QA4 health readiness",
+      "category": "smartoffers",
+      "method": "GET",
+      "path": "<LOCAL_RUNTIME_PATH_REF>",
+      "environment_refs": [
+        "QA4",
+        "<QA4_API_RUNTIME_REF>"
+      ],
+      "supported_environments": [
+        "QA4"
+      ],
+      "execution_status": "blocked",
+      "notes": "Dedicated technical health checkpoint. Real execution remains blocked pending operational release.",
+      "safe_for_real_execution": false,
+      "source_collection": "QA4 API health contract",
+      "source_file": "local_secrets only",
+      "headers_expected": [],
+      "environment_variables": [],
+      "host_placeholder": "<QA4_API_RUNTIME_REF>",
+      "host_placeholders": [
+        "<QA4_API_RUNTIME_REF>"
+      ],
+      "payload_base": {}
+    },
+    {
       "api_id": "post-vivo-next-habilitacao-de-cliente-ade0841563",
       "name": "***VIVO NEXT - Habilitação de Cliente",
       "category": "habilitacao",
