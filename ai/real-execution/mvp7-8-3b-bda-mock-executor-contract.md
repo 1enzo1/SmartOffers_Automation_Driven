@@ -21,7 +21,7 @@ path.
 
 ## Mock-only gates
 
-The simulation requires `BASIC_SMOKE_OK`, `BDA_RUNTIME_READY`,
+The simulation requires `BASIC_DB_CHECKPOINT_OK`, `BDA_RUNTIME_READY`,
 `EXECUTION_APPROVED`, `OPERATIONAL_WINDOW_ACTIVE=true` and
 `OPERATIONAL_EXECUTION_RELEASED` as test inputs only. These tokens do not
 authorize a BDA connection.
