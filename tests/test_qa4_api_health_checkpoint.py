@@ -3,6 +3,7 @@ import inspect
 from pathlib import Path
 
 import pytest
+import tools.qa4_api_health_smoke as api_health_smoke
 
 from core.api_catalog.catalog import get_api_catalog
 from core.api_catalog.policy import is_mock_plannable
@@ -81,7 +82,11 @@ def _arguments(**overrides):
         "path_parameters_allowed": False,
         "customer_identifiers_allowed": False,
         "authentication_required": False,
-        "basic_smoke_status": "BASIC_SMOKE_OK",
+        "acm_custom_db_checkpoint_status": "ACM_CUSTOM_DB_CHECKPOINT_OK",
+        "acm_db_checkpoint_status": "ACM_DB_CHECKPOINT_OK",
+        "bda_db_checkpoint_status": "BDA_DB_CHECKPOINT_OK",
+        "basic_db_checkpoint_status": "BASIC_DB_CHECKPOINT_OK",
+        "operational_window_active": "true",
         "approval": "EXECUTION_APPROVED",
         "operational_release": "OPERATIONAL_EXECUTION_RELEASED",
         "preflight_status": API_RUNTIME_READY,
@@ -194,6 +199,9 @@ def test_health_checkpoint_documentation_uses_only_contract_refs_and_placeholder
         assert ref in content
     assert "<LOCAL_SECRET>" in content
     assert "OPERATIONAL_EXECUTION_RELEASED" in content
+    assert "BASIC_DB_CHECKPOINT_OK" in content
+    assert "BASIC_SMOKE_OK" in content
+    assert "OPERATIONAL_WINDOW_ACTIVE" in content
     assert "redirect" in content.lower()
     assert "http://" not in content
     assert "https://" not in content
@@ -219,6 +227,11 @@ def test_api_executor_uses_one_fake_get_and_only_sanitized_evidence():
 @pytest.mark.parametrize(
     "argument_update, expected_category",
     (
+        ({"acm_custom_db_checkpoint_status": "DENIED"}, "DB_CHECKPOINT_GATE_MISSING"),
+        ({"acm_db_checkpoint_status": "DENIED"}, "DB_CHECKPOINT_GATE_MISSING"),
+        ({"bda_db_checkpoint_status": "DENIED"}, "DB_CHECKPOINT_GATE_MISSING"),
+        ({"basic_db_checkpoint_status": "DENIED"}, "DB_CHECKPOINT_GATE_MISSING"),
+        ({"operational_window_active": "false"}, "OPERATIONAL_WINDOW_INACTIVE"),
         ({"approval": "DENIED"}, "APPROVAL_MISSING"),
         ({"operational_release": "DENIED"}, "APPROVAL_MISSING"),
         ({"method": "POST"}, "ALLOWLIST_DENIED"),
@@ -291,6 +304,77 @@ def test_api_executor_requires_matching_preflight_and_never_imports_real_http_be
     assert "socket" not in source
 
 
+@pytest.mark.parametrize(
+    "argument_update",
+    (
+        {"acm_custom_db_checkpoint_status": "DENIED"},
+        {"acm_db_checkpoint_status": "DENIED"},
+        {"bda_db_checkpoint_status": "DENIED"},
+        {"basic_db_checkpoint_status": "DENIED"},
+        {"operational_window_active": "false"},
+        {"approval": "DENIED"},
+        {"operational_release": "DENIED"},
+        {"preflight_status": API_RUNTIME_BLOCKED},
+    ),
+)
+def test_api_executor_does_not_load_real_client_or_send_when_any_required_gate_fails(
+    argument_update, monkeypatch
+):
+    loaded = False
+
+    def real_client_loader():
+        nonlocal loaded
+        loaded = True
+        return FakeHttpClient(FakeResponse(status_code=200))
+
+    monkeypatch.setattr(api_health_smoke, "_load_real_http_client", real_client_loader)
+    client = FakeHttpClient(FakeResponse(status_code=200))
+    result = run_api_health_checkpoint(
+        _arguments(**argument_update), environ=_runtime(), client=client
+    )
+
+    assert result["status"] == API_HEALTH_CHECKPOINT_BLOCKED
+    assert loaded is False
+    assert client.calls == []
+
+
+def test_api_executor_rejects_basic_smoke_ok_as_a_substitute_for_the_basic_db_gate():
+    args = _arguments()
+    args.pop("basic_db_checkpoint_status")
+    args["basic_smoke_status"] = "BASIC_SMOKE_OK"
+    client = FakeHttpClient(FakeResponse(status_code=200))
+
+    result = run_api_health_checkpoint(args, environ=_runtime(), client=client)
+
+    assert result["status"] == API_HEALTH_CHECKPOINT_BLOCKED
+    assert result["sanitized_error_category"] == "DB_CHECKPOINT_GATE_MISSING"
+    assert client.calls == []
+
+
+@pytest.mark.parametrize(
+    "missing_gate, expected_category",
+    (
+        ("acm_custom_db_checkpoint_status", "DB_CHECKPOINT_GATE_MISSING"),
+        ("acm_db_checkpoint_status", "DB_CHECKPOINT_GATE_MISSING"),
+        ("bda_db_checkpoint_status", "DB_CHECKPOINT_GATE_MISSING"),
+        ("basic_db_checkpoint_status", "DB_CHECKPOINT_GATE_MISSING"),
+        ("operational_window_active", "OPERATIONAL_WINDOW_INACTIVE"),
+    ),
+)
+def test_api_executor_blocks_each_missing_operational_gate_before_send(
+    missing_gate, expected_category
+):
+    args = _arguments()
+    args.pop(missing_gate)
+    client = FakeHttpClient(FakeResponse(status_code=200))
+
+    result = run_api_health_checkpoint(args, environ=_runtime(), client=client)
+
+    assert result["status"] == API_HEALTH_CHECKPOINT_BLOCKED
+    assert result["sanitized_error_category"] == expected_category
+    assert client.calls == []
+
+
 def test_api_executor_cli_emits_one_sanitized_json_when_a_gate_is_missing(capsys):
     exit_code = main(
         [
@@ -313,7 +397,11 @@ def test_api_executor_cli_emits_one_sanitized_json_when_a_gate_is_missing(capsys
             "--path-parameters-allowed", "false",
             "--customer-identifiers-allowed", "false",
             "--authentication-required", "false",
-            "--basic-smoke-status", "BASIC_SMOKE_OK",
+            "--acm-custom-db-checkpoint-status", "ACM_CUSTOM_DB_CHECKPOINT_OK",
+            "--acm-db-checkpoint-status", "ACM_DB_CHECKPOINT_OK",
+            "--bda-db-checkpoint-status", "BDA_DB_CHECKPOINT_OK",
+            "--basic-db-checkpoint-status", "BASIC_DB_CHECKPOINT_OK",
+            "--operational-window-active", "true",
             "--approval", "DENIED",
             "--operational-release", "OPERATIONAL_EXECUTION_RELEASED",
             "--preflight-status", API_RUNTIME_READY,
@@ -324,6 +412,15 @@ def test_api_executor_cli_emits_one_sanitized_json_when_a_gate_is_missing(capsys
     assert exit_code == 1
     assert len(output) == 1
     assert '"sanitized_error_category": "APPROVAL_MISSING"' in output[0]
+
+
+def test_api_executor_cli_rejects_the_legacy_basic_smoke_argument(capsys):
+    exit_code = main(["--basic-smoke-status", "BASIC_SMOKE_OK"])
+
+    output = capsys.readouterr().out.splitlines()
+    assert exit_code == 1
+    assert len(output) == 1
+    assert '"sanitized_error_category": "CONFIG_MISSING"' in output[0]
 
 
 def test_api_executor_blocks_runtime_fingerprint_mismatch_before_the_fake_transport():

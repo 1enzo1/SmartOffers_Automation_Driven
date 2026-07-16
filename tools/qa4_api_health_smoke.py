@@ -24,7 +24,10 @@ from core.real_execution.api_health_local_runtime_preflight import (
 API_HEALTH_CHECKPOINT_OK = "SMARTOFFERS_API_QA4_CHECKPOINT_OK"
 API_HEALTH_CHECKPOINT_FAILED = "SMARTOFFERS_API_QA4_CHECKPOINT_FAILED"
 API_HEALTH_CHECKPOINT_BLOCKED = "SMARTOFFERS_API_QA4_CHECKPOINT_BLOCKED"
-_BASIC_SMOKE_OK = "BASIC_SMOKE_OK"
+_ACM_CUSTOM_DB_CHECKPOINT_OK = "ACM_CUSTOM_DB_CHECKPOINT_OK"
+_ACM_DB_CHECKPOINT_OK = "ACM_DB_CHECKPOINT_OK"
+_BDA_DB_CHECKPOINT_OK = "BDA_DB_CHECKPOINT_OK"
+_BASIC_DB_CHECKPOINT_OK = "BASIC_DB_CHECKPOINT_OK"
 _APPROVAL = "EXECUTION_APPROVED"
 _OPERATIONAL_RELEASE = "OPERATIONAL_EXECUTION_RELEASED"
 _MAX_RESPONSE_BYTES = 1024
@@ -114,7 +117,11 @@ def build_parser():
         "path-parameters-allowed", "customer-identifiers-allowed", "authentication-required",
     ):
         parser.add_argument(f"--{name}", required=True)
-    parser.add_argument("--basic-smoke-status", required=True)
+    parser.add_argument("--acm-custom-db-checkpoint-status", required=True)
+    parser.add_argument("--acm-db-checkpoint-status", required=True)
+    parser.add_argument("--bda-db-checkpoint-status", required=True)
+    parser.add_argument("--basic-db-checkpoint-status", required=True)
+    parser.add_argument("--operational-window-active", required=True)
     parser.add_argument("--approval", required=True)
     parser.add_argument("--operational-release", required=True)
     parser.add_argument("--preflight-status", required=True)
@@ -191,14 +198,23 @@ def _validate_arguments(args):
         "profile": API_PROFILE,
         "resource_id": API_RESOURCE_ID,
         "method": "GET",
-        "basic_smoke_status": _BASIC_SMOKE_OK,
         "approval": _APPROVAL,
         "operational_release": _OPERATIONAL_RELEASE,
         "preflight_status": API_RUNTIME_READY,
     }
+    database_gates = {
+        "acm_custom_db_checkpoint_status": _ACM_CUSTOM_DB_CHECKPOINT_OK,
+        "acm_db_checkpoint_status": _ACM_DB_CHECKPOINT_OK,
+        "bda_db_checkpoint_status": _BDA_DB_CHECKPOINT_OK,
+        "basic_db_checkpoint_status": _BASIC_DB_CHECKPOINT_OK,
+    }
+    if any(args.get(name) != value for name, value in database_gates.items()):
+        raise _Blocked("DB_CHECKPOINT_GATE_MISSING")
+    if not _is_true(args.get("operational_window_active")):
+        raise _Blocked("OPERATIONAL_WINDOW_INACTIVE")
     for name, value in expected.items():
         if args.get(name) != value:
-            if name in {"basic_smoke_status", "approval", "operational_release"}:
+            if name in {"approval", "operational_release"}:
                 raise _Blocked("APPROVAL_MISSING")
             if name == "preflight_status":
                 raise _Blocked("PREFLIGHT_DENIED")
@@ -294,6 +310,10 @@ def _ensure_total_timeout(started, args, monotonic):
 
 def _is_false(value):
     return value is False or value == "false"
+
+
+def _is_true(value):
+    return value is True or value == "true"
 
 
 def _elapsed_ms(started, monotonic):

@@ -65,10 +65,24 @@ header, response or other runtime value.
 
 ## Gates And Transport
 
-The executor requires `BASIC_SMOKE_OK`, `EXECUTION_APPROVED`,
-`OPERATIONAL_EXECUTION_RELEASED` and a freshly computed `API_RUNTIME_READY`
-before loading its real HTTP transport. Automated tests use only
-`FakeHttpClient` and `FakeResponse`.
+The API checkpoint requires these successful database gates before loading its
+real HTTP transport:
+
+```text
+ACM_CUSTOM_DB_CHECKPOINT_OK
+ACM_DB_CHECKPOINT_OK
+BDA_DB_CHECKPOINT_OK
+BASIC_DB_CHECKPOINT_OK
+OPERATIONAL_WINDOW_ACTIVE=true
+EXECUTION_APPROVED
+OPERATIONAL_EXECUTION_RELEASED
+API_RUNTIME_READY
+```
+
+`BASIC_SMOKE_OK` and `FULL_SMOKE_OK` are consolidated only by the Manager after
+the API checkpoint succeeds. They are not accepted as API entry gates. Every
+missing or divergent gate stops before runtime loading, client loading or send.
+Automated tests use only `FakeHttpClient` and `FakeResponse`.
 
 The real transport is structurally redirect-deny: it sends one `GET` at most
 and does not follow 3xx responses. A 3xx response produces
