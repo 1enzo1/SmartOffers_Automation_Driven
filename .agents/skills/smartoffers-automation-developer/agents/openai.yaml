@@ -1,0 +1,4 @@
+interface:
+  display_name: "SmartOffers Automation Developer"
+  short_description: "Implementa e publica entregas SmartOffers"
+  default_prompt: "Use $smartoffers-automation-developer para implementar e validar este goal SmartOffers com autonomia."

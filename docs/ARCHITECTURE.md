@@ -9,7 +9,9 @@ O produto e um laboratorio seguro de automacao SmartOffers/ACM, local-first e mo
 ## Linha base
 
 - Branch evolutiva atual: `qa/mvp4-integration`, apesar do nome historico.
-- Estado atual: MVP7.8.3A.1 concluido.
+- Baseline imutavel: `v0.0.0-pre-alpha.1` no merge `e1263595aa736de3855234b6f9a0379b944fe70e`.
+- Continuacao de governanca: `codex/alpha`.
+- Estado atual: MVP7.8.3B aceito no recorte DB-only; MVP7.8.4 autorizado para desenvolvimento mock-first.
 - Runtime secrets locais: protegidos por `.gitignore` e template sanitizado desde o commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`.
 - Execucao real: bloqueada por padrao.
 - Catalogo de APIs: sanitizado, versionado e `mock_only`.
@@ -38,6 +40,11 @@ O produto e um laboratorio seguro de automacao SmartOffers/ACM, local-first e mo
 `core/exporters/` gera artefatos JSON, DOCX e XLSX para cenarios e dry-runs.
 
 `ai/` contem contratos conceituais e operacionais para ontologia, playbooks, evidencia, risco, real execution, skills e supervisores.
+
+Os contratos em `ai/supervisors/*` pertencem ao dominio interno do produto. Eles
+nao sao os papeis multiagente de desenvolvimento descritos em `AGENTS.md`, nao
+usam ferramentas e nao possuem autoridade operacional. O snapshot de
+governanca e as divergencias vigentes ficam em `docs/ALPHA_GOVERNANCE.md`.
 
 ## Guardrails de execucao real
 

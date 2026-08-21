@@ -1,0 +1,4 @@
+interface:
+  display_name: "SmartOffers Execution Manager"
+  short_description: "Coordena goals, review e liberacoes cobertas"
+  default_prompt: "Use $smartoffers-execution-manager para montar e coordenar este pacote completo de entrega SmartOffers."

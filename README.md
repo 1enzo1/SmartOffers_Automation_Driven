@@ -4,7 +4,15 @@ SmartOffers_Automation_Driven e uma plataforma Flask/Python local-first e mock-f
 
 O produto deve evoluir como um laboratorio seguro de automacao SmartOffers/ACM, nao apenas como um gerador ou simulador de testes. Ele transforma regras de campanha, eventos, APIs sanitizadas, evidencias operacionais e troubleshooting em cenarios deterministicos, dry-runs, adapter-runs mockados, `request_plan` seguro e, em MVP futuro, execucoes reais controladas.
 
-Estado atual: MVP7.8.3A.1 concluido, com contrato runtime multi-recurso para o perfil `smartoffers_basic_smoke`, preflight sanitizado para execucao QA manual e protecao local de runtime secrets registrada no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`. A branch `qa/mvp4-integration` e a linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4. A execucao real segue bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs, Kafka, Jenkins ou rede externa.
+Estado atual: a baseline pre-alpha esta preservada pela tag
+`v0.0.0-pre-alpha.1` no merge `e1263595aa736de3855234b6f9a0379b944fe70e`.
+O Owner aceitou o MVP7.8.3B no recorte DB-only; a API esta `NOT_READY` e
+`BASIC_SMOKE_OK`/`FULL_SMOKE_OK` permanecem falsos. MVP7.8.4 esta autorizado
+somente para desenvolvimento mock-first. A branch `qa/mvp4-integration` e a
+linha evolutiva base e `codex/alpha` registra a continuacao de governanca. O
+snapshot canonico esta em `docs/ALPHA_GOVERNANCE.md`. A execucao real segue
+bloqueada por padrao, e o projeto nao faz chamadas reais para Oracle, APIs,
+Kafka, Jenkins ou rede externa.
 
 ## Objetivo
 
@@ -34,9 +42,9 @@ A execucao real continua bloqueada por padrao. Qualquer evolucao para `mode=real
 
 ## Roadmap ajustado
 
-O roadmap futuro parte do estado atual MVP7.8.3A.1. Os MVPs 7.6.x e 7.7.x ficam como historico concluido, nao como trabalho pendente.
+O roadmap futuro parte do recorte MVP7.8.3B DB-only aceito. Os MVPs 7.6.x e
+7.7.x ficam como historico concluido, nao como trabalho pendente.
 
-- MVP7.8.3B - First QA4 Real Smoke manual
 - MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy
 - MVP7.8.5 - Real Campaign Scenario Pack 01
 - MVP7.8.6 - Evidence Comparison & Runner Hardening
