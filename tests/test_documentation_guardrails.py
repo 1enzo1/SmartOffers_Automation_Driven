@@ -7,6 +7,7 @@ import pytest
 from tools import qa4_acm_manual_smoke
 from tools import qa4_api_health_smoke
 from tools import qa4_bda_manual_smoke
+from tools import qa4_bda_mock_executor
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -225,10 +226,12 @@ def test_future_roadmap_does_not_relist_completed_mvp76_or_mvp77_as_pending():
 def test_alpha_gate_dag_has_no_legacy_or_summary_predecessor_in_active_admission():
     acm_validation = inspect.getsource(qa4_acm_manual_smoke._validate_arguments)
     bda_validation = inspect.getsource(qa4_bda_manual_smoke._validate_arguments)
+    bda_mock_validation = inspect.getsource(qa4_bda_mock_executor._validate_arguments)
     api_validation = inspect.getsource(qa4_api_health_smoke._validate_arguments)
 
     assert "basic_smoke_status" not in acm_validation
     assert "basic_db_checkpoint_status" not in bda_validation
+    assert "basic_db_checkpoint_status" not in bda_mock_validation
     assert "basic_db_checkpoint_status" not in api_validation
     assert "validate_api_db_gate_bundle" in api_validation
 
@@ -272,19 +275,69 @@ def test_alpha_gate_dag_contract_preserves_independence_provenance_and_terminal_
         assert fragment in content
 
 
-def test_alpha_gate_dag_is_linked_and_awaits_independent_acceptance():
+def test_alpha_gate_dag_contract_has_exact_canonical_edge_set():
+    content = _read("ai/real-execution/mvp7-8-4-gate-dag-contract.md")
+    match = re.search(
+        r"<!-- CANONICAL_GATE_EDGE_SET_BEGIN -->\s*```text\s*(.*?)\s*```\s*"
+        r"<!-- CANONICAL_GATE_EDGE_SET_END -->",
+        content,
+        re.DOTALL,
+    )
+    assert match is not None
+
+    edge_lines = [line.strip() for line in match.group(1).splitlines() if line.strip()]
+    actual_edges = {
+        tuple(part.strip() for part in line.split("->", maxsplit=1))
+        for line in edge_lines
+    }
+    expected_edges = {
+        ("ACM_CUSTOM_OWN_GUARDS", "ACM_CUSTOM_DB_CHECKPOINT_OK"),
+        ("ACM_OWN_GUARDS", "ACM_DB_CHECKPOINT_OK"),
+        ("BDA_OWN_GUARDS", "BDA_DB_CHECKPOINT_OK"),
+        ("ACM_CUSTOM_DB_CHECKPOINT_OK", "SMARTOFFERS_API_QA4_CHECKPOINT_OK"),
+        ("ACM_DB_CHECKPOINT_OK", "SMARTOFFERS_API_QA4_CHECKPOINT_OK"),
+        ("BDA_DB_CHECKPOINT_OK", "SMARTOFFERS_API_QA4_CHECKPOINT_OK"),
+        ("SMARTOFFERS_API_QA4_CHECKPOINT_OK", "MANAGER_CONSOLIDATION"),
+    }
+
+    assert len(edge_lines) == len(expected_edges)
+    assert actual_edges == expected_edges
+
+
+def test_alpha_gate_dag_is_linked():
     contract_path = "ai/real-execution/mvp7-8-4-gate-dag-contract.md"
     real_execution_readme = _read("ai/real-execution/README.md")
     architecture = _read("docs/ARCHITECTURE.md")
-    governance = _read("docs/ALPHA_GOVERNANCE.md")
 
     assert "mvp7-8-4-gate-dag-contract.md" in real_execution_readme
     assert contract_path in architecture
-    assert "ALPHA-MVP784-002" in governance
-    assert "TASK_CLASS=DEVELOPMENT" in governance
-    assert "IMPLEMENTED_AWAITING_INDEPENDENT_ACCEPTANCE" in governance
+
+
+def test_alpha_mvp784_board_row_has_exact_class_and_awaiting_acceptance_state():
+    governance = _read("docs/ALPHA_GOVERNANCE.md")
+    matching_rows = [
+        line for line in governance.splitlines()
+        if line.startswith("| P1 | ALPHA-MVP784-002 ")
+    ]
+
+    assert len(matching_rows) == 1
+    cells = [cell.strip() for cell in matching_rows[0].strip("|").split("|")]
+    assert cells[2] == "`TASK_CLASS=DEVELOPMENT`"
+    assert cells[3] == "`STATE=IMPLEMENTED_AWAITING_INDEPENDENT_ACCEPTANCE`"
+
+
+def test_alpha_contract_conflict_remains_open_pending_independent_acceptance():
+    governance = _read("docs/ALPHA_GOVERNANCE.md")
 
     conflict_section = governance.split("### `CONTRACT_CONFLICT-001`", 1)[1].split("### `STATE_DIVERGENCE-001`", 1)[0]
     normalized_conflict = " ".join(conflict_section.split())
     assert "permanece aberta" in normalized_conflict
     assert "aceite independente" in normalized_conflict
+
+
+def test_alpha_gate_record_validates_attempt_policy_without_claiming_to_store_it():
+    content = _read("ai/real-execution/mvp7-8-4-gate-dag-contract.md")
+    normalized_content = " ".join(content.split())
+
+    assert "normalizer validates `attempts=1` and `retry=0` before emitting" in normalized_content
+    assert "It also records one attempt, zero retry" not in normalized_content

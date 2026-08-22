@@ -31,6 +31,21 @@ BDA own guards        -> BDA_DB_CHECKPOINT_OK --------+     -> SMARTOFFERS_API_Q
                                                           FULL_SMOKE_*
 ```
 
+The following delimited block is the machine-checkable canonical edge set. It
+contains every dependency edge and no scheduling or reporting-only relation:
+
+<!-- CANONICAL_GATE_EDGE_SET_BEGIN -->
+```text
+ACM_CUSTOM_OWN_GUARDS -> ACM_CUSTOM_DB_CHECKPOINT_OK
+ACM_OWN_GUARDS -> ACM_DB_CHECKPOINT_OK
+BDA_OWN_GUARDS -> BDA_DB_CHECKPOINT_OK
+ACM_CUSTOM_DB_CHECKPOINT_OK -> SMARTOFFERS_API_QA4_CHECKPOINT_OK
+ACM_DB_CHECKPOINT_OK -> SMARTOFFERS_API_QA4_CHECKPOINT_OK
+BDA_DB_CHECKPOINT_OK -> SMARTOFFERS_API_QA4_CHECKPOINT_OK
+SMARTOFFERS_API_QA4_CHECKPOINT_OK -> MANAGER_CONSOLIDATION
+```
+<!-- CANONICAL_GATE_EDGE_SET_END -->
+
 Written without diagram alignment, the independent producer edges are
 `ACM_CUSTOM own guards -> ACM_CUSTOM_DB_CHECKPOINT_OK`,
 `ACM own guards -> ACM_DB_CHECKPOINT_OK` and
@@ -69,9 +84,11 @@ filesystem, subprocess or clock I/O.
 Caller-supplied success strings are not evidence. A canonical record binds the
 exact checkpoint/resource pair, source execution reference, source timestamp,
 environment, source profile, orchestration reference, operational-window
-reference and window bounds. It also records one attempt, zero retry, a
-sanitized error category, terminal stop reason, the component-specific
-validation map and `sensitive_values_logged=false`.
+reference and window bounds. The normalizer validates `attempts=1` and
+`retry=0` before emitting a canonical record; those source policy fields are
+not copied into the record. The record contains a sanitized error category,
+terminal stop reason, the component-specific validation map and
+`sensitive_values_logged=false`.
 
 The source timestamp, evaluation timestamp and window bounds must be
 timezone-aware. Source and evaluation times must fall inside the same active

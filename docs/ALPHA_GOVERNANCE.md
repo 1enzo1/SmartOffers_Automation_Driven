@@ -126,7 +126,7 @@ continuam como historico, nao como autorizacao.
 | Prioridade | Goal | TASK_CLASS | Estado | Owner operacional | Saida esperada |
 |---|---|---|---|---|---|
 | P0 | ALPHA-PR18-FIX-001 | `TASK_CLASS=REVIEW` | REVIEW; gate independente pendente | Tester -> Execution Manager | Precisao de governanca validada sem alterar runtime. |
-| P1 | ALPHA-MVP784-002 - DAG canonico para `CONTRACT_CONFLICT-001` | `TASK_CLASS=DEVELOPMENT` | `STATE=IMPLEMENTED_AWAITING_INDEPENDENT_ACCEPTANCE`; conflito aberto | Dev -> Tester -> Manager | DAG mock-first implementado; aceite independente pendente. |
+| P1 | ALPHA-MVP784-002 - DAG canonico para `CONTRACT_CONFLICT-001` | `TASK_CLASS=DEVELOPMENT` | `STATE=IMPLEMENTED_AWAITING_INDEPENDENT_ACCEPTANCE` | Dev -> Tester -> Manager | DAG mock-first implementado; conflito aberto e aceite independente pendente. |
 | P1 | Preparar API health checkpoint | `TASK_CLASS=RESEARCH` | Bloqueado por readiness externo | Manager | Confirmacao segura do service owner; nenhum endpoint no Git/chat. |
 | P1 | MVP7.8.4 Sanity Runner Standard/Variant/Copy | `TASK_CLASS=DEVELOPMENT` | Autorizado para desenvolvimento mock-first | Manager -> Dev -> Tester | Runner deterministico, compatibilidade e suite verde. |
 | P2 | Evidence comparison e hardening | `TASK_CLASS=DEVELOPMENT` | Pendente do runner | Manager | Evidencia sanitizada e regras de comparacao. |
