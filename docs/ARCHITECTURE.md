@@ -44,6 +44,14 @@ mas essa capacidade nao constitui liberacao Alpha nem garantia de kill switch.
 Eles permanecem operacional e contratualmente
 proibidos de invocacao real no Alpha.
 
+O DAG Alpha mock-first desses checkpoints e implementado por modulos puros em
+`core/real_execution/gate_dag.py` e
+`core/real_execution/smoke_consolidation.py`. O contrato canonico
+`ai/real-execution/mvp7-8-4-gate-dag-contract.md` preserva ACM_CUSTOM, ACM e BDA
+como ramos independentes; a API consome exatamente as tres evidencias DB
+estruturadas e o Manager somente consolida resumos terminais sem autoridade
+operacional.
+
 `core/exporters/` gera artefatos JSON, DOCX e XLSX para cenarios e dry-runs.
 
 `ai/` contem contratos conceituais e operacionais para ontologia, playbooks, evidencia, risco, real execution, skills e supervisores.

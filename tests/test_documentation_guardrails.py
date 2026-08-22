@@ -1,7 +1,12 @@
+import inspect
 import re
 from pathlib import Path
 
 import pytest
+
+from tools import qa4_acm_manual_smoke
+from tools import qa4_api_health_smoke
+from tools import qa4_bda_manual_smoke
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -215,3 +220,71 @@ def test_future_roadmap_does_not_relist_completed_mvp76_or_mvp77_as_pending():
 
     for item in obsolete_pending_items:
         assert item not in future_section
+
+
+def test_alpha_gate_dag_has_no_legacy_or_summary_predecessor_in_active_admission():
+    acm_validation = inspect.getsource(qa4_acm_manual_smoke._validate_arguments)
+    bda_validation = inspect.getsource(qa4_bda_manual_smoke._validate_arguments)
+    api_validation = inspect.getsource(qa4_api_health_smoke._validate_arguments)
+
+    assert "basic_smoke_status" not in acm_validation
+    assert "basic_db_checkpoint_status" not in bda_validation
+    assert "basic_db_checkpoint_status" not in api_validation
+    assert "validate_api_db_gate_bundle" in api_validation
+
+
+def test_alpha_gate_dag_contract_declares_exact_task_class_and_blocks_transport():
+    content = _read("ai/real-execution/mvp7-8-4-gate-dag-contract.md")
+
+    required_fragments = [
+        "ALPHA-MVP784-002",
+        "TASK_CLASS=DEVELOPMENT",
+        "ACM_CUSTOM | ACM | BDA -> API -> Manager consolidation",
+        "smartoffers_qa4_full_smoke",
+        "real transport remains blocked",
+        "mock-only",
+    ]
+    for fragment in required_fragments:
+        assert fragment.lower() in content.lower()
+
+
+def test_alpha_gate_dag_contract_preserves_independence_provenance_and_terminal_precedence():
+    content = _read("ai/real-execution/mvp7-8-4-gate-dag-contract.md")
+
+    required_fragments = [
+        "Producer, consumer, meaning and evidence source",
+        "ACM_CUSTOM own guards -> ACM_CUSTOM_DB_CHECKPOINT_OK",
+        "ACM own guards -> ACM_DB_CHECKPOINT_OK",
+        "BDA own guards -> BDA_DB_CHECKPOINT_OK",
+        "Scheduling is not dependency",
+        "exactly three canonical DB gates",
+        "BASIC_SMOKE_OK",
+        "BASIC_SMOKE_FAILED",
+        "BASIC_SMOKE_BLOCKED",
+        "FULL_SMOKE_OK",
+        "FULL_SMOKE_PARTIAL",
+        "FULL_SMOKE_FAILED",
+        "FULL_SMOKE_BLOCKED",
+        "BASIC_DB_CHECKPOINT_OK",
+        "deprecated",
+    ]
+    for fragment in required_fragments:
+        assert fragment in content
+
+
+def test_alpha_gate_dag_is_linked_and_awaits_independent_acceptance():
+    contract_path = "ai/real-execution/mvp7-8-4-gate-dag-contract.md"
+    real_execution_readme = _read("ai/real-execution/README.md")
+    architecture = _read("docs/ARCHITECTURE.md")
+    governance = _read("docs/ALPHA_GOVERNANCE.md")
+
+    assert "mvp7-8-4-gate-dag-contract.md" in real_execution_readme
+    assert contract_path in architecture
+    assert "ALPHA-MVP784-002" in governance
+    assert "TASK_CLASS=DEVELOPMENT" in governance
+    assert "IMPLEMENTED_AWAITING_INDEPENDENT_ACCEPTANCE" in governance
+
+    conflict_section = governance.split("### `CONTRACT_CONFLICT-001`", 1)[1].split("### `STATE_DIVERGENCE-001`", 1)[0]
+    normalized_conflict = " ".join(conflict_section.split())
+    assert "permanece aberta" in normalized_conflict
+    assert "aceite independente" in normalized_conflict
