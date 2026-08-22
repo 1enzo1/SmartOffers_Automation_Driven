@@ -77,6 +77,27 @@ _PREFLIGHT_DB_VALIDATIONS = _COMMON_DB_VALIDATIONS + (
     ("preflight_validation", "MATCH"),
     ("fingerprint_validation", "MATCH"),
 )
+_MATCH_VALIDATION_VALUES = frozenset({"MATCH", "DENIED", "BLOCKED"})
+_PASS_VALIDATION_VALUES = frozenset({"PASS", "DENIED", "BLOCKED"})
+_SANITIZED_VALIDATION_VALUES = MappingProxyType(
+    {
+        "environment_allowlist": _MATCH_VALIDATION_VALUES,
+        "resource_allowlist": _MATCH_VALIDATION_VALUES,
+        "destination_allowlist": _MATCH_VALIDATION_VALUES,
+        "query_hash_validation": _MATCH_VALIDATION_VALUES,
+        "read_only_validation": _PASS_VALIDATION_VALUES,
+        "result_shape_validation": _MATCH_VALIDATION_VALUES,
+        "preflight_validation": _MATCH_VALIDATION_VALUES,
+        "fingerprint_validation": _MATCH_VALIDATION_VALUES,
+        "allowlist_validation": _MATCH_VALIDATION_VALUES,
+        "path_validation": _MATCH_VALIDATION_VALUES,
+        "path_hash_validation": _MATCH_VALIDATION_VALUES,
+        "db_gate_bundle_validation": _MATCH_VALIDATION_VALUES,
+        "response_body_logged": bool,
+        "response_headers_logged": bool,
+        "sensitive_values_logged": bool,
+    }
+)
 
 _COMPONENTS = MappingProxyType(
     {
@@ -152,8 +173,8 @@ def normalize_checkpoint_evidence(result, context, *, evaluated_at):
     if context_reason:
         return _rejected(context_reason)
 
-    spec = _COMPONENTS.get(
-        (result_data.get("checkpoint"), result_data.get("resource_id"))
+    spec = _component_spec(
+        result_data.get("checkpoint"), result_data.get("resource_id")
     )
     if spec is None:
         return _rejected("UNKNOWN_CHECKPOINT_RESOURCE")
@@ -188,6 +209,9 @@ def normalize_checkpoint_evidence(result, context, *, evaluated_at):
     if result_data.get("sensitive_values_logged") is not False:
         return _rejected("SENSITIVE_LOGGING_DENIED")
 
+    if not _validation_values_are_sanitized(result_data, spec):
+        return _rejected("VALIDATION_VALUE_INVALID")
+
     if outcome == "OK":
         if (
             result_data.get("sanitized_error_category") != "NONE"
@@ -220,8 +244,8 @@ def validate_canonical_evidence_record(record, context, *, evaluated_at):
     if not _record_context_matches(record, context_data):
         return _evidence_validation("CONTEXT_MISMATCH")
 
-    spec = _COMPONENTS.get(
-        (record.get("source_checkpoint"), record.get("source_resource_id"))
+    spec = _component_spec(
+        record.get("source_checkpoint"), record.get("source_resource_id")
     )
     if spec is None or (
         record.get("component") != spec.component
@@ -253,6 +277,7 @@ def validate_canonical_evidence_record(record, context, *, evaluated_at):
         not isinstance(validations, dict)
         or not set(validations) <= allowed_validation_names
         or validations.get("sensitive_values_logged") is not False
+        or not _validation_values_are_sanitized(validations, spec)
     ):
         return _evidence_validation("CANONICAL_RECORD_VALIDATION_MISMATCH")
 
@@ -368,6 +393,29 @@ def _positive_validations_match(result, spec):
     return all(
         result.get(name) == expected for name, expected in spec.positive_validations
     )
+
+
+def _component_spec(checkpoint, resource_id):
+    if not isinstance(checkpoint, str) or not isinstance(resource_id, str):
+        return None
+    return _COMPONENTS.get((checkpoint, resource_id))
+
+
+def _validation_values_are_sanitized(values, spec):
+    validation_names = {
+        name for name, _ in spec.positive_validations
+    } | {"sensitive_values_logged"}
+    return all(
+        name not in values or _validation_value_is_sanitized(name, values[name])
+        for name in validation_names
+    )
+
+
+def _validation_value_is_sanitized(name, value):
+    allowed = _SANITIZED_VALIDATION_VALUES[name]
+    if allowed is bool:
+        return type(value) is bool
+    return isinstance(value, str) and value in allowed
 
 
 def _rejected(reason):

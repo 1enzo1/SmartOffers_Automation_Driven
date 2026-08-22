@@ -224,6 +224,21 @@ def test_rejects_unknown_or_invalid_provenance(raw, reason):
 
 
 @pytest.mark.parametrize(
+    "checkpoint,resource_id",
+    (
+        ([], "acm_db"),
+        ("ORACLE_ACM_TECHNICAL_READ_ONLY_01", []),
+    ),
+)
+def test_normalizer_rejects_non_string_checkpoint_identity_without_raising(
+    checkpoint, resource_id
+):
+    raw = _acm_result(checkpoint=checkpoint, resource_id=resource_id)
+
+    assert _normalize(raw) == _rejected("UNKNOWN_CHECKPOINT_RESOURCE")
+
+
+@pytest.mark.parametrize(
     "context,evaluated_at,reason",
     (
         ({}, EVALUATED_AT, "ORCHESTRATION_CONTEXT_INVALID"),
@@ -333,6 +348,20 @@ def test_normalizes_sanitized_non_ok_terminal_evidence_without_promoting_it(raw,
     ) == {"status": CANONICAL_EVIDENCE_VALID, "reason": "NONE"}
 
 
+@pytest.mark.parametrize("status", ("FAILED", "BLOCKED"))
+def test_non_ok_evidence_rejects_unsanitized_validation_label_without_copying_it(
+    status,
+):
+    raw = _acm_result(
+        status=status,
+        sanitized_error_category="READ_ONLY_POLICY_VIOLATION",
+        stop_reason="IMMEDIATE_STOP",
+        query_hash_validation="password=secret",
+    )
+
+    assert _normalize(raw) == _rejected("VALIDATION_VALUE_INVALID")
+
+
 @pytest.mark.parametrize(
     "change,reason",
     (
@@ -356,6 +385,50 @@ def test_revalidation_rejects_noncanonical_extra_fields(change, reason):
     ) == {
         "status": CANONICAL_EVIDENCE_BLOCKED,
         "reason": reason,
+    }
+
+
+@pytest.mark.parametrize(
+    "source_checkpoint,source_resource_id",
+    (
+        ([], "acm_db"),
+        ("ORACLE_ACM_TECHNICAL_READ_ONLY_01", []),
+    ),
+)
+def test_revalidation_rejects_non_string_checkpoint_identity_without_raising(
+    source_checkpoint, source_resource_id
+):
+    record = {
+        **_normalize(_acm_result()),
+        "source_checkpoint": source_checkpoint,
+        "source_resource_id": source_resource_id,
+    }
+
+    assert validate_canonical_evidence_record(
+        record, _context(), evaluated_at=EVALUATED_AT
+    ) == {
+        "status": CANONICAL_EVIDENCE_BLOCKED,
+        "reason": "CANONICAL_RECORD_IDENTITY_MISMATCH",
+    }
+
+
+@pytest.mark.parametrize("status", ("FAILED", "BLOCKED"))
+def test_revalidation_rejects_unsanitized_validation_label(status):
+    record = _normalize(
+        _acm_result(
+            status=status,
+            sanitized_error_category="READ_ONLY_POLICY_VIOLATION",
+            stop_reason="IMMEDIATE_STOP",
+            query_hash_validation="DENIED",
+        )
+    )
+    record["validations"]["query_hash_validation"] = "password=secret"
+
+    assert validate_canonical_evidence_record(
+        record, _context(), evaluated_at=EVALUATED_AT
+    ) == {
+        "status": CANONICAL_EVIDENCE_BLOCKED,
+        "reason": "CANONICAL_RECORD_VALIDATION_MISMATCH",
     }
 
 
