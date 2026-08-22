@@ -146,8 +146,7 @@ def run_api_health_checkpoint(arguments, environ=None, client=None, clock=None):
     started = monotonic()
     validations = _denied_validations()
     try:
-        _validate_arguments(args)
-        validations["db_gate_bundle_validation"] = "MATCH"
+        _validate_arguments(args, validations)
         runtime = _load_runtime(environment)
         preflight = _validate_preflight(args, environment)
         validations.update(
@@ -203,7 +202,7 @@ def run_api_health_checkpoint(arguments, environ=None, client=None, clock=None):
         )
 
 
-def _validate_arguments(args):
+def _validate_arguments(args, validations):
     bundle = validate_api_db_gate_bundle(
         args.get("db_checkpoint_gates"),
         args.get("orchestration_context"),
@@ -211,6 +210,7 @@ def _validate_arguments(args):
     )
     if bundle["status"] != DB_CHECKPOINT_GATES_READY:
         raise _Blocked("DB_CHECKPOINT_GATE_MISSING")
+    validations["db_gate_bundle_validation"] = "MATCH"
 
     expected = {
         "checkpoint": API_CHECKPOINT,

@@ -425,6 +425,28 @@ def test_api_rejects_expired_structured_gates_before_client_load(monkeypatch):
     (
         ({"operational_window_active": "false"}, "OPERATIONAL_WINDOW_INACTIVE"),
         ({"approval": "DENIED"}, "APPROVAL_MISSING"),
+    ),
+)
+def test_api_preserves_valid_db_bundle_evidence_when_a_later_guard_blocks(
+    argument_update, expected_category
+):
+    client = FakeHttpClient(FakeResponse(status_code=200))
+
+    result = run_api_health_checkpoint(
+        _arguments(**argument_update), environ=_runtime(), client=client
+    )
+
+    assert result["status"] == API_HEALTH_CHECKPOINT_BLOCKED
+    assert result["sanitized_error_category"] == expected_category
+    assert result["db_gate_bundle_validation"] == "MATCH"
+    assert client.calls == []
+
+
+@pytest.mark.parametrize(
+    "argument_update, expected_category",
+    (
+        ({"operational_window_active": "false"}, "OPERATIONAL_WINDOW_INACTIVE"),
+        ({"approval": "DENIED"}, "APPROVAL_MISSING"),
         ({"operational_release": "DENIED"}, "APPROVAL_MISSING"),
         ({"method": "POST"}, "ALLOWLIST_DENIED"),
         ({"attempts": 2}, "READ_ONLY_POLICY_VIOLATION"),
