@@ -183,7 +183,9 @@ def test_alpha_role_boundaries_are_consistent_per_source():
     assert "o Dev nao aprova a propria entrega como\nindependente" in developer
 
     assert "CONTRACT_CONFLICT-001" in governance
-    assert "nao\ninferir um bypass a partir de evidencia historica" in governance
+    assert "nao inferir um bypass a partir de evidencia historica" in " ".join(
+        governance.split()
+    )
 
 
 def test_alpha_precision_contract_routes_authority_capability_and_task_classes():
@@ -369,13 +371,13 @@ def test_alpha_gate_dag_is_linked():
     assert contract_path in architecture
 
 
-def test_alpha_mvp784_board_row_has_exact_class_and_awaiting_acceptance_state():
+def test_alpha_mvp784_board_row_has_exact_class_and_completed_state():
     governance = _read("docs/ALPHA_GOVERNANCE.md")
     matching_rows = [row for row in _extract_alpha_board_rows(governance) if row[1].startswith("ALPHA-MVP784-002 ")]
 
     assert len(matching_rows) == 1
     assert matching_rows[0][2] == "`TASK_CLASS=DEVELOPMENT`"
-    assert matching_rows[0][3] == "`STATE=IMPLEMENTED_AWAITING_INDEPENDENT_ACCEPTANCE`"
+    assert matching_rows[0][3] == "`STATE=COMPLETED`"
 
 
 def test_every_alpha_board_row_has_one_exact_allowed_task_class_cell():
@@ -399,13 +401,17 @@ def test_alpha_board_rejects_task_class_cell_contamination(malformed_cell):
         _assert_alpha_board_task_classes(malformed_board)
 
 
-def test_alpha_contract_conflict_remains_open_pending_independent_acceptance():
+def test_alpha_contract_conflict_is_resolved_after_independent_acceptance():
     governance = _read("docs/ALPHA_GOVERNANCE.md")
 
     conflict_section = governance.split("### `CONTRACT_CONFLICT-001`", 1)[1].split("### `STATE_DIVERGENCE-001`", 1)[0]
     normalized_conflict = " ".join(conflict_section.split())
-    assert "permanece aberta" in normalized_conflict
-    assert "aceite independente" in normalized_conflict
+    assert "RESOLVIDO" in normalized_conflict
+    assert "Tester independente aceitou os 12 criterios" in normalized_conflict
+    assert "983bace" in normalized_conflict
+    assert "676 passed" in normalized_conflict
+    assert "nao libera transporte real" in normalized_conflict
+    assert "permanece aberta" not in normalized_conflict
 
 
 def test_alpha_contract_conflict_describes_previous_cycle_in_the_past():
@@ -414,7 +420,7 @@ def test_alpha_contract_conflict_describes_previous_cycle_in_the_past():
     normalized_conflict = " ".join(conflict_section.split())
 
     assert "O contrato/executor ACM anterior exigia `BASIC_SMOKE_OK`" in normalized_conflict
-    assert "A implementacao candidata removeu esse predecessor" in normalized_conflict
+    assert "removeu o predecessor da admissao ACM" in normalized_conflict
     assert "O contrato/executor ACM exige `BASIC_SMOKE_OK`" not in normalized_conflict
 
 

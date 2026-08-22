@@ -2,7 +2,7 @@
 
 Goal: `ALPHA-MVP784-002`
 Task: `TASK_CLASS=DEVELOPMENT`
-State: `IMPLEMENTED_AWAITING_INDEPENDENT_ACCEPTANCE`
+State: `ACCEPTED`
 
 This is the canonical Alpha contract for dependency admission between the
 dormant QA4 checkpoint tools. It records mock-only behavior and does not grant
@@ -191,6 +191,7 @@ runtime profile resources, `safe_for_real_execution`, `execution_status` and
 fake drivers/clients. It must not contact DNS, network, Oracle, HTTP, Kafka,
 Jenkins or a subprocess.
 
-Independent acceptance is required before the Alpha Manager can close
-`CONTRACT_CONFLICT-001`. Until then this implementation state is evidence for
-review, not operational release.
+Independent acceptance was recorded for implementation head `983bace` after
+`676 passed`, adversarial reference probes and clean diff checks. The Alpha
+Manager may therefore close `CONTRACT_CONFLICT-001`. Acceptance and conflict
+closure are governance evidence only; they are not operational release.
