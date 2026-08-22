@@ -217,6 +217,10 @@ def test_rejects_noncanonical_success_evidence(field, value, reason):
             _acm_result(timestamp="2026-08-22T12:11:00+00:00"),
             "SOURCE_TIMESTAMP_IN_FUTURE",
         ),
+        (
+            _acm_result(timestamp="0001-01-01T00:00:00+23:59"),
+            "SOURCE_TIMESTAMP_INVALID",
+        ),
     ),
 )
 def test_rejects_unknown_or_invalid_provenance(raw, reason):
@@ -362,6 +366,63 @@ def test_non_ok_evidence_rejects_unsanitized_validation_label_without_copying_it
     assert _normalize(raw) == _rejected("VALIDATION_VALUE_INVALID")
 
 
+@pytest.mark.parametrize("status", ([], {}))
+def test_normalizer_rejects_non_string_status_without_raising(status):
+    assert _normalize(_acm_result(status=status)) == _rejected(
+        "SOURCE_STATUS_MISMATCH"
+    )
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("sanitized_error_category", "password=secret"),
+        ("stop_reason", "operator=alice"),
+    ),
+)
+@pytest.mark.parametrize("status", ("FAILED", "BLOCKED"))
+def test_non_ok_evidence_rejects_unsanitized_terminal_metadata(
+    status, field, value
+):
+    raw = _acm_result(
+        status=status,
+        sanitized_error_category="READ_ONLY_POLICY_VIOLATION",
+        stop_reason="IMMEDIATE_STOP",
+        query_hash_validation="DENIED",
+    )
+    raw[field] = value
+
+    assert _normalize(raw) == _rejected("TERMINAL_METADATA_MISMATCH")
+
+
+@pytest.mark.parametrize("status", ("FAILED", "BLOCKED"))
+@pytest.mark.parametrize("field", ("response_body_logged", "response_headers_logged"))
+@pytest.mark.parametrize("invalid_value", (True, None))
+def test_api_non_ok_evidence_requires_false_response_logging_guards(
+    status, field, invalid_value
+):
+    source_status = {
+        "FAILED": "SMARTOFFERS_API_QA4_CHECKPOINT_FAILED",
+        "BLOCKED": "SMARTOFFERS_API_QA4_CHECKPOINT_BLOCKED",
+    }[status]
+    error_category = {
+        "FAILED": "HTTP_STATUS_DENIED",
+        "BLOCKED": "DB_CHECKPOINT_GATE_MISSING",
+    }[status]
+    raw = _api_result(
+        status=source_status,
+        sanitized_error_category=error_category,
+        stop_reason="IMMEDIATE_STOP",
+        db_gate_bundle_validation="DENIED",
+    )
+    if invalid_value is None:
+        raw.pop(field)
+    else:
+        raw[field] = invalid_value
+
+    assert _normalize(raw) == _rejected("TERMINAL_VALIDATION_MISMATCH")
+
+
 @pytest.mark.parametrize(
     "change,reason",
     (
@@ -423,6 +484,83 @@ def test_revalidation_rejects_unsanitized_validation_label(status):
         )
     )
     record["validations"]["query_hash_validation"] = "password=secret"
+
+    assert validate_canonical_evidence_record(
+        record, _context(), evaluated_at=EVALUATED_AT
+    ) == {
+        "status": CANONICAL_EVIDENCE_BLOCKED,
+        "reason": "CANONICAL_RECORD_VALIDATION_MISMATCH",
+    }
+
+
+@pytest.mark.parametrize("source_status", ([], {}))
+def test_revalidation_rejects_non_string_status_without_raising(source_status):
+    record = {
+        **_normalize(_acm_result()),
+        "source_status": source_status,
+    }
+
+    assert validate_canonical_evidence_record(
+        record, _context(), evaluated_at=EVALUATED_AT
+    ) == {
+        "status": CANONICAL_EVIDENCE_BLOCKED,
+        "reason": "CANONICAL_RECORD_OUTCOME_MISMATCH",
+    }
+
+
+@pytest.mark.parametrize(
+    "field,value",
+    (
+        ("sanitized_error_category", "password=secret"),
+        ("stop_reason", "operator=alice"),
+    ),
+)
+@pytest.mark.parametrize("source_status", ("FAILED", "BLOCKED"))
+def test_revalidation_rejects_unsanitized_terminal_metadata(
+    source_status, field, value
+):
+    record = _normalize(
+        _acm_result(
+            status=source_status,
+            sanitized_error_category="READ_ONLY_POLICY_VIOLATION",
+            stop_reason="IMMEDIATE_STOP",
+            query_hash_validation="DENIED",
+        )
+    )
+    record[field] = value
+
+    assert validate_canonical_evidence_record(
+        record, _context(), evaluated_at=EVALUATED_AT
+    ) == {
+        "status": CANONICAL_EVIDENCE_BLOCKED,
+        "reason": "CANONICAL_RECORD_VALIDATION_MISMATCH",
+    }
+
+
+@pytest.mark.parametrize(
+    "source_status,error_category",
+    (
+        ("SMARTOFFERS_API_QA4_CHECKPOINT_FAILED", "HTTP_STATUS_DENIED"),
+        ("SMARTOFFERS_API_QA4_CHECKPOINT_BLOCKED", "DB_CHECKPOINT_GATE_MISSING"),
+    ),
+)
+@pytest.mark.parametrize("field", ("response_body_logged", "response_headers_logged"))
+@pytest.mark.parametrize("invalid_value", (True, None))
+def test_revalidation_requires_false_api_terminal_response_logging_guards(
+    source_status, error_category, field, invalid_value
+):
+    record = _normalize(
+        _api_result(
+            status=source_status,
+            sanitized_error_category=error_category,
+            stop_reason="IMMEDIATE_STOP",
+            db_gate_bundle_validation="DENIED",
+        )
+    )
+    if invalid_value is None:
+        record["validations"].pop(field)
+    else:
+        record["validations"][field] = invalid_value
 
     assert validate_canonical_evidence_record(
         record, _context(), evaluated_at=EVALUATED_AT

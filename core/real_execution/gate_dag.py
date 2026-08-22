@@ -63,6 +63,7 @@ class _ComponentSpec:
     failed_statuses: frozenset
     blocked_statuses: frozenset
     positive_validations: tuple
+    terminal_error_categories: frozenset
 
 
 _COMMON_DB_VALIDATIONS = (
@@ -98,6 +99,45 @@ _SANITIZED_VALIDATION_VALUES = MappingProxyType(
         "sensitive_values_logged": bool,
     }
 )
+_COMMON_ORACLE_TERMINAL_CATEGORIES = frozenset(
+    {
+        "ALLOWLIST_MISMATCH",
+        "APPROVAL_MISSING",
+        "AUTHENTICATION_ERROR",
+        "CONFIG_MISSING",
+        "CONNECT_TIMEOUT",
+        "ORACLE_CLIENT_ERROR",
+        "QUERY_HASH_MISMATCH",
+        "READ_ONLY_POLICY_VIOLATION",
+        "TOTAL_TIMEOUT",
+        "UNCLASSIFIED_ORACLE_ERROR",
+    }
+)
+_PREFLIGHT_ORACLE_TERMINAL_CATEGORIES = (
+    _COMMON_ORACLE_TERMINAL_CATEGORIES | {"FINGERPRINT_DENIED"}
+)
+_API_TERMINAL_CATEGORIES = frozenset(
+    {
+        "ALLOWLIST_DENIED",
+        "APPROVAL_MISSING",
+        "AUTHENTICATION_ERROR",
+        "AUTHENTICATION_UNCONFIRMED",
+        "CONFIG_MISSING",
+        "CONNECT_TIMEOUT",
+        "DB_CHECKPOINT_GATE_MISSING",
+        "FINGERPRINT_DENIED",
+        "HTTP_STATUS_DENIED",
+        "HTTP_TRANSPORT_ERROR",
+        "OPERATIONAL_WINDOW_INACTIVE",
+        "PATH_HASH_DENIED",
+        "PREFLIGHT_DENIED",
+        "READ_ONLY_POLICY_VIOLATION",
+        "READ_TIMEOUT",
+        "REDIRECT_DENIED",
+        "RESPONSE_LIMIT_EXCEEDED",
+        "TOTAL_TIMEOUT",
+    }
+)
 
 _COMPONENTS = MappingProxyType(
     {
@@ -113,6 +153,7 @@ _COMPONENTS = MappingProxyType(
             blocked_statuses=frozenset({"BLOCKED", "CONNECT_AND_READ_BLOCKED"}),
             positive_validations=_COMMON_DB_VALIDATIONS
             + (("fingerprint_validation", "MATCH"),),
+            terminal_error_categories=_COMMON_ORACLE_TERMINAL_CATEGORIES,
         ),
         (
             "ORACLE_ACM_TECHNICAL_READ_ONLY_01",
@@ -125,6 +166,7 @@ _COMPONENTS = MappingProxyType(
             failed_statuses=frozenset({"FAILED", "CONNECT_AND_READ_FAILED"}),
             blocked_statuses=frozenset({"BLOCKED", "CONNECT_AND_READ_BLOCKED"}),
             positive_validations=_PREFLIGHT_DB_VALIDATIONS,
+            terminal_error_categories=_PREFLIGHT_ORACLE_TERMINAL_CATEGORIES,
         ),
         (
             "ORACLE_BDA_TECHNICAL_READ_ONLY_01",
@@ -137,6 +179,9 @@ _COMPONENTS = MappingProxyType(
             failed_statuses=frozenset({"BDA_DB_CHECKPOINT_FAILED"}),
             blocked_statuses=frozenset({"BDA_DB_CHECKPOINT_BLOCKED"}),
             positive_validations=_PREFLIGHT_DB_VALIDATIONS,
+            terminal_error_categories=(
+                _PREFLIGHT_ORACLE_TERMINAL_CATEGORIES | {"READ_TIMEOUT"}
+            ),
         ),
         (
             "SMARTOFFERS_API_QA4_TECHNICAL_READ_ONLY_01",
@@ -158,6 +203,7 @@ _COMPONENTS = MappingProxyType(
                 ("response_body_logged", False),
                 ("response_headers_logged", False),
             ),
+            terminal_error_categories=_API_TERMINAL_CATEGORIES,
         ),
     }
 )
@@ -220,8 +266,11 @@ def normalize_checkpoint_evidence(result, context, *, evaluated_at):
             return _rejected("SUCCESS_METADATA_MISMATCH")
         if not _positive_validations_match(result_data, spec):
             return _rejected("SUCCESS_VALIDATION_MISMATCH")
-    elif not _terminal_failure_metadata_is_valid(result_data):
-        return _rejected("TERMINAL_METADATA_MISMATCH")
+    else:
+        if not _terminal_failure_metadata_is_valid(result_data, spec):
+            return _rejected("TERMINAL_METADATA_MISMATCH")
+        if not _terminal_validations_match(result_data, spec):
+            return _rejected("TERMINAL_VALIDATION_MISMATCH")
 
     return _valid_record(result_data, context_data, spec, outcome)
 
@@ -291,7 +340,10 @@ def validate_canonical_evidence_record(record, context, *, evaluated_at):
     ):
         return _evidence_validation("CANONICAL_RECORD_VALIDATION_MISMATCH")
 
-    if outcome != "OK" and not _terminal_failure_metadata_is_valid(record):
+    if outcome != "OK" and (
+        not _terminal_failure_metadata_is_valid(record, spec)
+        or not _terminal_validations_match(validations, spec)
+    ):
         return _evidence_validation("CANONICAL_RECORD_VALIDATION_MISMATCH")
 
     return {"status": CANONICAL_EVIDENCE_VALID, "reason": "NONE"}
@@ -338,11 +390,11 @@ def _parse_utc(value):
         return None
     try:
         parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
+        if parsed.tzinfo is None or parsed.utcoffset() is None:
+            return None
+        return parsed.astimezone(timezone.utc)
+    except (ValueError, OverflowError, OSError):
         return None
-    if parsed.tzinfo is None or parsed.utcoffset() is None:
-        return None
-    return parsed.astimezone(timezone.utc)
 
 
 def _validate_context(context, evaluated_at):
@@ -441,6 +493,8 @@ def _record_context_matches(record, context):
 
 
 def _outcome_for_status(status, spec):
+    if not isinstance(status, str):
+        return None
     if status == spec.success_status:
         return "OK"
     if status in spec.failed_statuses:
@@ -450,16 +504,22 @@ def _outcome_for_status(status, spec):
     return None
 
 
-def _terminal_failure_metadata_is_valid(result):
+def _terminal_failure_metadata_is_valid(result, spec):
     error_category = result.get("sanitized_error_category")
     stop_reason = result.get("stop_reason")
     return (
         isinstance(error_category, str)
-        and bool(error_category.strip())
-        and error_category != "NONE"
-        and isinstance(stop_reason, str)
-        and bool(stop_reason.strip())
-        and stop_reason != "CHECKPOINT_COMPLETED"
+        and error_category in spec.terminal_error_categories
+        and stop_reason == "IMMEDIATE_STOP"
+    )
+
+
+def _terminal_validations_match(values, spec):
+    if spec.component != "SMARTOFFERS_API":
+        return True
+    return (
+        values.get("response_body_logged") is False
+        and values.get("response_headers_logged") is False
     )
 
 
