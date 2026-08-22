@@ -111,6 +111,9 @@ def test_valid_checkpoint_uses_one_connection_cursor_execute_and_rollback():
     assert driver.connection.rollback_calls == 1
     assert driver.connection.commit_calls == 0
     assert driver.connection.close_calls == 1
+    assert result["fingerprint_validation"] == "MATCH"
+    assert result["result_shape_validation"] == "MATCH"
+    assert result["sensitive_values_logged"] is False
     assert "not-recorded" not in repr(result)
 
 

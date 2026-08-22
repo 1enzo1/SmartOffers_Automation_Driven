@@ -6,6 +6,7 @@ import pytest
 
 from tools.qa4_acm_manual_smoke import (
     CHECKPOINT,
+    build_parser,
     main,
     run_acm_manual_smoke,
 )
@@ -103,7 +104,6 @@ def _args(**overrides):
         "fallback": False,
         "credential_guessing": False,
         "alternative_password": False,
-        "basic_smoke_status": "BASIC_SMOKE_OK",
         "approval": "EXECUTION_APPROVED",
         "operational_release": "OPERATIONAL_EXECUTION_RELEASED",
         "preflight_status": "ACM_RUNTIME_READY",
@@ -126,7 +126,47 @@ def test_acm_contract_uses_one_connection_cursor_execute_and_defensive_rollback(
     assert driver.connection.commit_calls == 0
     assert driver.connection.close_calls == 1
     assert result["fingerprint_validation"] == "MATCH"
+    assert result["result_shape_validation"] == "MATCH"
+    assert result["sensitive_values_logged"] is False
     assert "not-recorded" not in repr(result)
+
+
+@pytest.mark.parametrize("legacy_value", (None, "DENIED", "BASIC_SMOKE_OK"))
+def test_acm_legacy_basic_smoke_value_is_non_authoritative(legacy_value):
+    args = _args()
+    if legacy_value is not None:
+        args["basic_smoke_status"] = legacy_value
+
+    result = run_acm_manual_smoke(args, environ=_runtime(), driver=FakeDriver())
+
+    assert result["status"] == "CONNECT_AND_READ_OK"
+
+
+def test_acm_parser_keeps_legacy_basic_smoke_option_optional():
+    parsed = build_parser().parse_args(
+        [
+            "--checkpoint", CHECKPOINT,
+            "--environment", "qa4",
+            "--profile", "smartoffers_qa4_full_smoke",
+            "--resource-id", "acm_db",
+            "--api-mode", "omitted",
+            "--attempts", "1",
+            "--retry", "0",
+            "--connect-timeout", "5",
+            "--read-timeout", "5",
+            "--total-timeout", "15",
+            "--result-limit-rows", "1",
+            "--result-limit-columns", "1",
+            "--fallback", "false",
+            "--credential-guessing", "false",
+            "--alternative-password", "false",
+            "--approval", "EXECUTION_APPROVED",
+            "--operational-release", "OPERATIONAL_EXECUTION_RELEASED",
+            "--preflight-status", "ACM_RUNTIME_READY",
+        ]
+    )
+
+    assert parsed.basic_smoke_status is None
 
 
 @pytest.mark.parametrize(
@@ -145,7 +185,6 @@ def test_acm_contract_uses_one_connection_cursor_execute_and_defensive_rollback(
         ("fallback", True),
         ("credential_guessing", True),
         ("alternative_password", True),
-        ("basic_smoke_status", "missing"),
         ("approval", "missing"),
         ("operational_release", "missing"),
         ("preflight_status", "ACM_RUNTIME_BLOCKED"),

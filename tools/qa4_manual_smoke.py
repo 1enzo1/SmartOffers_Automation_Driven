@@ -131,6 +131,8 @@ def run_manual_smoke(arguments, environ=None, driver=None, clock=None):
             resource_allowlist="MATCH",
             query_hash_validation="MATCH",
             read_only_validation="PASS",
+            fingerprint_validation="MATCH",
+            result_shape_validation="MATCH",
         )
     except _Blocked as error:
         return _result(
@@ -270,6 +272,8 @@ def _result(
     resource_allowlist="DENIED",
     query_hash_validation="DENIED",
     read_only_validation="DENIED",
+    fingerprint_validation="DENIED",
+    result_shape_validation="DENIED",
 ):
     return {
         "execution_id": uuid.uuid4().hex,
@@ -290,9 +294,12 @@ def _result(
         "destination_allowlist": allowlist,
         "query_hash_validation": query_hash_validation,
         "read_only_validation": read_only_validation,
+        "fingerprint_validation": fingerprint_validation,
+        "result_shape_validation": result_shape_validation,
         "api_checkpoint": "OMITTED",
         "sanitized_error_category": error_category,
         "stop_reason": stop_reason,
+        "sensitive_values_logged": False,
     }
 
 

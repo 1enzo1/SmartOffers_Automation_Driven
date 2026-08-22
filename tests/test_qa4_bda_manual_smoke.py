@@ -6,6 +6,7 @@ import pytest
 
 from tools.qa4_bda_manual_smoke import (
     CHECKPOINT,
+    build_parser,
     main,
     run_bda_manual_smoke,
 )
@@ -106,7 +107,6 @@ def _args(**overrides):
         "fallback": False,
         "credential_guessing": False,
         "alternative_password": False,
-        "basic_db_checkpoint_status": "BASIC_DB_CHECKPOINT_OK",
         "preflight_status": "BDA_RUNTIME_READY",
         "approval": "EXECUTION_APPROVED",
         "operational_window_active": True,
@@ -133,7 +133,50 @@ def test_bda_contract_uses_one_connection_cursor_execute_and_defensive_rollback(
     assert driver.connection.commit_calls == 0
     assert driver.connection.close_calls == 1
     assert result["fingerprint_validation"] == "MATCH"
+    assert result["result_shape_validation"] == "MATCH"
+    assert result["sensitive_values_logged"] is False
     assert "not-recorded" not in repr(result)
+
+
+@pytest.mark.parametrize(
+    "legacy_value", (None, "DENIED", "BASIC_DB_CHECKPOINT_OK")
+)
+def test_bda_legacy_basic_db_value_is_non_authoritative(legacy_value):
+    args = _args()
+    if legacy_value is not None:
+        args["basic_db_checkpoint_status"] = legacy_value
+
+    result = run_bda_manual_smoke(args, environ=_runtime(), driver=FakeDriver())
+
+    assert result["status"] == "BDA_DB_CHECKPOINT_OK"
+
+
+def test_bda_parser_keeps_legacy_basic_db_option_optional():
+    parsed = build_parser().parse_args(
+        [
+            "--checkpoint", CHECKPOINT,
+            "--environment", "qa4",
+            "--profile", "smartoffers_qa4_full_smoke",
+            "--resource-id", "bda_db",
+            "--api-mode", "omitted",
+            "--attempts", "1",
+            "--retry", "0",
+            "--connect-timeout", "5",
+            "--read-timeout", "5",
+            "--total-timeout", "15",
+            "--result-limit-rows", "1",
+            "--result-limit-columns", "1",
+            "--fallback", "false",
+            "--credential-guessing", "false",
+            "--alternative-password", "false",
+            "--preflight-status", "BDA_RUNTIME_READY",
+            "--approval", "EXECUTION_APPROVED",
+            "--operational-window-active", "true",
+            "--operational-release", "OPERATIONAL_EXECUTION_RELEASED",
+        ]
+    )
+
+    assert parsed.basic_db_checkpoint_status is None
 
 
 @pytest.mark.parametrize(
@@ -154,7 +197,6 @@ def test_bda_contract_uses_one_connection_cursor_execute_and_defensive_rollback(
         ("fallback", True),
         ("credential_guessing", True),
         ("alternative_password", True),
-        ("basic_db_checkpoint_status", "missing"),
         ("preflight_status", "BDA_RUNTIME_BLOCKED"),
         ("approval", "missing"),
         ("operational_window_active", False),
