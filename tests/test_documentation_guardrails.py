@@ -1,8 +1,12 @@
 import re
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
+
+ALLOWED_TASK_CLASSES = {"MECHANICAL", "DEVELOPMENT", "DEBUG", "RESEARCH", "REVIEW"}
 
 ROADMAP_ITEMS = [
     "MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy",
@@ -39,6 +43,16 @@ SKILLS = [
 
 def _read(path):
     return (ROOT / path).read_text(encoding="utf-8")
+
+
+def _extract_task_class_assignments(document):
+    return set(re.findall(r"TASK_CLASS=([^\s`|]+)", document))
+
+
+def _assert_only_allowed_task_classes(document):
+    assigned_task_classes = _extract_task_class_assignments(document)
+    assert assigned_task_classes
+    assert assigned_task_classes <= ALLOWED_TASK_CLASSES
 
 
 def test_product_guardrails_are_documented():
@@ -153,9 +167,7 @@ def test_alpha_precision_contract_routes_authority_capability_and_task_classes()
     assert "ALPHA-PR18-FIX-001" in governance
     assert "TASK_CLASS=MECHANICAL|DEVELOPMENT|DEBUG|RESEARCH|REVIEW" in governance
 
-    assigned_task_classes = set(re.findall(r"TASK_CLASS=([A-Z]+)", governance))
-    assert assigned_task_classes
-    assert assigned_task_classes <= {"MECHANICAL", "DEVELOPMENT", "DEBUG", "RESEARCH", "REVIEW"}
+    _assert_only_allowed_task_classes(governance)
 
     assert "entry points dormentes nao sao autorizacao" in architect
     assert "nao devem ser invocados no Alpha" in architect
@@ -176,6 +188,14 @@ def test_alpha_precision_contract_routes_authority_capability_and_task_classes()
     assert "architectural risk envelope" in execution_plan
     assert "authorized operational role" in execution_plan
     assert "EXECUTION_BLOCKED" in execution_plan
+
+
+@pytest.mark.parametrize("malformed_task_class", ["research", "REVIEW_EXTRA", "REVIEW2"])
+def test_alpha_task_class_validation_rejects_malformed_complete_tokens(malformed_task_class):
+    document = f"`TASK_CLASS=REVIEW`\n`TASK_CLASS={malformed_task_class}`"
+
+    with pytest.raises(AssertionError):
+        _assert_only_allowed_task_classes(document)
 
 
 def test_future_roadmap_does_not_relist_completed_mvp76_or_mvp77_as_pending():
