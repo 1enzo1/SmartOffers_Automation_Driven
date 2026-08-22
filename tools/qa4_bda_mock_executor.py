@@ -17,7 +17,6 @@ from core.real_execution.bda_local_runtime_preflight import (
 
 
 API_MODE = "omitted"
-BASIC_DB_CHECKPOINT_OK = "BASIC_DB_CHECKPOINT_OK"
 APPROVAL = "EXECUTION_APPROVED"
 OPERATIONAL_RELEASE = "OPERATIONAL_EXECUTION_RELEASED"
 
@@ -120,7 +119,7 @@ def build_parser():
     parser.add_argument("--fallback", required=True)
     parser.add_argument("--credential-guessing", required=True)
     parser.add_argument("--alternative-password", required=True)
-    parser.add_argument("--basic-db-checkpoint-status", required=True)
+    parser.add_argument("--basic-db-checkpoint-status")
     parser.add_argument("--preflight-status", required=True)
     parser.add_argument("--approval", required=True)
     parser.add_argument("--operational-window-active", required=True)
@@ -219,8 +218,7 @@ def _validate_arguments(args):
     ):
         raise _Blocked("READ_ONLY_POLICY_VIOLATION")
     if (
-        args.get("basic_db_checkpoint_status") != BASIC_DB_CHECKPOINT_OK
-        or args.get("preflight_status") != BDA_RUNTIME_READY
+        args.get("preflight_status") != BDA_RUNTIME_READY
         or args.get("approval") != APPROVAL
         or not _is_true(args.get("operational_window_active"))
         or args.get("operational_release") != OPERATIONAL_RELEASE

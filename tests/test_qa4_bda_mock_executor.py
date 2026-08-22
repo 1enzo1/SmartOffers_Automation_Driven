@@ -48,7 +48,6 @@ def _args(**overrides):
         "fallback": False,
         "credential_guessing": False,
         "alternative_password": False,
-        "basic_db_checkpoint_status": "BASIC_DB_CHECKPOINT_OK",
         "preflight_status": "BDA_RUNTIME_READY",
         "approval": "EXECUTION_APPROVED",
         "operational_window_active": True,
@@ -85,6 +84,19 @@ def test_bda_mock_executor_returns_sanitized_success_after_one_simulation():
 
 
 @pytest.mark.parametrize(
+    "legacy_value", (None, "DENIED", "BASIC_DB_CHECKPOINT_OK")
+)
+def test_bda_mock_legacy_basic_db_value_is_non_authoritative(legacy_value):
+    args = _args()
+    if legacy_value is not None:
+        args["basic_db_checkpoint_status"] = legacy_value
+
+    result = run_bda_mock_executor(args, environ=_runtime(), driver=FakeDriver())
+
+    assert result["status"] == "MOCK_EXECUTION_OK"
+
+
+@pytest.mark.parametrize(
     "field,value",
     [
         ("checkpoint", "ORACLE_ACM_TECHNICAL_READ_ONLY_01"),
@@ -102,7 +114,6 @@ def test_bda_mock_executor_returns_sanitized_success_after_one_simulation():
         ("fallback", True),
         ("credential_guessing", True),
         ("alternative_password", True),
-        ("basic_db_checkpoint_status", "missing"),
         ("preflight_status", "BDA_RUNTIME_BLOCKED"),
         ("approval", "missing"),
         ("operational_window_active", False),
@@ -293,3 +304,35 @@ def test_bda_mock_cli_emits_one_sanitized_json_without_runtime_loading(capsys):
     assert exit_code == 1
     assert len(output) == 1
     assert json.loads(output[0])["sanitized_error_category"] == "CONFIG_MISSING"
+
+
+def test_bda_mock_cli_runs_without_legacy_predecessor(capsys):
+    exit_code = main(
+        [
+            "--checkpoint", BDA_CHECKPOINT,
+            "--environment", "qa4",
+            "--profile", "smartoffers_qa4_full_smoke",
+            "--resource-id", "bda_db",
+            "--api-mode", "omitted",
+            "--attempts", "1",
+            "--retry", "0",
+            "--connect-timeout", "5",
+            "--read-timeout", "5",
+            "--total-timeout", "15",
+            "--result-limit-rows", "1",
+            "--result-limit-columns", "1",
+            "--fallback", "false",
+            "--credential-guessing", "false",
+            "--alternative-password", "false",
+            "--preflight-status", "BDA_RUNTIME_READY",
+            "--approval", "EXECUTION_APPROVED",
+            "--operational-window-active", "true",
+            "--operational-release", "OPERATIONAL_EXECUTION_RELEASED",
+        ],
+        environ=_runtime(),
+    )
+
+    output = capsys.readouterr().out.strip().splitlines()
+    assert exit_code == 0
+    assert len(output) == 1
+    assert json.loads(output[0])["status"] == "MOCK_EXECUTION_OK"
