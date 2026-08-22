@@ -53,12 +53,21 @@ Every canonical evidence record is bound to a sanitized context:
 }
 ```
 
-The identifiers are opaque sanitized references, not operator names, endpoints
-or credentials. Each normalizer or consumer also receives an explicit
-`evaluated_at` timestamp. Context, source and evaluation timestamps must be
-timezone-aware; the source and evaluation must fall inside the same window,
-and source time must not be later than evaluation time. This rejects stale,
-future and cross-window evidence without relying on wall-clock I/O.
+`orchestration_id`, `operational_window_ref` and the executor's source
+`execution_id` are opaque sanitized references, not operator names, endpoints
+or credentials. Each must have length 1 through 128 and match the closed ASCII
+grammar `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$` exactly. The first character is
+ASCII alphanumeric; every remaining character is ASCII alphanumeric, `.`, `_`
+or `-`. URLs, credential or DSN assignments, whitespace, control characters,
+non-ASCII characters and longer values are rejected before a canonical record
+is created. A rejection contains only a deterministic reason and never copies
+the rejected reference.
+
+Each normalizer or consumer also receives an explicit `evaluated_at` timestamp.
+Context, source and evaluation timestamps must be timezone-aware; the source
+and evaluation must fall inside the same window, and source time must not be
+later than evaluation time. This rejects stale, future and cross-window
+evidence without relying on wall-clock I/O.
 
 ## Canonical evidence record
 

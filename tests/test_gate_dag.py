@@ -16,6 +16,15 @@ from core.real_execution.gate_dag import (
 
 
 EVALUATED_AT = "2026-08-22T12:10:00+00:00"
+INVALID_OPAQUE_REFS = (
+    "https://qa4.example/checkpoint",
+    "password=secret",
+    "dsn=qa4-db",
+    "ref with space",
+    "ref\x00control",
+    "referência",
+    "a" * 129,
+)
 
 
 def _context(**overrides):
@@ -263,6 +272,40 @@ def test_rejects_invalid_or_expired_context(context, evaluated_at, reason):
     assert _normalize(_acm_result(), context, evaluated_at) == _rejected(reason)
 
 
+@pytest.mark.parametrize("field", ("orchestration_id", "operational_window_ref"))
+@pytest.mark.parametrize("unsafe_ref", INVALID_OPAQUE_REFS)
+def test_normalizer_rejects_unsafe_context_references_without_leaking_them(
+    field, unsafe_ref
+):
+    rejected = _normalize(_acm_result(), _context(**{field: unsafe_ref}))
+
+    assert rejected == _rejected("ORCHESTRATION_CONTEXT_INVALID")
+    assert unsafe_ref not in repr(rejected)
+
+
+@pytest.mark.parametrize("unsafe_ref", INVALID_OPAQUE_REFS)
+def test_normalizer_rejects_unsafe_source_execution_reference_without_leaking_it(
+    unsafe_ref,
+):
+    rejected = _normalize(_acm_result(execution_id=unsafe_ref))
+
+    assert rejected == _rejected("SOURCE_EXECUTION_ID_INVALID")
+    assert unsafe_ref not in repr(rejected)
+
+
+def test_normalizer_accepts_opaque_reference_boundaries():
+    context = _context(
+        orchestration_id="a",
+        operational_window_ref="Z" + "_" * 127,
+    )
+    record = _normalize(_acm_result(execution_id="9" + "." * 127), context)
+
+    assert record["evidence_status"] == "VALID"
+    assert record["orchestration_id"] == "a"
+    assert len(record["operational_window_ref"]) == 128
+    assert len(record["source_execution_id"]) == 128
+
+
 def test_successful_record_contains_only_the_canonical_safe_shape():
     raw = _acm_result(runtime_secret="must-not-be-copied", endpoint="not-safe")
 
@@ -447,6 +490,62 @@ def test_revalidation_rejects_noncanonical_extra_fields(change, reason):
         "status": CANONICAL_EVIDENCE_BLOCKED,
         "reason": reason,
     }
+
+
+@pytest.mark.parametrize("field", ("orchestration_id", "operational_window_ref"))
+@pytest.mark.parametrize("unsafe_ref", INVALID_OPAQUE_REFS)
+def test_revalidation_rejects_unsafe_record_references_without_leaking_them(
+    field, unsafe_ref
+):
+    record = {**_normalize(_acm_result()), field: unsafe_ref}
+
+    blocked = validate_canonical_evidence_record(
+        record, _context(), evaluated_at=EVALUATED_AT
+    )
+
+    assert blocked == {
+        "status": CANONICAL_EVIDENCE_BLOCKED,
+        "reason": "CANONICAL_RECORD_REFERENCE_INVALID",
+    }
+    assert unsafe_ref not in repr(blocked)
+
+
+@pytest.mark.parametrize("unsafe_ref", INVALID_OPAQUE_REFS)
+def test_revalidation_rejects_unsafe_source_execution_reference_without_leaking_it(
+    unsafe_ref,
+):
+    record = {
+        **_normalize(_acm_result()),
+        "source_execution_id": unsafe_ref,
+    }
+
+    blocked = validate_canonical_evidence_record(
+        record, _context(), evaluated_at=EVALUATED_AT
+    )
+
+    assert blocked == {
+        "status": CANONICAL_EVIDENCE_BLOCKED,
+        "reason": "SOURCE_EXECUTION_ID_INVALID",
+    }
+    assert unsafe_ref not in repr(blocked)
+
+
+@pytest.mark.parametrize("field", ("orchestration_id", "operational_window_ref"))
+@pytest.mark.parametrize("unsafe_ref", INVALID_OPAQUE_REFS)
+def test_revalidation_rejects_unsafe_supplied_context_without_leaking_it(
+    field, unsafe_ref
+):
+    blocked = validate_canonical_evidence_record(
+        _normalize(_acm_result()),
+        _context(**{field: unsafe_ref}),
+        evaluated_at=EVALUATED_AT,
+    )
+
+    assert blocked == {
+        "status": CANONICAL_EVIDENCE_BLOCKED,
+        "reason": "ORCHESTRATION_CONTEXT_INVALID",
+    }
+    assert unsafe_ref not in repr(blocked)
 
 
 @pytest.mark.parametrize(

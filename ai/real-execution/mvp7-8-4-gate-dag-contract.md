@@ -90,6 +90,15 @@ not copied into the record. The record contains a sanitized error category,
 terminal stop reason, the component-specific validation map and
 `sensitive_values_logged=false`.
 
+The orchestration reference, operational-window reference and source execution
+reference are opaque ASCII identifiers. Each has length 1 through 128 and must
+match `^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$` exactly: the first character is ASCII
+alphanumeric and each remaining character is ASCII alphanumeric, `.`, `_` or
+`-`. URLs, `password=...`, `dsn=...`, whitespace, control characters,
+non-ASCII text and longer values are invalid. Normalization and revalidation
+reject them before admission, and a rejection returns only its deterministic
+reason without copying the invalid reference.
+
 The source timestamp, evaluation timestamp and window bounds must be
 timezone-aware. Source and evaluation times must fall inside the same active
 window, source time cannot be in the future, and every API predecessor must

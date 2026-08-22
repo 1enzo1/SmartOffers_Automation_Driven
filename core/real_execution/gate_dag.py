@@ -1,5 +1,6 @@
 """Pure normalization and validation for Alpha checkpoint gate evidence."""
 
+import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from types import MappingProxyType
@@ -19,6 +20,10 @@ CANONICAL_DB_GATE_NAMES = (
 _RECORD_TYPE = "canonical_checkpoint_evidence"
 _VALID = "VALID"
 _REJECTED = "REJECTED"
+_OPAQUE_REFERENCE_RE = re.compile(
+    r"^[A-Za-z0-9][A-Za-z0-9._-]{0,127}$",
+    re.ASCII,
+)
 _CONTEXT_FIELDS = (
     "orchestration_id",
     "operational_window_ref",
@@ -290,6 +295,9 @@ def validate_canonical_evidence_record(record, context, *, evaluated_at):
     if context_reason:
         return _evidence_validation(context_reason)
 
+    if not _record_references_are_valid(record):
+        return _evidence_validation("CANONICAL_RECORD_REFERENCE_INVALID")
+
     if not _record_context_matches(record, context_data):
         return _evidence_validation("CONTEXT_MISMATCH")
 
@@ -403,6 +411,11 @@ def _validate_context(context, evaluated_at):
         for field in _CONTEXT_FIELDS
     ):
         return "ORCHESTRATION_CONTEXT_INVALID"
+    if any(
+        not _is_opaque_reference(context[field])
+        for field in ("orchestration_id", "operational_window_ref")
+    ):
+        return "ORCHESTRATION_CONTEXT_INVALID"
     if (
         context["environment"] != "qa4"
         or context["workflow_profile"] != "smartoffers_qa4_full_smoke"
@@ -425,8 +438,10 @@ def _validate_context(context, evaluated_at):
 
 
 def _validate_provenance(execution_id, source_timestamp, context, evaluated_at):
-    if not isinstance(execution_id, str) or not execution_id.strip():
+    if execution_id is None or execution_id == "":
         return "SOURCE_EXECUTION_ID_MISSING"
+    if not _is_opaque_reference(execution_id):
+        return "SOURCE_EXECUTION_ID_INVALID"
 
     source_time = _parse_utc(source_timestamp)
     if source_time is None:
@@ -489,6 +504,20 @@ def _record_context_matches(record, context):
             "window_expires_at",
             "workflow_profile",
         )
+    )
+
+
+def _record_references_are_valid(record):
+    return all(
+        _is_opaque_reference(record.get(field))
+        for field in ("orchestration_id", "operational_window_ref")
+    )
+
+
+def _is_opaque_reference(value):
+    return (
+        isinstance(value, str)
+        and _OPAQUE_REFERENCE_RE.fullmatch(value) is not None
     )
 
 
