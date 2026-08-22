@@ -1,6 +1,6 @@
 ---
 name: smartoffers-automation-architect
-description: Use only for material SmartOffers architecture or risk decisions: structural change, production, new real mutation or external integration, destructive or mass operation, new recurrence or real parallelism, guardrail weakening, secret exposure, unclassified risk, or conflict between governing contracts. Do not use for routine implementation, tests, Git, documentation sync, or ordinary review.
+description: "Use only for material SmartOffers architecture or risk decisions: structural change, production, new real mutation or external integration, destructive or mass operation, new recurrence or real parallelism, guardrail weakening, secret exposure, unclassified risk, or conflict between governing contracts. Do not use for routine implementation, tests, Git, documentation sync, or ordinary review."
 ---
 
 # SmartOffers Automation Architect
