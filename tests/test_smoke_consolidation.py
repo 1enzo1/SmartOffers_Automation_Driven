@@ -232,11 +232,81 @@ def test_missing_and_rejected_inputs_are_blocked_without_promoting_raw_values():
         "reason": "MISSING_CANONICAL_EVIDENCE",
     }
     assert result["basic"]["status"] == "BASIC_SMOKE_BLOCKED"
-    assert result["full"]["status"] == "FULL_SMOKE_PARTIAL"
+    assert result["basic"]["reason"] == "INVALID_INPUT_EVIDENCE"
+    assert result["full"]["status"] == "FULL_SMOKE_BLOCKED"
+    assert result["full"]["reason"] == "INVALID_INPUT_EVIDENCE"
     assert result["input_rejections"] == [
         "CANONICAL_RECORD_INVALID",
         "CANONICAL_RECORD_INVALID",
     ]
+
+
+def test_extra_invalid_input_contaminates_an_otherwise_valid_batch():
+    valid_records = _records_with_outcomes(("OK", "OK", "OK", "OK"))
+    rejected_record = normalize_checkpoint_evidence(
+        _raw_result("SMARTOFFERS_API") | {"resource_id": "unknown"},
+        _context(),
+        evaluated_at=NORMALIZED_AT,
+    )
+
+    for invalid_input in (
+        "SMARTOFFERS_API_QA4_CHECKPOINT_OK",
+        rejected_record,
+    ):
+        result = consolidate_smoke_results(
+            [*valid_records, invalid_input],
+            _context(),
+            evaluated_at=CONSOLIDATED_AT,
+        )
+
+        assert result["basic"]["status"] == "BASIC_SMOKE_BLOCKED"
+        assert result["basic"]["reason"] == "INVALID_INPUT_EVIDENCE"
+        assert result["full"]["status"] == "FULL_SMOKE_BLOCKED"
+        assert result["full"]["reason"] == "INVALID_INPUT_EVIDENCE"
+
+
+def test_input_rejection_codes_are_stable_when_invalid_inputs_are_reordered():
+    valid_records = _records_with_outcomes(("OK", "OK", "OK", "OK"))
+    invalid_identity = deepcopy(valid_records[0])
+    invalid_identity["component"] = "UNTRUSTED_COMPONENT"
+    invalid_inputs = [
+        "SMARTOFFERS_API_QA4_CHECKPOINT_OK",
+        invalid_identity,
+    ]
+
+    forward = consolidate_smoke_results(
+        [*valid_records, *invalid_inputs],
+        _context(),
+        evaluated_at=CONSOLIDATED_AT,
+    )
+    reversed_inputs = consolidate_smoke_results(
+        [*valid_records, *reversed(invalid_inputs)],
+        _context(),
+        evaluated_at=CONSOLIDATED_AT,
+    )
+
+    assert forward["input_rejections"] == [
+        "CANONICAL_RECORD_IDENTITY_MISMATCH",
+        "CANONICAL_RECORD_INVALID",
+    ]
+    assert reversed_inputs["input_rejections"] == forward["input_rejections"]
+
+
+def test_global_safety_stop_reason_precedes_invalid_input_contamination():
+    result = consolidate_smoke_results(
+        [
+            *_records_with_outcomes(("OK", "OK", "OK", "OK")),
+            "SMARTOFFERS_API_QA4_CHECKPOINT_OK",
+        ],
+        _context(),
+        evaluated_at=CONSOLIDATED_AT,
+        global_safety_stop=True,
+    )
+
+    assert result["basic"]["status"] == "BASIC_SMOKE_BLOCKED"
+    assert result["basic"]["reason"] == "GLOBAL_SAFETY_STOP"
+    assert result["full"]["status"] == "FULL_SMOKE_BLOCKED"
+    assert result["full"]["reason"] == "GLOBAL_SAFETY_STOP"
 
 
 def test_expired_evidence_blocks_every_component():

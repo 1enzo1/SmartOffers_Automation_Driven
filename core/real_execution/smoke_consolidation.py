@@ -17,6 +17,7 @@ FULL_COMPONENTS = (
 _MISSING_EVIDENCE = "MISSING_CANONICAL_EVIDENCE"
 _DUPLICATE_EVIDENCE = "DUPLICATE_COMPONENT_EVIDENCE"
 _GLOBAL_SAFETY_STOP = "GLOBAL_SAFETY_STOP"
+_INVALID_INPUT_EVIDENCE = "INVALID_INPUT_EVIDENCE"
 
 
 def consolidate_smoke_results(
@@ -44,6 +45,7 @@ def consolidate_smoke_results(
         if validation["status"] != CANONICAL_EVIDENCE_VALID:
             input_rejections.append(validation["reason"])
 
+    input_rejections.sort()
     components = {
         component: _materialize_component(routed[component])
         for component in FULL_COMPONENTS
@@ -59,12 +61,14 @@ def consolidate_smoke_results(
             BASIC_COMPONENTS,
             components,
             global_safety_stop=safety_stop,
+            invalid_input_evidence=bool(input_rejections),
         ),
         "full": _summarize(
             "FULL_SMOKE",
             FULL_COMPONENTS,
             components,
             global_safety_stop=safety_stop,
+            invalid_input_evidence=bool(input_rejections),
         ),
         "operational_readiness": False,
         "authoritative": False,
@@ -86,12 +90,22 @@ def _materialize_component(candidates):
     }
 
 
-def _summarize(prefix, component_names, components, *, global_safety_stop):
+def _summarize(
+    prefix,
+    component_names,
+    components,
+    *,
+    global_safety_stop,
+    invalid_input_evidence,
+):
     outcomes = [components[name]["outcome"] for name in component_names]
 
     if global_safety_stop:
         suffix = "BLOCKED"
         reason = _GLOBAL_SAFETY_STOP
+    elif invalid_input_evidence:
+        suffix = "BLOCKED"
+        reason = _INVALID_INPUT_EVIDENCE
     elif all(outcome == "OK" for outcome in outcomes):
         suffix = "OK"
         reason = "ALL_COMPONENTS_OK"
