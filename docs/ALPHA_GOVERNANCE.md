@@ -98,20 +98,26 @@ de risco; qualquer liberacao futura explicita cabe a um papel operacional
 autorizado, somente depois que uma fonte superior e o contrato entao vigente a
 permitirem. No Alpha atual nao existe essa liberacao.
 
-## Divergencias abertas
+## Divergencias e reconciliacoes Alpha
 
-### `CONTRACT_CONFLICT-001` - gate circular ACM/API
+### `CONTRACT_CONFLICT-001` - RESOLVIDO
 
-O contrato/executor ACM exige `BASIC_SMOKE_OK`, enquanto o contrato API exige
-`ACM_DB_CHECKPOINT_OK` e declara que `BASIC_SMOKE_OK` so e consolidado depois da
-API. Isso forma uma dependencia circular para uma nova execucao completa.
+O contrato/executor ACM anterior exigia `BASIC_SMOKE_OK`, enquanto o contrato
+API anterior exigia `ACM_DB_CHECKPOINT_OK` e declarava que `BASIC_SMOKE_OK` so
+seria consolidado depois da API. Isso formava uma dependencia circular para
+uma nova execucao completa.
 
-Decisao Alpha: nao alterar runtime nesta sincronizacao de governanca, nao
-inferir um bypass a partir de evidencia historica e manter qualquer nova
-execucao bloqueada. MVP7.8.4 deve resolver o contrato e os testes mock-first em
-card proprio antes de pedir liberacao operacional. A divergencia permanece
-aberta ate que o card DAG separado seja aceito; `ALPHA-PR18-FIX-001` nao fecha
-`CONTRACT_CONFLICT-001`.
+Decisao Alpha registrada na sincronizacao anterior: nao inferir um bypass a
+partir de evidencia historica e manter qualquer nova execucao bloqueada. O card
+`ALPHA-MVP784-002` removeu o predecessor da admissao ACM, removeu o predecessor
+indefinido das admissoes BDA manual/mock e API, e substituiu status informados
+pelo caller por evidencia estruturada, sempre mock-first.
+
+O Tester independente aceitou os 12 criterios no head `983bace`, com
+`676 passed`, probes adversariais de referencia opaca e diff checks limpos. O
+Execution Manager encerra `CONTRACT_CONFLICT-001` com esse aceite. A resolucao
+nao libera transporte real, producao, retry, mutacao, credenciais alternativas
+ou qualquer operacao externa.
 
 ### `STATE_DIVERGENCE-001` - documentos historicos
 
@@ -124,16 +130,16 @@ continuam como historico, nao como autorizacao.
 
 | Prioridade | Goal | TASK_CLASS | Estado | Owner operacional | Saida esperada |
 |---|---|---|---|---|---|
-| P0 | ALPHA-PR18-FIX-001 | `TASK_CLASS=REVIEW` | REVIEW; gate independente pendente | Tester -> Execution Manager | Precisao de governanca validada sem alterar runtime. |
-| P1 | Card DAG separado para `CONTRACT_CONFLICT-001` | `TASK_CLASS=RESEARCH` | Ready para analise mock-first; conflito aberto | Architect -> Manager | DAG contratual consistente para aceite separado. |
+| P0 | ALPHA-PR18-FIX-001 | `TASK_CLASS=REVIEW` | `STATE=COMPLETED` | Tester -> Execution Manager | Precisao aceita e PR #18 mergeado em `d3065e5`, sem alterar runtime. |
+| P1 | ALPHA-MVP784-002 - DAG canonico para `CONTRACT_CONFLICT-001` | `TASK_CLASS=DEVELOPMENT` | `STATE=COMPLETED` | Dev -> Tester -> Manager | DAG mock-first aceito no head `983bace`; conflito resolvido, operacao real bloqueada. |
 | P1 | Preparar API health checkpoint | `TASK_CLASS=RESEARCH` | Bloqueado por readiness externo | Manager | Confirmacao segura do service owner; nenhum endpoint no Git/chat. |
 | P1 | MVP7.8.4 Sanity Runner Standard/Variant/Copy | `TASK_CLASS=DEVELOPMENT` | Autorizado para desenvolvimento mock-first | Manager -> Dev -> Tester | Runner deterministico, compatibilidade e suite verde. |
 | P2 | Evidence comparison e hardening | `TASK_CLASS=DEVELOPMENT` | Pendente do runner | Manager | Evidencia sanitizada e regras de comparacao. |
 
 ## Roteamento do proximo goal
 
-O Gerente deve transformar MVP7.8.4 em pacote completo. O primeiro card precisa
-reconciliar `CONTRACT_CONFLICT-001` apenas em contrato/testes mockados; se a
-solucao alterar envelope de risco ou runtime real, retornar ao Architect. O Dev
-implementa e testa. Um Tester independente valida antes da consolidacao. Nao
-usar uma janela QA4 nem solicitar secrets para essa etapa.
+O primeiro card de reconciliacao do MVP7.8.4 esta concluido. O Gerente pode
+avancar para o proximo card `TASK_CLASS=DEVELOPMENT` ja autorizado no board,
+mantendo execucao local/mock-first. Qualquer alteracao de envelope de risco ou
+runtime real retorna ao Architect. Nao usar uma janela QA4 nem solicitar
+secrets para essa continuidade.

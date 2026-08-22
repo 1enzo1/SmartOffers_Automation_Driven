@@ -15,12 +15,22 @@ Status: planning only. This document does not authorize a real call.
 
 ## Required Order
 
-1. Run `smartoffers_basic_smoke` only after `EXECUTION_APPROVED`.
-2. Stop and review sanitized evidence.
-3. Consider `smartoffers_qa4_full_smoke` only after `BASIC_SMOKE_OK`.
-4. Stop immediately at the first unexpected error.
+1. Keep every real checkpoint `EXECUTION_BLOCKED`; this plan defines topology
+   and does not release an execution.
+2. After all own-resource guards pass, schedule the `ACM_CUSTOM`, `ACM` and
+   `BDA` database checkpoints independently. A deterministic local schedule may
+   visit them in that order, but the order does not create dependencies between
+   database branches.
+3. Consider the API checkpoint only after current structured evidence provides
+   exactly `ACM_CUSTOM_DB_CHECKPOINT_OK`, `ACM_DB_CHECKPOINT_OK` and
+   `BDA_DB_CHECKPOINT_OK` for the same orchestration and operational window.
+4. Only after the API terminal record exists, let the Manager consolidate both
+   `BASIC_SMOKE_*` and `FULL_SMOKE_*`. These summaries are post-API,
+   non-authoritative reporting artifacts and have no outgoing dependency edge.
+5. Stop immediately at the first unexpected error.
 
-Basic and full profiles must never run in parallel.
+No real execution or real parallelism is authorized. `BASIC_SMOKE_*` and
+`FULL_SMOKE_*` must never be used as predecessor gates.
 
 ## Closed Allowlist
 

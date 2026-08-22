@@ -21,10 +21,16 @@ path.
 
 ## Mock-only gates
 
-The simulation requires `BASIC_DB_CHECKPOINT_OK`, `BDA_RUNTIME_READY`,
+The BDA mock branch is independent and consumes only its own runtime, safety
+and operational guards. The simulation requires `BDA_RUNTIME_READY`,
 `EXECUTION_APPROVED`, `OPERATIONAL_WINDOW_ACTIVE=true` and
 `OPERATIONAL_EXECUTION_RELEASED` as test inputs only. These tokens do not
 authorize a BDA connection.
+
+The retained `--basic-db-checkpoint-status` option is deprecated parser
+compatibility. It is optional and ignored: absent, matching or divergent
+values neither authorize nor suppress the fake simulation.
+`BASIC_DB_CHECKPOINT_OK` is not a canonical gate.
 
 The BDA preflight remains the source of local hash, fingerprint and allowlist
 validation. Its `connection_allowed=false` and `sql_execution_allowed=false`

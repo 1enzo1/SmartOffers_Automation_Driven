@@ -62,20 +62,13 @@ def test_missing_execution_approval_blocks_the_planning_contract():
     assert result["real_execution_implemented"] is False
 
 
-def test_full_plan_requires_confirmed_basic_smoke():
-    result = build_manual_smoke_plan(_request(profile="smartoffers_qa4_full_smoke"))
-
-    assert result["planning_status"] == "BLOCKED"
-    assert "basic_smoke_not_confirmed" in result["blocked_reasons"]
-    assert result["execution_decision"] == EXECUTION_BLOCKED
-
-
-def test_full_plan_is_ready_for_review_only_after_basic_smoke_confirmation():
+def test_full_plan_does_not_consume_terminal_basic_smoke_summary():
     result = build_manual_smoke_plan(
-        _request(profile="smartoffers_qa4_full_smoke", basic_smoke_ok=True)
+        _request(profile="smartoffers_qa4_full_smoke", basic_smoke_ok=False)
     )
 
     assert result["planning_status"] == "READY_FOR_ARCHITECT_REVIEW"
+    assert "basic_smoke_not_confirmed" not in result["blocked_reasons"]
     assert result["resources"] == [
         "smartoffers_api",
         "acm_custom_db",

@@ -26,6 +26,8 @@ O objetivo e preparar a primeira revisao controlada para execucao real futura em
 
 - `readiness-gate.md`: contrato do gate, decisoes e bloqueios.
 - `qa4-first-call-contract.md`: contrato futuro da primeira chamada QA4, ainda conceitual.
+- `mvp7-8-4-gate-dag-contract.md`: DAG canonico Alpha mock-only, evidencia
+  estruturada, admissao API e consolidacao terminal do Manager.
 
 ## Resultado esperado
 

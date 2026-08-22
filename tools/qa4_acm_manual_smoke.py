@@ -25,7 +25,6 @@ PROFILE = ACM_PROFILE
 RESOURCE_ID = ACM_RESOURCE_ID
 APPROVAL = "EXECUTION_APPROVED"
 OPERATIONAL_RELEASE = "OPERATIONAL_EXECUTION_RELEASED"
-BASIC_SMOKE_OK = "BASIC_SMOKE_OK"
 API_MODE = "omitted"
 
 _REQUIRED_RUNTIME_REFS = (
@@ -79,7 +78,7 @@ def build_parser():
     parser.add_argument("--fallback", required=True)
     parser.add_argument("--credential-guessing", required=True)
     parser.add_argument("--alternative-password", required=True)
-    parser.add_argument("--basic-smoke-status", required=True)
+    parser.add_argument("--basic-smoke-status")
     parser.add_argument("--approval", required=True)
     parser.add_argument("--operational-release", required=True)
     parser.add_argument("--preflight-status", required=True)
@@ -151,6 +150,7 @@ def run_acm_manual_smoke(arguments, environ=None, driver=None, clock=None):
             read_only_validation="PASS",
             preflight_validation="MATCH",
             fingerprint_validation=fingerprint_validation,
+            result_shape_validation="MATCH",
         )
     except _Blocked as error:
         error_fingerprint_validation = (
@@ -185,7 +185,6 @@ def _validate_arguments(args):
         "profile": PROFILE,
         "resource_id": RESOURCE_ID,
         "api_mode": API_MODE,
-        "basic_smoke_status": BASIC_SMOKE_OK,
         "approval": APPROVAL,
         "operational_release": OPERATIONAL_RELEASE,
         "preflight_status": ACM_RUNTIME_READY,
@@ -193,7 +192,6 @@ def _validate_arguments(args):
     for name, value in expected.items():
         if args.get(name) != value:
             if name in {
-                "basic_smoke_status",
                 "approval",
                 "operational_release",
                 "preflight_status",
@@ -333,6 +331,7 @@ def _result(
     read_only_validation="DENIED",
     preflight_validation="DENIED",
     fingerprint_validation="DENIED",
+    result_shape_validation="DENIED",
 ):
     return {
         "execution_id": uuid.uuid4().hex,
@@ -357,9 +356,11 @@ def _result(
         "read_only_validation": read_only_validation,
         "preflight_validation": preflight_validation,
         "fingerprint_validation": fingerprint_validation,
+        "result_shape_validation": result_shape_validation,
         "api_checkpoint": "OMITTED",
         "sanitized_error_category": error_category,
         "stop_reason": stop_reason,
+        "sensitive_values_logged": False,
     }
 
 

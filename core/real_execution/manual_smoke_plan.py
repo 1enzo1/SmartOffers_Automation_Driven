@@ -61,8 +61,6 @@ def _planning_blocked_reasons(request_data, profile):
         reasons.append("environment_not_qa4")
     if profile not in _PROFILE_RESOURCES:
         reasons.append("profile_not_allowlisted")
-    if profile == "smartoffers_qa4_full_smoke" and request_data.get("basic_smoke_ok") is not True:
-        reasons.append("basic_smoke_not_confirmed")
     if not _requested_resources_match_profile(request_data, allowed_resources):
         reasons.append("resource_allowlist_violation")
     if request_data.get("destination_allowlisted") is not True:
