@@ -46,7 +46,7 @@ def _read(path):
 
 
 def _extract_task_class_assignments(document):
-    return set(re.findall(r"TASK_CLASS=([^\s`|]+)", document))
+    return set(re.findall(r"TASK_CLASS=([^\s`|]*)", document))
 
 
 def _assert_only_allowed_task_classes(document):
@@ -190,7 +190,7 @@ def test_alpha_precision_contract_routes_authority_capability_and_task_classes()
     assert "EXECUTION_BLOCKED" in execution_plan
 
 
-@pytest.mark.parametrize("malformed_task_class", ["research", "REVIEW_EXTRA", "REVIEW2"])
+@pytest.mark.parametrize("malformed_task_class", ["research", "REVIEW_EXTRA", "REVIEW2", ""])
 def test_alpha_task_class_validation_rejects_malformed_complete_tokens(malformed_task_class):
     document = f"`TASK_CLASS=REVIEW`\n`TASK_CLASS={malformed_task_class}`"
 
