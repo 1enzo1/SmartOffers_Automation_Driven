@@ -50,4 +50,11 @@ Any future API checkpoint requires an approved operation identifier, finite time
 
 ## Approval Gate
 
-This plan remains `EXECUTION_BLOCKED` until the Architect General issues `EXECUTION_APPROVED` after reviewing the completed plan. The planning helper has no client and cannot perform a connection, query or HTTP call.
+This planning-only document remains `EXECUTION_BLOCKED`. The Architect defines
+the architectural risk envelope but is not an autonomous operational approver.
+Any future explicit release must come from an authorized operational role after
+a higher-priority source and the then-current contract permit it and every gate
+is satisfied. No such release exists in Alpha. The planning helper described by
+this document has no client and cannot perform a connection, query or HTTP call;
+that narrow statement does not describe the dormant manual executors elsewhere
+in the repository.

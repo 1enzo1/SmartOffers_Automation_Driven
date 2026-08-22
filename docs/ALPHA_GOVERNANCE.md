@@ -59,8 +59,9 @@ restritivo, registrar `CONTRACT_CONFLICT` e encaminhar ao Architect.
 
 O Architect nao e Gerente, Dev, executor ou Reviewer da propria decisao. O Dev
 nao aprova independentemente a propria entrega. O Gerente nao amplia o envelope.
-Conflitos Dev/Tester vao ao Gerente; divergencias materiais Gerente/Tester vao
-ao Architect.
+Conflitos Dev/Tester vao ao Gerente. O encaminhamento ao Architect exige uma
+divergencia material de contrato ou risco demonstrada pelos fatos, nao apenas o
+rotulo adotado por uma parte da review.
 
 ## Supervisores internos do produto
 
@@ -78,9 +79,24 @@ separado do Architect de desenvolvimento.
 - `PROD_BLOCKED`: producao bloqueada;
 - `DESTRUCTIVE_OPERATION`: decisao e autorizacao especificas obrigatorias.
 
-No Alpha atual, Oracle, APIs, Kafka e Jenkins reais permanecem bloqueados. O
+No Alpha atual, Oracle, APIs, Kafka e Jenkins reais permanecem operacional e
+contratualmente bloqueados. A existencia de executores manuais dormentes e sua
+capacidade tecnica nao cria autorizacao, liberacao ou garantia operacional. O
 identificador canonico do checkpoint API documental e
 `SMARTOFFERS_API_QA4_TECHNICAL_READ_ONLY_01`.
+
+## Taxonomia de trabalho Alpha
+
+A taxonomia fechada e `TASK_CLASS=MECHANICAL|DEVELOPMENT|DEBUG|RESEARCH|REVIEW`.
+Nenhuma outra classe pode ser usada no board ou nos pacotes Alpha.
+
+## Autoridade historica reconciliada
+
+A frase historica "Architect General issues `EXECUTION_APPROVED`" esta
+reconciliada e nao representa autoridade vigente. O Architect define o envelope
+de risco; qualquer liberacao futura explicita cabe a um papel operacional
+autorizado, somente depois que uma fonte superior e o contrato entao vigente a
+permitirem. No Alpha atual nao existe essa liberacao.
 
 ## Divergencias abertas
 
@@ -93,7 +109,9 @@ API. Isso forma uma dependencia circular para uma nova execucao completa.
 Decisao Alpha: nao alterar runtime nesta sincronizacao de governanca, nao
 inferir um bypass a partir de evidencia historica e manter qualquer nova
 execucao bloqueada. MVP7.8.4 deve resolver o contrato e os testes mock-first em
-card proprio antes de pedir liberacao operacional.
+card proprio antes de pedir liberacao operacional. A divergencia permanece
+aberta ate que o card DAG separado seja aceito; `ALPHA-PR18-FIX-001` nao fecha
+`CONTRACT_CONFLICT-001`.
 
 ### `STATE_DIVERGENCE-001` - documentos historicos
 
@@ -104,13 +122,13 @@ continuam como historico, nao como autorizacao.
 
 ## Board Alpha
 
-| Prioridade | Goal | Estado | Owner operacional | Saida esperada |
-|---|---|---|---|---|
-| P0 | Sincronizar governanca multiagente e baseline | Em andamento nesta branch | Execution Manager | Skills, docs, testes e PR Alpha. |
-| P1 | Reconciliar gate circular ACM/API | Ready para pacote mock-first | Architect -> Manager | Contrato consistente e testes deny/allow sem chamada real. |
-| P1 | Preparar API health checkpoint | Bloqueado por readiness externo | Manager | Confirmacao segura do service owner; nenhum endpoint no Git/chat. |
-| P1 | MVP7.8.4 Sanity Runner Standard/Variant/Copy | Autorizado para desenvolvimento mock-first | Manager -> Dev -> Tester | Runner deterministico, compatibilidade e suite verde. |
-| P2 | Evidence comparison e hardening | Pendente do runner | Manager | Evidencia sanitizada e regras de comparacao. |
+| Prioridade | Goal | TASK_CLASS | Estado | Owner operacional | Saida esperada |
+|---|---|---|---|---|---|
+| P0 | ALPHA-PR18-FIX-001 | `TASK_CLASS=REVIEW` | REVIEW; gate independente pendente | Tester -> Execution Manager | Precisao de governanca validada sem alterar runtime. |
+| P1 | Card DAG separado para `CONTRACT_CONFLICT-001` | `TASK_CLASS=RESEARCH` | Ready para analise mock-first; conflito aberto | Architect -> Manager | DAG contratual consistente para aceite separado. |
+| P1 | Preparar API health checkpoint | `TASK_CLASS=RESEARCH` | Bloqueado por readiness externo | Manager | Confirmacao segura do service owner; nenhum endpoint no Git/chat. |
+| P1 | MVP7.8.4 Sanity Runner Standard/Variant/Copy | `TASK_CLASS=DEVELOPMENT` | Autorizado para desenvolvimento mock-first | Manager -> Dev -> Tester | Runner deterministico, compatibilidade e suite verde. |
+| P2 | Evidence comparison e hardening | `TASK_CLASS=DEVELOPMENT` | Pendente do runner | Manager | Evidencia sanitizada e regras de comparacao. |
 
 ## Roteamento do proximo goal
 

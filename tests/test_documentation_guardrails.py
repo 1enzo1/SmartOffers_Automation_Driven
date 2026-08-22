@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 
@@ -126,7 +127,9 @@ def test_alpha_role_boundaries_are_consistent_per_source():
     assert "`smartoffers-architect-supervisor` nao e" in agents
 
     assert "O Architect nao assume implementacao" in architect
-    assert "todo transporte real permanecem universalmente\nbloqueados" in architect
+    assert "escalonamento ao Architect exige divergencia material de contrato ou risco" in architect
+    assert "transporte real permanece operacional e contratualmente bloqueado" in architect
+    assert "todo transporte real permanecem universalmente\nbloqueados" not in architect
     assert "mode=real` não deve ser universalmente permitido" not in architect
     assert "SMARTOFFERS_API_QA4_TECHNICAL_READ_ONLY_01" in architect
     assert "API_QA4_TECHNICAL_NON_MUTATING_01" not in architect
@@ -137,6 +140,42 @@ def test_alpha_role_boundaries_are_consistent_per_source():
 
     assert "CONTRACT_CONFLICT-001" in governance
     assert "nao\ninferir um bypass a partir de evidencia historica" in governance
+
+
+def test_alpha_precision_contract_routes_authority_capability_and_task_classes():
+    architect = _read(".agents/skills/smartoffers-automation-architect/SKILL.md")
+    governance = _read("docs/ALPHA_GOVERNANCE.md")
+    architecture = _read("docs/ARCHITECTURE.md")
+    execution_plan = _read("ai/real-execution/mvp7-8-3b-execution-plan.md")
+
+    assert "divergencia material de contrato ou risco" in governance
+    assert "capacidade tecnica nao cria autorizacao" in governance
+    assert "ALPHA-PR18-FIX-001" in governance
+    assert "TASK_CLASS=MECHANICAL|DEVELOPMENT|DEBUG|RESEARCH|REVIEW" in governance
+
+    assigned_task_classes = set(re.findall(r"TASK_CLASS=([A-Z]+)", governance))
+    assert assigned_task_classes
+    assert assigned_task_classes <= {"MECHANICAL", "DEVELOPMENT", "DEBUG", "RESEARCH", "REVIEW"}
+
+    assert "entry points dormentes nao sao autorizacao" in architect
+    assert "nao devem ser invocados no Alpha" in architect
+
+    dormant_executors = [
+        "tools/qa4_manual_smoke.py",
+        "tools/qa4_acm_manual_smoke.py",
+        "tools/qa4_bda_manual_smoke.py",
+        "tools/qa4_api_health_smoke.py",
+    ]
+    for executor in dormant_executors:
+        assert executor in architecture
+
+    assert "executores manuais dormentes" in architecture
+    assert "nao constitui liberacao Alpha nem garantia de kill switch" in architecture
+
+    assert "Architect General issues `EXECUTION_APPROVED`" not in execution_plan
+    assert "architectural risk envelope" in execution_plan
+    assert "authorized operational role" in execution_plan
+    assert "EXECUTION_BLOCKED" in execution_plan
 
 
 def test_future_roadmap_does_not_relist_completed_mvp76_or_mvp77_as_pending():

@@ -37,6 +37,13 @@ O produto e um laboratorio seguro de automacao SmartOffers/ACM, local-first e mo
 
 `core/real_execution/runtime_profiles.py` define contratos sanitizados por perfil/fluxo. O perfil oficial inicial e `smartoffers_basic_smoke`, que exige SmartOffers API, ACM_CUSTOM read-only e Oracle client por nomes de refs, sem valores reais. Alias `SMARTOFFERS_QA4_DB_*` sao aceitos apenas como legado temporario para ACM_CUSTOM e nao representam ACMV4 ou BDA.
 
+`tools/qa4_manual_smoke.py`, `tools/qa4_acm_manual_smoke.py`,
+`tools/qa4_bda_manual_smoke.py` e `tools/qa4_api_health_smoke.py` sao executores manuais dormentes.
+Alguns possuem capacidade tecnica de carregar clientes e acionar transporte,
+mas essa capacidade nao constitui liberacao Alpha nem garantia de kill switch.
+Eles permanecem operacional e contratualmente
+proibidos de invocacao real no Alpha.
+
 `core/exporters/` gera artefatos JSON, DOCX e XLSX para cenarios e dry-runs.
 
 `ai/` contem contratos conceituais e operacionais para ontologia, playbooks, evidencia, risco, real execution, skills e supervisores.

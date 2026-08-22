@@ -29,7 +29,9 @@ Papeis de desenvolvimento:
 
 O Architect nao assume implementacao, Git, revisao rotineira, liberacao
 operacional ou aprovacao da propria evidencia. Conflitos Dev/Tester vao ao
-Gerente; divergencias materiais de contrato ou risco vao ao Architect.
+Gerente. O escalonamento ao Architect exige divergencia material de contrato ou risco
+demonstrada pelos fatos; um rotulo de review, isoladamente, nao muda o
+roteamento de uma divergencia rotineira.
 
 Escopos nomeados nesta skill:
 
@@ -788,10 +790,12 @@ Dry-run deve:
 
 Adapter-run mockado deve permanecer funcional.
 
-No Alpha atual, `mode=real` e todo transporte real permanecem universalmente
-bloqueados. Classificacao por operacao so pode ser considerada depois que uma
-fonte superior e um contrato futuro removerem explicitamente esse bloqueio. Uma
-futura decisao devera considerar:
+No Alpha atual, `mode=real` e o transporte real permanece operacional e contratualmente bloqueado.
+Os entry points dormentes nao sao autorizacao, mesmo
+quando demonstram capacidade tecnica, e nao devem ser invocados no Alpha. Uma
+classificacao por operacao so pode ser considerada depois que uma fonte
+superior e um contrato futuro removerem explicitamente esse bloqueio. Uma futura
+decisao devera considerar:
 
 - operação;
 - ambiente;
