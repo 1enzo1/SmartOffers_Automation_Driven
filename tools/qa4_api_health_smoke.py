@@ -19,15 +19,15 @@ from core.real_execution.api_health_local_runtime_preflight import (
     API_RUNTIME_READY,
     preflight_api_health_local_runtime,
 )
+from core.real_execution.gate_dag import (
+    DB_CHECKPOINT_GATES_READY,
+    validate_api_db_gate_bundle,
+)
 
 
 API_HEALTH_CHECKPOINT_OK = "SMARTOFFERS_API_QA4_CHECKPOINT_OK"
 API_HEALTH_CHECKPOINT_FAILED = "SMARTOFFERS_API_QA4_CHECKPOINT_FAILED"
 API_HEALTH_CHECKPOINT_BLOCKED = "SMARTOFFERS_API_QA4_CHECKPOINT_BLOCKED"
-_ACM_CUSTOM_DB_CHECKPOINT_OK = "ACM_CUSTOM_DB_CHECKPOINT_OK"
-_ACM_DB_CHECKPOINT_OK = "ACM_DB_CHECKPOINT_OK"
-_BDA_DB_CHECKPOINT_OK = "BDA_DB_CHECKPOINT_OK"
-_BASIC_DB_CHECKPOINT_OK = "BASIC_DB_CHECKPOINT_OK"
 _APPROVAL = "EXECUTION_APPROVED"
 _OPERATIONAL_RELEASE = "OPERATIONAL_EXECUTION_RELEASED"
 _MAX_RESPONSE_BYTES = 1024
@@ -117,10 +117,10 @@ def build_parser():
         "path-parameters-allowed", "customer-identifiers-allowed", "authentication-required",
     ):
         parser.add_argument(f"--{name}", required=True)
-    parser.add_argument("--acm-custom-db-checkpoint-status", required=True)
-    parser.add_argument("--acm-db-checkpoint-status", required=True)
-    parser.add_argument("--bda-db-checkpoint-status", required=True)
-    parser.add_argument("--basic-db-checkpoint-status", required=True)
+    parser.add_argument("--acm-custom-db-checkpoint-status")
+    parser.add_argument("--acm-db-checkpoint-status")
+    parser.add_argument("--bda-db-checkpoint-status")
+    parser.add_argument("--basic-db-checkpoint-status")
     parser.add_argument("--operational-window-active", required=True)
     parser.add_argument("--approval", required=True)
     parser.add_argument("--operational-release", required=True)
@@ -144,10 +144,21 @@ def run_api_health_checkpoint(arguments, environ=None, client=None, clock=None):
     environment = environ if environ is not None else os.environ
     monotonic = clock or time.monotonic
     started = monotonic()
+    validations = _denied_validations()
     try:
         _validate_arguments(args)
+        validations["db_gate_bundle_validation"] = "MATCH"
         runtime = _load_runtime(environment)
         preflight = _validate_preflight(args, environment)
+        validations.update(
+            {
+                "allowlist_validation": preflight["allowlist_validation"],
+                "preflight_validation": "MATCH",
+                "path_validation": preflight["path_validation"],
+                "path_hash_validation": preflight["path_hash_validation"],
+                "fingerprint_validation": preflight["fingerprint_validation"],
+            }
+        )
         _validate_destination(runtime)
         _ensure_total_timeout(started, args, monotonic)
         active_client = client if client is not None else _load_real_http_client()
@@ -161,36 +172,46 @@ def run_api_health_checkpoint(arguments, environ=None, client=None, clock=None):
                 API_HEALTH_CHECKPOINT_FAILED,
                 "AUTHENTICATION_ERROR" if status in (401, 403) else "HTTP_STATUS_DENIED",
                 _elapsed_ms(started, monotonic),
-                preflight["fingerprint_validation"],
+                validations,
             )
         if response.bounded_body_size(args["max_response_bytes"]) > args["max_response_bytes"]:
             return _result(
                 API_HEALTH_CHECKPOINT_FAILED,
                 "RESPONSE_LIMIT_EXCEEDED",
                 _elapsed_ms(started, monotonic),
-                preflight["fingerprint_validation"],
+                validations,
             )
         return _result(
             API_HEALTH_CHECKPOINT_OK,
             "NONE",
             _elapsed_ms(started, monotonic),
-            preflight["fingerprint_validation"],
+            validations,
         )
     except _Blocked as error:
         return _result(
             API_HEALTH_CHECKPOINT_BLOCKED,
             error.category,
             _elapsed_ms(started, monotonic),
+            validations,
         )
     except Exception as error:
         return _result(
             API_HEALTH_CHECKPOINT_FAILED,
             _classify_transport_error(error),
             _elapsed_ms(started, monotonic),
+            validations,
         )
 
 
 def _validate_arguments(args):
+    bundle = validate_api_db_gate_bundle(
+        args.get("db_checkpoint_gates"),
+        args.get("orchestration_context"),
+        evaluated_at=args.get("gate_evaluated_at"),
+    )
+    if bundle["status"] != DB_CHECKPOINT_GATES_READY:
+        raise _Blocked("DB_CHECKPOINT_GATE_MISSING")
+
     expected = {
         "checkpoint": API_CHECKPOINT,
         "api_operation_id": API_OPERATION_ID,
@@ -202,14 +223,6 @@ def _validate_arguments(args):
         "operational_release": _OPERATIONAL_RELEASE,
         "preflight_status": API_RUNTIME_READY,
     }
-    database_gates = {
-        "acm_custom_db_checkpoint_status": _ACM_CUSTOM_DB_CHECKPOINT_OK,
-        "acm_db_checkpoint_status": _ACM_DB_CHECKPOINT_OK,
-        "bda_db_checkpoint_status": _BDA_DB_CHECKPOINT_OK,
-        "basic_db_checkpoint_status": _BASIC_DB_CHECKPOINT_OK,
-    }
-    if any(args.get(name) != value for name, value in database_gates.items()):
-        raise _Blocked("DB_CHECKPOINT_GATE_MISSING")
     if not _is_true(args.get("operational_window_active")):
         raise _Blocked("OPERATIONAL_WINDOW_INACTIVE")
     for name, value in expected.items():
@@ -333,7 +346,24 @@ def _classify_transport_error(error):
     return "HTTP_TRANSPORT_ERROR"
 
 
-def _result(status, error_category, elapsed_ms, fingerprint_validation="DENIED"):
+def _denied_validations():
+    return {
+        "allowlist_validation": "DENIED",
+        "preflight_validation": "DENIED",
+        "path_validation": "DENIED",
+        "path_hash_validation": "DENIED",
+        "fingerprint_validation": "DENIED",
+        "db_gate_bundle_validation": "DENIED",
+        "response_body_logged": False,
+        "response_headers_logged": False,
+        "sensitive_values_logged": False,
+    }
+
+
+def _result(status, error_category, elapsed_ms, validations=None):
+    validation_metadata = _denied_validations()
+    if isinstance(validations, dict):
+        validation_metadata.update(validations)
     return {
         "execution_id": uuid.uuid4().hex,
         "timestamp": datetime.now(timezone.utc).replace(microsecond=0).isoformat(),
@@ -351,9 +381,7 @@ def _result(status, error_category, elapsed_ms, fingerprint_validation="DENIED")
         "total_timeout_seconds": 15,
         "max_response_bytes": _MAX_RESPONSE_BYTES,
         "elapsed_ms": elapsed_ms,
-        "fingerprint_validation": fingerprint_validation,
-        "response_body_logged": False,
-        "response_headers_logged": False,
+        **validation_metadata,
         "sanitized_error_category": error_category,
         "stop_reason": "CHECKPOINT_COMPLETED" if status == API_HEALTH_CHECKPOINT_OK else "IMMEDIATE_STOP",
     }

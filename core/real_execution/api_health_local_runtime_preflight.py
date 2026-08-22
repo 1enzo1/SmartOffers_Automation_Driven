@@ -8,7 +8,7 @@ from os import environ as process_environment
 API_CHECKPOINT = "SMARTOFFERS_API_QA4_TECHNICAL_READ_ONLY_01"
 API_OPERATION_ID = "smartoffers_api_health_readiness_01"
 API_ENVIRONMENT = "qa4"
-API_PROFILE = "smartoffers_basic_smoke"
+API_PROFILE = "smartoffers_qa4_full_smoke"
 API_RESOURCE_ID = "smartoffers_api"
 API_RUNTIME_READY = "API_RUNTIME_READY"
 API_RUNTIME_BLOCKED = "API_RUNTIME_BLOCKED"

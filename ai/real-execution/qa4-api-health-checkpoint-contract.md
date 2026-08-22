@@ -11,7 +11,7 @@ any use of a private runtime.
 | checkpoint | `SMARTOFFERS_API_QA4_TECHNICAL_READ_ONLY_01` |
 | api_operation_id | `smartoffers_api_health_readiness_01` |
 | environment | `qa4` |
-| profile | `smartoffers_basic_smoke` |
+| profile | `smartoffers_qa4_full_smoke` |
 | resource_id | `smartoffers_api` |
 | method | `GET` |
 | access mode | `read_only` |
@@ -63,29 +63,57 @@ tokens: `API_RUNTIME_READY`, `API_RUNTIME_BLOCKED`, `MATCH`, `DENIED`, `READY`
 and `BLOCKED`. It must never include a URL, path, hash, fingerprint, token,
 header, response or other runtime value.
 
-## Gates And Transport
+## Structured Gates And Transport
 
-The API checkpoint requires these successful database gates before loading its
-real HTTP transport:
+The API checkpoint consumes exactly these three current canonical evidence
+records before runtime resolution, local preflight, destination validation or
+HTTP client loading:
 
 ```text
 ACM_CUSTOM_DB_CHECKPOINT_OK
 ACM_DB_CHECKPOINT_OK
 BDA_DB_CHECKPOINT_OK
-BASIC_DB_CHECKPOINT_OK
+```
+
+Each record must be typed canonical evidence produced by the local gate
+normalizer. All three records must be `OK`, belong to the same sanitized
+orchestration and operational-window context, and remain current at the
+explicit gate evaluation timestamp. Bare gate names, raw executor results,
+duplicates, extra records, mixed orchestrations and expired evidence are
+denied before any client can load.
+
+After that structured bundle validates, these independent operational and
+safety guards remain mandatory:
+
+```text
 OPERATIONAL_WINDOW_ACTIVE=true
 EXECUTION_APPROVED
 OPERATIONAL_EXECUTION_RELEASED
 API_RUNTIME_READY
 ```
 
-`BASIC_SMOKE_OK` and `FULL_SMOKE_OK` are consolidated only by the Manager after
-the API checkpoint succeeds. They are not accepted as API entry gates. Every
-missing or divergent gate stops before runtime loading, client loading or send.
-Automated tests use only `FakeHttpClient` and `FakeResponse`.
+The direct Python function receives `db_checkpoint_gates`,
+`orchestration_context` and `gate_evaluated_at`. The CLI deliberately has no
+JSON or file argument for evidence injection. Automated tests call the direct
+function with normalized records and use only `FakeHttpClient` and
+`FakeResponse`.
 
-The real transport is structurally redirect-deny: it sends one `GET` at most
-and does not follow 3xx responses. A 3xx response produces
+### Non-authoritative compatibility names
+
+The parser temporarily accepts the deprecated string options for
+`ACM_CUSTOM_DB_CHECKPOINT_OK`, `ACM_DB_CHECKPOINT_OK`,
+`BDA_DB_CHECKPOINT_OK` and `BASIC_DB_CHECKPOINT_OK`, but ignores every value.
+Those strings cannot enable or block admission, and a CLI invocation containing
+only them is denied for missing structured evidence. `BASIC_DB_CHECKPOINT_OK`
+is not a canonical DAG node.
+
+`BASIC_SMOKE_OK` and `FULL_SMOKE_OK` are terminal Manager summaries created
+only after the API checkpoint. They have no outgoing dependency edge and are
+never accepted as API entry gates.
+
+Real transport remains blocked. The dormant transport implementation is
+structurally redirect-deny: it sends one `GET` at most and does not follow 3xx
+responses. A 3xx response produces
 `REDIRECT_DENIED`; any status other than 200, timeout, authentication failure,
 response-limit breach or unexpected transport error stops immediately. Evidence
 is one sanitized JSON object and omits body and headers.

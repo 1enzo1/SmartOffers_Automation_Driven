@@ -1,5 +1,6 @@
 import hashlib
 import inspect
+from copy import deepcopy
 from pathlib import Path
 
 import pytest
@@ -19,6 +20,7 @@ from core.real_execution.api_health_local_runtime_preflight import (
     API_RUNTIME_READY,
     preflight_api_health_local_runtime,
 )
+from core.real_execution.gate_dag import normalize_checkpoint_evidence
 from tools.qa4_api_health_smoke import (
     API_HEALTH_CHECKPOINT_BLOCKED,
     API_HEALTH_CHECKPOINT_FAILED,
@@ -36,6 +38,9 @@ class FakeConnectTimeout(Exception):
 
 class FakeReadTimeout(Exception):
     pass
+
+
+EVALUATED_AT = "2026-08-22T12:10:00+00:00"
 
 
 def _sha256(value):
@@ -65,6 +70,80 @@ def _runtime():
     }
 
 
+def _context(**overrides):
+    context = {
+        "orchestration_id": "alpha-run-ref",
+        "operational_window_ref": "qa4-window-ref",
+        "window_started_at": "2026-08-22T12:00:00+00:00",
+        "window_expires_at": "2026-08-22T12:15:00+00:00",
+        "environment": "qa4",
+        "workflow_profile": "smartoffers_qa4_full_smoke",
+    }
+    context.update(overrides)
+    return context
+
+
+def _db_result(**overrides):
+    result = {
+        "execution_id": "execution-ref",
+        "timestamp": "2026-08-22T12:05:00+00:00",
+        "environment": "qa4",
+        "profile": "smartoffers_qa4_full_smoke",
+        "attempts_used": 1,
+        "retry_count": 0,
+        "sensitive_values_logged": False,
+        "sanitized_error_category": "NONE",
+        "stop_reason": "CHECKPOINT_COMPLETED",
+        "environment_allowlist": "MATCH",
+        "resource_allowlist": "MATCH",
+        "destination_allowlist": "MATCH",
+        "query_hash_validation": "MATCH",
+        "read_only_validation": "PASS",
+        "result_shape_validation": "MATCH",
+        "preflight_validation": "MATCH",
+        "fingerprint_validation": "MATCH",
+    }
+    result.update(overrides)
+    return result
+
+
+def _valid_db_records(context=None):
+    effective_context = _context() if context is None else context
+    raw_results = (
+        _db_result(
+            checkpoint="ORACLE_ACM_CUSTOM_TECHNICAL_READ_ONLY_01",
+            resource_id="acm_custom_db",
+            profile="smartoffers_basic_smoke",
+            status="CONNECT_AND_READ_OK",
+        ),
+        _db_result(
+            checkpoint="ORACLE_ACM_TECHNICAL_READ_ONLY_01",
+            resource_id="acm_db",
+            status="CONNECT_AND_READ_OK",
+        ),
+        _db_result(
+            checkpoint="ORACLE_BDA_TECHNICAL_READ_ONLY_01",
+            resource_id="bda_db",
+            status="BDA_DB_CHECKPOINT_OK",
+        ),
+    )
+    return [
+        normalize_checkpoint_evidence(
+            result, effective_context, evaluated_at=EVALUATED_AT
+        )
+        for result in raw_results
+    ]
+
+
+def _legacy_statuses():
+    return {
+        "acm_custom_db_checkpoint_status": "ACM_CUSTOM_DB_CHECKPOINT_OK",
+        "acm_db_checkpoint_status": "ACM_DB_CHECKPOINT_OK",
+        "bda_db_checkpoint_status": "BDA_DB_CHECKPOINT_OK",
+        "basic_db_checkpoint_status": "BASIC_DB_CHECKPOINT_OK",
+    }
+
+
 def _arguments(**overrides):
     arguments = {
         **_request(),
@@ -82,10 +161,9 @@ def _arguments(**overrides):
         "path_parameters_allowed": False,
         "customer_identifiers_allowed": False,
         "authentication_required": False,
-        "acm_custom_db_checkpoint_status": "ACM_CUSTOM_DB_CHECKPOINT_OK",
-        "acm_db_checkpoint_status": "ACM_DB_CHECKPOINT_OK",
-        "bda_db_checkpoint_status": "BDA_DB_CHECKPOINT_OK",
-        "basic_db_checkpoint_status": "BASIC_DB_CHECKPOINT_OK",
+        "db_checkpoint_gates": _valid_db_records(),
+        "orchestration_context": _context(),
+        "gate_evaluated_at": EVALUATED_AT,
         "operational_window_active": "true",
         "approval": "EXECUTION_APPROVED",
         "operational_release": "OPERATIONAL_EXECUTION_RELEASED",
@@ -133,7 +211,7 @@ def test_api_preflight_blocks_each_missing_ref(missing_ref):
         {"checkpoint": "WRONG"},
         {"api_operation_id": "wrong-operation"},
         {"environment": "production"},
-        {"profile": "smartoffers_qa4_full_smoke"},
+        {"profile": "smartoffers_basic_smoke"},
         {"resource_id": "wrong-resource"},
     ),
 )
@@ -201,6 +279,7 @@ def test_health_checkpoint_documentation_uses_only_contract_refs_and_placeholder
     assert "OPERATIONAL_EXECUTION_RELEASED" in content
     assert "BASIC_DB_CHECKPOINT_OK" in content
     assert "BASIC_SMOKE_OK" in content
+    assert "smartoffers_qa4_full_smoke" in content
     assert "OPERATIONAL_WINDOW_ACTIVE" in content
     assert "redirect" in content.lower()
     assert "http://" not in content
@@ -215,6 +294,16 @@ def test_api_executor_uses_one_fake_get_and_only_sanitized_evidence():
 
     assert result["status"] == API_HEALTH_CHECKPOINT_OK
     assert result["sanitized_error_category"] == "NONE"
+    assert result["profile"] == "smartoffers_qa4_full_smoke"
+    assert result["allowlist_validation"] == "MATCH"
+    assert result["preflight_validation"] == "MATCH"
+    assert result["path_validation"] == "MATCH"
+    assert result["path_hash_validation"] == "MATCH"
+    assert result["fingerprint_validation"] == "MATCH"
+    assert result["db_gate_bundle_validation"] == "MATCH"
+    assert result["response_body_logged"] is False
+    assert result["response_headers_logged"] is False
+    assert result["sensitive_values_logged"] is False
     assert len(client.calls) == 1
     assert client.calls[0]["method"] == "GET"
     serialized = str(result)
@@ -225,12 +314,115 @@ def test_api_executor_uses_one_fake_get_and_only_sanitized_evidence():
 
 
 @pytest.mark.parametrize(
+    "legacy_name",
+    (
+        "acm_custom_db_checkpoint_status",
+        "acm_db_checkpoint_status",
+        "bda_db_checkpoint_status",
+        "basic_db_checkpoint_status",
+    ),
+)
+def test_api_legacy_checkpoint_statuses_are_optional_and_non_authoritative(
+    legacy_name,
+):
+    client = FakeHttpClient(FakeResponse(status_code=200))
+
+    result = run_api_health_checkpoint(
+        _arguments(**{legacy_name: "DENIED"}), environ=_runtime(), client=client
+    )
+
+    assert result["status"] == API_HEALTH_CHECKPOINT_OK
+    assert len(client.calls) == 1
+
+
+def _invalid_structured_gate_cases():
+    records = _valid_db_records()
+    mixed_context = deepcopy(records)
+    mixed_context[0]["orchestration_id"] = "historical-run"
+    raw_results = deepcopy(records)
+    raw_results[0] = _db_result(
+        checkpoint="ORACLE_ACM_CUSTOM_TECHNICAL_READ_ONLY_01",
+        resource_id="acm_custom_db",
+        profile="smartoffers_basic_smoke",
+        status="CONNECT_AND_READ_OK",
+    )
+    return (
+        [
+            "ACM_CUSTOM_DB_CHECKPOINT_OK",
+            "ACM_DB_CHECKPOINT_OK",
+            "BDA_DB_CHECKPOINT_OK",
+        ],
+        ["BASIC_DB_CHECKPOINT_OK"],
+        [],
+        records[:2],
+        [records[0], records[0], records[2]],
+        raw_results,
+        mixed_context,
+    )
+
+
+@pytest.mark.parametrize("gate_input", _invalid_structured_gate_cases())
+def test_api_rejects_invalid_structured_or_legacy_gates_before_any_runtime_step(
+    gate_input, monkeypatch
+):
+    called = []
+
+    def load_runtime(environment):
+        called.append("runtime")
+        return {"endpoint": "https://fake-qa4-api.example", "path": "/fake-health"}
+
+    def validate_preflight(args, environment):
+        called.append("preflight")
+        return {"fingerprint_validation": "MATCH"}
+
+    def validate_destination(runtime):
+        called.append("destination")
+
+    def load_client():
+        called.append("client")
+        return FakeHttpClient(FakeResponse(status_code=200))
+
+    monkeypatch.setattr(api_health_smoke, "_load_runtime", load_runtime)
+    monkeypatch.setattr(api_health_smoke, "_validate_preflight", validate_preflight)
+    monkeypatch.setattr(api_health_smoke, "_validate_destination", validate_destination)
+    monkeypatch.setattr(api_health_smoke, "_load_real_http_client", load_client)
+
+    result = run_api_health_checkpoint(
+        _arguments(
+            **_legacy_statuses(),
+            db_checkpoint_gates=gate_input,
+        ),
+        environ=_runtime(),
+    )
+
+    assert result["status"] == API_HEALTH_CHECKPOINT_BLOCKED
+    assert result["sanitized_error_category"] == "DB_CHECKPOINT_GATE_MISSING"
+    assert called == []
+
+
+def test_api_rejects_expired_structured_gates_before_client_load(monkeypatch):
+    loaded = False
+
+    def load_client():
+        nonlocal loaded
+        loaded = True
+        return FakeHttpClient(FakeResponse(status_code=200))
+
+    monkeypatch.setattr(api_health_smoke, "_load_real_http_client", load_client)
+
+    result = run_api_health_checkpoint(
+        _arguments(gate_evaluated_at="2026-08-22T12:15:01+00:00"),
+        environ=_runtime(),
+    )
+
+    assert result["status"] == API_HEALTH_CHECKPOINT_BLOCKED
+    assert result["sanitized_error_category"] == "DB_CHECKPOINT_GATE_MISSING"
+    assert loaded is False
+
+
+@pytest.mark.parametrize(
     "argument_update, expected_category",
     (
-        ({"acm_custom_db_checkpoint_status": "DENIED"}, "DB_CHECKPOINT_GATE_MISSING"),
-        ({"acm_db_checkpoint_status": "DENIED"}, "DB_CHECKPOINT_GATE_MISSING"),
-        ({"bda_db_checkpoint_status": "DENIED"}, "DB_CHECKPOINT_GATE_MISSING"),
-        ({"basic_db_checkpoint_status": "DENIED"}, "DB_CHECKPOINT_GATE_MISSING"),
         ({"operational_window_active": "false"}, "OPERATIONAL_WINDOW_INACTIVE"),
         ({"approval": "DENIED"}, "APPROVAL_MISSING"),
         ({"operational_release": "DENIED"}, "APPROVAL_MISSING"),
@@ -307,10 +499,6 @@ def test_api_executor_requires_matching_preflight_and_never_imports_real_http_be
 @pytest.mark.parametrize(
     "argument_update",
     (
-        {"acm_custom_db_checkpoint_status": "DENIED"},
-        {"acm_db_checkpoint_status": "DENIED"},
-        {"bda_db_checkpoint_status": "DENIED"},
-        {"basic_db_checkpoint_status": "DENIED"},
         {"operational_window_active": "false"},
         {"approval": "DENIED"},
         {"operational_release": "DENIED"},
@@ -338,10 +526,8 @@ def test_api_executor_does_not_load_real_client_or_send_when_any_required_gate_f
     assert client.calls == []
 
 
-def test_api_executor_rejects_basic_smoke_ok_as_a_substitute_for_the_basic_db_gate():
-    args = _arguments()
-    args.pop("basic_db_checkpoint_status")
-    args["basic_smoke_status"] = "BASIC_SMOKE_OK"
+def test_api_executor_rejects_basic_smoke_ok_as_a_substitute_for_structured_gates():
+    args = _arguments(db_checkpoint_gates=None, basic_smoke_status="BASIC_SMOKE_OK")
     client = FakeHttpClient(FakeResponse(status_code=200))
 
     result = run_api_health_checkpoint(args, environ=_runtime(), client=client)
@@ -354,10 +540,9 @@ def test_api_executor_rejects_basic_smoke_ok_as_a_substitute_for_the_basic_db_ga
 @pytest.mark.parametrize(
     "missing_gate, expected_category",
     (
-        ("acm_custom_db_checkpoint_status", "DB_CHECKPOINT_GATE_MISSING"),
-        ("acm_db_checkpoint_status", "DB_CHECKPOINT_GATE_MISSING"),
-        ("bda_db_checkpoint_status", "DB_CHECKPOINT_GATE_MISSING"),
-        ("basic_db_checkpoint_status", "DB_CHECKPOINT_GATE_MISSING"),
+        ("db_checkpoint_gates", "DB_CHECKPOINT_GATE_MISSING"),
+        ("orchestration_context", "DB_CHECKPOINT_GATE_MISSING"),
+        ("gate_evaluated_at", "DB_CHECKPOINT_GATE_MISSING"),
         ("operational_window_active", "OPERATIONAL_WINDOW_INACTIVE"),
     ),
 )
@@ -375,9 +560,11 @@ def test_api_executor_blocks_each_missing_operational_gate_before_send(
     assert client.calls == []
 
 
-def test_api_executor_cli_emits_one_sanitized_json_when_a_gate_is_missing(capsys):
-    exit_code = main(
-        [
+@pytest.mark.parametrize("include_legacy", (False, True))
+def test_api_executor_cli_legacy_gate_strings_are_optional_and_non_authoritative(
+    include_legacy, capsys
+):
+    arguments = [
             "--checkpoint", API_CHECKPOINT,
             "--api-operation-id", API_OPERATION_ID,
             "--environment", API_ENVIRONMENT,
@@ -397,21 +584,27 @@ def test_api_executor_cli_emits_one_sanitized_json_when_a_gate_is_missing(capsys
             "--path-parameters-allowed", "false",
             "--customer-identifiers-allowed", "false",
             "--authentication-required", "false",
-            "--acm-custom-db-checkpoint-status", "ACM_CUSTOM_DB_CHECKPOINT_OK",
-            "--acm-db-checkpoint-status", "ACM_DB_CHECKPOINT_OK",
-            "--bda-db-checkpoint-status", "BDA_DB_CHECKPOINT_OK",
-            "--basic-db-checkpoint-status", "BASIC_DB_CHECKPOINT_OK",
             "--operational-window-active", "true",
             "--approval", "DENIED",
             "--operational-release", "OPERATIONAL_EXECUTION_RELEASED",
             "--preflight-status", API_RUNTIME_READY,
-        ]
-    )
+    ]
+    if include_legacy:
+        arguments.extend(
+            [
+                "--acm-custom-db-checkpoint-status", "ACM_CUSTOM_DB_CHECKPOINT_OK",
+                "--acm-db-checkpoint-status", "ACM_DB_CHECKPOINT_OK",
+                "--bda-db-checkpoint-status", "BDA_DB_CHECKPOINT_OK",
+                "--basic-db-checkpoint-status", "BASIC_DB_CHECKPOINT_OK",
+            ]
+        )
+
+    exit_code = main(arguments)
 
     output = capsys.readouterr().out.splitlines()
     assert exit_code == 1
     assert len(output) == 1
-    assert '"sanitized_error_category": "APPROVAL_MISSING"' in output[0]
+    assert '"sanitized_error_category": "DB_CHECKPOINT_GATE_MISSING"' in output[0]
 
 
 def test_api_executor_cli_rejects_the_legacy_basic_smoke_argument(capsys):
