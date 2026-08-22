@@ -128,20 +128,48 @@ Manager consolidation validates current canonical terminal records and
 preserves each component outcome and reason. It always returns
 `operational_readiness=false`; no summary authorizes execution.
 
+Both summaries use the same leading precedence: `GLOBAL_SAFETY_STOP` first,
+then `INVALID_INPUT_EVIDENCE`, then component outcomes. Any input rejected by
+canonical validation, including an extra raw or rejected record, sets
+`INVALID_INPUT_EVIDENCE` and blocks both summaries. A second otherwise-valid
+record for one component is instead materialized as
+`DUPLICATE_COMPONENT_EVIDENCE` and follows component outcome precedence.
+
+The following block is the machine-checkable order. Each row is
+`summary | priority | condition | status | reason`:
+
+<!-- MANAGER_PRECEDENCE_BEGIN -->
+```text
+BASIC | 1 | GLOBAL_SAFETY_STOP | BASIC_SMOKE_BLOCKED | GLOBAL_SAFETY_STOP
+BASIC | 2 | INVALID_INPUT_EVIDENCE | BASIC_SMOKE_BLOCKED | INVALID_INPUT_EVIDENCE
+BASIC | 3 | ALL_COMPONENTS_OK | BASIC_SMOKE_OK | ALL_COMPONENTS_OK
+BASIC | 4 | ANY_COMPONENT_FAILED | BASIC_SMOKE_FAILED | COMPONENT_FAILURE
+BASIC | 5 | OTHERWISE | BASIC_SMOKE_BLOCKED | COMPONENTS_BLOCKED
+FULL | 1 | GLOBAL_SAFETY_STOP | FULL_SMOKE_BLOCKED | GLOBAL_SAFETY_STOP
+FULL | 2 | INVALID_INPUT_EVIDENCE | FULL_SMOKE_BLOCKED | INVALID_INPUT_EVIDENCE
+FULL | 3 | ALL_COMPONENTS_OK | FULL_SMOKE_OK | ALL_COMPONENTS_OK
+FULL | 4 | ANY_COMPONENT_OK | FULL_SMOKE_PARTIAL | COMPONENTS_NOT_ALL_OK
+FULL | 5 | ANY_COMPONENT_FAILED | FULL_SMOKE_FAILED | COMPONENT_FAILURE
+FULL | 6 | OTHERWISE | FULL_SMOKE_BLOCKED | COMPONENTS_BLOCKED
+```
+<!-- MANAGER_PRECEDENCE_END -->
+
 Basic components are ACM_CUSTOM and API. Precedence is:
 
 1. global safety stop -> `BASIC_SMOKE_BLOCKED`;
-2. both components OK -> `BASIC_SMOKE_OK`;
-3. any attempted failure -> `BASIC_SMOKE_FAILED`;
-4. otherwise -> `BASIC_SMOKE_BLOCKED`.
+2. invalid input evidence -> `BASIC_SMOKE_BLOCKED`;
+3. both components OK -> `BASIC_SMOKE_OK`;
+4. any attempted failure -> `BASIC_SMOKE_FAILED`;
+5. otherwise -> `BASIC_SMOKE_BLOCKED`.
 
 Full components are ACM_CUSTOM, ACM, BDA and API. Precedence is:
 
 1. global safety stop -> `FULL_SMOKE_BLOCKED`;
-2. all components OK -> `FULL_SMOKE_OK`;
-3. at least one OK and at least one non-OK -> `FULL_SMOKE_PARTIAL`;
-4. no OK and at least one attempted failure -> `FULL_SMOKE_FAILED`;
-5. otherwise -> `FULL_SMOKE_BLOCKED`.
+2. invalid input evidence -> `FULL_SMOKE_BLOCKED`;
+3. all components OK -> `FULL_SMOKE_OK`;
+4. at least one OK and at least one non-OK -> `FULL_SMOKE_PARTIAL`;
+5. no OK and at least one attempted failure -> `FULL_SMOKE_FAILED`;
+6. otherwise -> `FULL_SMOKE_BLOCKED`.
 
 The full planning profile therefore does not consume a pre-existing
 `BASIC_SMOKE_OK`; both summaries are produced only after component evaluation.

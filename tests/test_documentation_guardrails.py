@@ -61,6 +61,30 @@ def _assert_only_allowed_task_classes(document):
     assert assigned_task_classes <= ALLOWED_TASK_CLASSES
 
 
+def _extract_alpha_board_rows(document):
+    board = document.split("## Board Alpha", 1)[1].split("\n## ", 1)[0]
+    table_lines = [line for line in board.splitlines() if line.startswith("|")]
+    assert len(table_lines) >= 3
+    assert table_lines[0].startswith("| Prioridade | Goal | TASK_CLASS |")
+    assert re.fullmatch(r"\|(?:---\|){6}", table_lines[1])
+    return [
+        [cell.strip() for cell in line.strip("|").split("|")]
+        for line in table_lines[2:]
+    ]
+
+
+def _assert_alpha_board_task_classes(document):
+    rows = _extract_alpha_board_rows(document)
+    allowed_cells = {
+        f"`TASK_CLASS={task_class}`"
+        for task_class in ALLOWED_TASK_CLASSES
+    }
+    assert rows
+    for row in rows:
+        assert len(row) == 6
+        assert row[2] in allowed_cells
+
+
 def test_product_guardrails_are_documented():
     docs = "\n".join(
         [
@@ -304,6 +328,38 @@ def test_alpha_gate_dag_contract_has_exact_canonical_edge_set():
     assert actual_edges == expected_edges
 
 
+def test_alpha_gate_dag_contract_has_exact_manager_precedence_and_reasons():
+    content = _read("ai/real-execution/mvp7-8-4-gate-dag-contract.md")
+    match = re.search(
+        r"<!-- MANAGER_PRECEDENCE_BEGIN -->\s*```text\s*(.*?)\s*```\s*"
+        r"<!-- MANAGER_PRECEDENCE_END -->",
+        content,
+        re.DOTALL,
+    )
+    assert match is not None
+
+    actual_precedence = tuple(
+        tuple(part.strip() for part in line.split("|"))
+        for line in match.group(1).splitlines()
+        if line.strip()
+    )
+    expected_precedence = (
+        ("BASIC", "1", "GLOBAL_SAFETY_STOP", "BASIC_SMOKE_BLOCKED", "GLOBAL_SAFETY_STOP"),
+        ("BASIC", "2", "INVALID_INPUT_EVIDENCE", "BASIC_SMOKE_BLOCKED", "INVALID_INPUT_EVIDENCE"),
+        ("BASIC", "3", "ALL_COMPONENTS_OK", "BASIC_SMOKE_OK", "ALL_COMPONENTS_OK"),
+        ("BASIC", "4", "ANY_COMPONENT_FAILED", "BASIC_SMOKE_FAILED", "COMPONENT_FAILURE"),
+        ("BASIC", "5", "OTHERWISE", "BASIC_SMOKE_BLOCKED", "COMPONENTS_BLOCKED"),
+        ("FULL", "1", "GLOBAL_SAFETY_STOP", "FULL_SMOKE_BLOCKED", "GLOBAL_SAFETY_STOP"),
+        ("FULL", "2", "INVALID_INPUT_EVIDENCE", "FULL_SMOKE_BLOCKED", "INVALID_INPUT_EVIDENCE"),
+        ("FULL", "3", "ALL_COMPONENTS_OK", "FULL_SMOKE_OK", "ALL_COMPONENTS_OK"),
+        ("FULL", "4", "ANY_COMPONENT_OK", "FULL_SMOKE_PARTIAL", "COMPONENTS_NOT_ALL_OK"),
+        ("FULL", "5", "ANY_COMPONENT_FAILED", "FULL_SMOKE_FAILED", "COMPONENT_FAILURE"),
+        ("FULL", "6", "OTHERWISE", "FULL_SMOKE_BLOCKED", "COMPONENTS_BLOCKED"),
+    )
+
+    assert actual_precedence == expected_precedence
+
+
 def test_alpha_gate_dag_is_linked():
     contract_path = "ai/real-execution/mvp7-8-4-gate-dag-contract.md"
     real_execution_readme = _read("ai/real-execution/README.md")
@@ -315,15 +371,32 @@ def test_alpha_gate_dag_is_linked():
 
 def test_alpha_mvp784_board_row_has_exact_class_and_awaiting_acceptance_state():
     governance = _read("docs/ALPHA_GOVERNANCE.md")
-    matching_rows = [
-        line for line in governance.splitlines()
-        if line.startswith("| P1 | ALPHA-MVP784-002 ")
-    ]
+    matching_rows = [row for row in _extract_alpha_board_rows(governance) if row[1].startswith("ALPHA-MVP784-002 ")]
 
     assert len(matching_rows) == 1
-    cells = [cell.strip() for cell in matching_rows[0].strip("|").split("|")]
-    assert cells[2] == "`TASK_CLASS=DEVELOPMENT`"
-    assert cells[3] == "`STATE=IMPLEMENTED_AWAITING_INDEPENDENT_ACCEPTANCE`"
+    assert matching_rows[0][2] == "`TASK_CLASS=DEVELOPMENT`"
+    assert matching_rows[0][3] == "`STATE=IMPLEMENTED_AWAITING_INDEPENDENT_ACCEPTANCE`"
+
+
+def test_every_alpha_board_row_has_one_exact_allowed_task_class_cell():
+    governance = _read("docs/ALPHA_GOVERNANCE.md")
+
+    _assert_alpha_board_task_classes(governance)
+
+
+@pytest.mark.parametrize(
+    "malformed_cell",
+    (
+        "`TASK_CLASS=REVIEW` extra",
+        "TASK_CLASS=REVIEW",
+    ),
+)
+def test_alpha_board_rejects_task_class_cell_contamination(malformed_cell):
+    governance = _read("docs/ALPHA_GOVERNANCE.md")
+    malformed_board = governance.replace("`TASK_CLASS=REVIEW`", malformed_cell, 1)
+
+    with pytest.raises(AssertionError):
+        _assert_alpha_board_task_classes(malformed_board)
 
 
 def test_alpha_contract_conflict_remains_open_pending_independent_acceptance():
@@ -333,6 +406,16 @@ def test_alpha_contract_conflict_remains_open_pending_independent_acceptance():
     normalized_conflict = " ".join(conflict_section.split())
     assert "permanece aberta" in normalized_conflict
     assert "aceite independente" in normalized_conflict
+
+
+def test_alpha_contract_conflict_describes_previous_cycle_in_the_past():
+    governance = _read("docs/ALPHA_GOVERNANCE.md")
+    conflict_section = governance.split("### `CONTRACT_CONFLICT-001`", 1)[1].split("### `STATE_DIVERGENCE-001`", 1)[0]
+    normalized_conflict = " ".join(conflict_section.split())
+
+    assert "O contrato/executor ACM anterior exigia `BASIC_SMOKE_OK`" in normalized_conflict
+    assert "A implementacao candidata removeu esse predecessor" in normalized_conflict
+    assert "O contrato/executor ACM exige `BASIC_SMOKE_OK`" not in normalized_conflict
 
 
 def test_alpha_gate_record_validates_attempt_policy_without_claiming_to_store_it():

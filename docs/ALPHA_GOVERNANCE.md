@@ -102,15 +102,18 @@ permitirem. No Alpha atual nao existe essa liberacao.
 
 ### `CONTRACT_CONFLICT-001` - gate circular ACM/API
 
-O contrato/executor ACM exige `BASIC_SMOKE_OK`, enquanto o contrato API exige
-`ACM_DB_CHECKPOINT_OK` e declara que `BASIC_SMOKE_OK` so e consolidado depois da
-API. Isso forma uma dependencia circular para uma nova execucao completa.
+O contrato/executor ACM anterior exigia `BASIC_SMOKE_OK`, enquanto o contrato
+API anterior exigia `ACM_DB_CHECKPOINT_OK` e declarava que `BASIC_SMOKE_OK` so
+seria consolidado depois da API. Isso formava uma dependencia circular para
+uma nova execucao completa.
 
 Decisao Alpha registrada na sincronizacao anterior: nao
 inferir um bypass a partir de evidencia historica e manter qualquer nova
-execucao bloqueada. O card proprio `ALPHA-MVP784-002` implementa a reconciliacao contratual e os testes
-mock-first, sem pedir liberacao operacional. A divergencia permanece aberta:
-o card esta implementado, mas aguarda aceite independente;
+execucao bloqueada. A implementacao candidata removeu esse predecessor da
+admissao ACM e substituiu os status informados pelo caller por evidencia
+estruturada no card `ALPHA-MVP784-002`, com testes mock-first e sem pedir
+liberacao operacional. A divergencia permanece aberta: o card esta
+implementado, mas aguarda aceite independente;
 `ALPHA-PR18-FIX-001` e o commit do Developer nao fecham
 `CONTRACT_CONFLICT-001`.
 
