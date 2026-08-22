@@ -1,10 +1,14 @@
+import re
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 
+ALLOWED_TASK_CLASSES = {"MECHANICAL", "DEVELOPMENT", "DEBUG", "RESEARCH", "REVIEW"}
+
 ROADMAP_ITEMS = [
-    "MVP7.8.3B - First QA4 Real Smoke manual",
     "MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy",
     "MVP7.8.5 - Real Campaign Scenario Pack 01",
     "MVP7.8.6 - Evidence Comparison & Runner Hardening",
@@ -39,6 +43,16 @@ SKILLS = [
 
 def _read(path):
     return (ROOT / path).read_text(encoding="utf-8")
+
+
+def _extract_task_class_assignments(document):
+    return set(re.findall(r"TASK_CLASS=([^\s`|]*)", document))
+
+
+def _assert_only_allowed_task_classes(document):
+    assigned_task_classes = _extract_task_class_assignments(document)
+    assert assigned_task_classes
+    assert assigned_task_classes <= ALLOWED_TASK_CLASSES
 
 
 def test_product_guardrails_are_documented():
@@ -87,30 +101,101 @@ def test_roadmap_supervisors_and_skills_are_documented():
         assert skill in docs
 
 
-def test_current_real_execution_plan_is_documented():
-    docs = "\n".join([_read("README.md"), _read("PROJECT_STATUS.md"), _read("docs/ROADMAP.md")])
+def test_current_alpha_governance_is_documented():
+    docs = "\n".join(
+        [
+            _read("README.md"),
+            _read("PROJECT_STATUS.md"),
+            _read("docs/ROADMAP.md"),
+            _read("docs/ALPHA_GOVERNANCE.md"),
+        ]
+    )
 
     required_fragments = [
-        "MVP atual em planejamento controlado: MVP7.8.3B - First QA4 Real Smoke Manual",
-        "Ultimo MVP aprovado: MVP7.8.3A.2 - Basic and Full QA4 Smoke Profiles",
-        "MVP7.8.3B: Execution Plan, guardrails mockados e executor manual em revisao",
-        "Estado funcional anterior: MVP7.8.3A - Runtime Preflight seguro para execucao QA manual",
-        "smartoffers_basic_smoke",
-        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
-        "SMARTOFFERS_QA4_DB_*",
-        "legado",
-        "de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71",
-        "QA4 e prioridade",
-        "QA1 vem depois",
-        "QA2/QA3",
-        "real QA4 executavel: 2 a 3 dias uteis",
-        "sanity real padrao/variante/copy: 4 a 5 dias uteis",
-        "primeiros cenarios reais: 7 a 10 dias uteis",
-        "v0.1 estavel interna: 15 a 20 dias uteis",
+        "v0.0.0-pre-alpha.1",
+        "e1263595aa736de3855234b6f9a0379b944fe70e",
+        "codex/alpha",
+        "MVP7.8.3B DB-only",
+        "API `NOT_READY`",
+        "`BASIC_SMOKE_OK=false`",
+        "`FULL_SMOKE_OK=false`",
+        "MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy",
+        "SMARTOFFERS_API_QA4_TECHNICAL_READ_ONLY_01",
+        "CONTRACT_CONFLICT-001",
+        "nao autoriza",
     ]
 
     for fragment in required_fragments:
         assert fragment in docs
+
+
+def test_alpha_role_boundaries_are_consistent_per_source():
+    agents = _read("AGENTS.md")
+    architect = _read(".agents/skills/smartoffers-automation-architect/SKILL.md")
+    manager = _read(".agents/skills/smartoffers-execution-manager/SKILL.md")
+    developer = _read(".agents/skills/smartoffers-automation-developer/SKILL.md")
+    governance = _read("docs/ALPHA_GOVERNANCE.md")
+
+    assert "O Arquiteto nao executa trabalho rotineiro" in agents
+    assert "Tester/Reviewer diferente de quem" in agents
+    assert "`smartoffers-architect-supervisor` nao e" in agents
+
+    assert "O Architect nao assume implementacao" in architect
+    assert "escalonamento ao Architect exige divergencia material de contrato ou risco" in architect
+    assert "transporte real permanece operacional e contratualmente bloqueado" in architect
+    assert "todo transporte real permanecem universalmente\nbloqueados" not in architect
+    assert "mode=real` não deve ser universalmente permitido" not in architect
+    assert "SMARTOFFERS_API_QA4_TECHNICAL_READ_ONLY_01" in architect
+    assert "API_QA4_TECHNICAL_NON_MUTATING_01" not in architect
+
+    assert "Tester/Reviewer" in manager
+    assert "No estado Alpha\natual, Oracle, API, Kafka e Jenkins reais permanecem bloqueados" in manager
+    assert "o Dev nao aprova a propria entrega como\nindependente" in developer
+
+    assert "CONTRACT_CONFLICT-001" in governance
+    assert "nao\ninferir um bypass a partir de evidencia historica" in governance
+
+
+def test_alpha_precision_contract_routes_authority_capability_and_task_classes():
+    architect = _read(".agents/skills/smartoffers-automation-architect/SKILL.md")
+    governance = _read("docs/ALPHA_GOVERNANCE.md")
+    architecture = _read("docs/ARCHITECTURE.md")
+    execution_plan = _read("ai/real-execution/mvp7-8-3b-execution-plan.md")
+
+    assert "divergencia material de contrato ou risco" in governance
+    assert "capacidade tecnica nao cria autorizacao" in governance
+    assert "ALPHA-PR18-FIX-001" in governance
+    assert "TASK_CLASS=MECHANICAL|DEVELOPMENT|DEBUG|RESEARCH|REVIEW" in governance
+
+    _assert_only_allowed_task_classes(governance)
+
+    assert "entry points dormentes nao sao autorizacao" in architect
+    assert "nao devem ser invocados no Alpha" in architect
+
+    dormant_executors = [
+        "tools/qa4_manual_smoke.py",
+        "tools/qa4_acm_manual_smoke.py",
+        "tools/qa4_bda_manual_smoke.py",
+        "tools/qa4_api_health_smoke.py",
+    ]
+    for executor in dormant_executors:
+        assert executor in architecture
+
+    assert "executores manuais dormentes" in architecture
+    assert "nao constitui liberacao Alpha nem garantia de kill switch" in architecture
+
+    assert "Architect General issues `EXECUTION_APPROVED`" not in execution_plan
+    assert "architectural risk envelope" in execution_plan
+    assert "authorized operational role" in execution_plan
+    assert "EXECUTION_BLOCKED" in execution_plan
+
+
+@pytest.mark.parametrize("malformed_task_class", ["research", "REVIEW_EXTRA", "REVIEW2", ""])
+def test_alpha_task_class_validation_rejects_malformed_complete_tokens(malformed_task_class):
+    document = f"`TASK_CLASS=REVIEW`\n`TASK_CLASS={malformed_task_class}`"
+
+    with pytest.raises(AssertionError):
+        _assert_only_allowed_task_classes(document)
 
 
 def test_future_roadmap_does_not_relist_completed_mvp76_or_mvp77_as_pending():

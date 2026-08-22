@@ -10,6 +10,12 @@ O produto atual e `SmartOffers_Automation_Driven`. PortalQA e uma referencia his
 
 A branch `qa/mvp4-integration` e a branch base evolutiva atual, apesar do nome historico. Nao criar MVP novo a partir de `main` sem confirmacao. Antes de qualquer PR, confirmar que a branch contem o merge do MVP7.6 ou posterior.
 
+Baseline imutavel da fase anterior: tag `v0.0.0-pre-alpha.1` no merge
+`e1263595aa736de3855234b6f9a0379b944fe70e`. A continuacao de governanca Alpha
+parte dessa baseline na branch `codex/alpha`. Consultar
+`docs/ALPHA_GOVERNANCE.md` para o snapshot, board e divergencias vigentes; nao
+tratar o nome historico da branch base como estado do MVP.
+
 ## Direcao de Dominio
 
 Nao tratar o projeto apenas como gerador de testes. Toda evolucao deve preservar a direcao de laboratorio seguro SmartOffers/ACM, local-first e mock-first, com geracao deterministica, planejamento mockado, evidencia esperada, classificacao de risco e preparacao gradual para execucao real controlada.
@@ -104,4 +110,123 @@ Executar:
 
 ```powershell
 python -m pytest tests -q
+```
+
+## Organização das skills SmartOffers
+
+### Desenvolvimento
+
+Use:
+
+```text
+.agents/skills/smartoffers-automation-developer/SKILL.md
+```
+
+para implementação, correções, testes, documentação, Git, PR, preflight,
+preparacao QA4 mock-first e evidencias sanitizadas. A skill nao autoriza
+transporte real.
+
+O Dev possui autonomia para implementar, corrigir, testar e publicar dentro do
+escopo recebido. Deve retornar somente ao concluir um goal, plano, marco
+operacional ou bloqueio material.
+
+### Gerenciamento da execução
+
+Use `.agents/skills/smartoffers-execution-manager/SKILL.md` para:
+
+- organizar goals;
+- montar pacotes completos para o Dev;
+- sequenciar entregas;
+- revisar evidências e consolidar feedback;
+- preparar liberacoes operacionais apenas quando uma fonte superior e o
+  contrato atual permitirem; no estado Alpha vigente, transporte real continua
+  bloqueado;
+- acompanhar planos com múltiplas partes;
+- decidir continuidade para o próximo goal.
+
+O Gerente deve delegar várias tarefas relacionadas de uma vez e solicitar
+retorno somente ao concluir um goal, plano ou marco operacional.
+
+### Arquitetura
+
+Use `.agents/skills/smartoffers-automation-architect/SKILL.md` somente quando
+houver decisão estrutural, novo envelope de risco, produção, mutação real nova,
+operação destrutiva, integração externa real, processamento massivo, remoção de
+guardrail ou mudança material de política.
+
+O Arquiteto nao executa trabalho rotineiro, nao faz Git como responsabilidade do
+papel, nao libera operacao real e nao aprova a propria evidencia.
+
+### Teste e revisao independentes
+
+Para cada goal material, designar um Tester/Reviewer diferente de quem
+implementou. O Tester valida aceite, regressao, seguranca, compatibilidade,
+evidencia e Git solicitado; nao corrige a propria finding como parte da mesma
+aprovacao. Findings de implementacao vao ao Gerente/Dev. Divergencias materiais
+de contrato ou risco vao ao Arquiteto.
+
+Researcher e Debugger sao papeis temporarios para investigacao delimitada. Eles
+entregam fatos, reproducao e hipoteses, sem autoridade para mudar politica ou
+executar fora do pacote.
+
+### Supervisores internos do produto
+
+Os artefatos em `ai/supervisors/*` sao contratos conceituais do produto. Nao sao
+agentes do time de desenvolvimento, nao usam ferramentas e nao possuem
+autoridade operacional. Em particular, `smartoffers-architect-supervisor` nao e
+o Arquiteto definido acima e os dois papeis nao devem ser fundidos.
+
+### Fonte de verdade
+
+Aplicar: instrucoes da plataforma/usuario; este `AGENTS.md`; estado Git e
+contratos vigentes; decisoes arquiteturais explicitas; skills. Contrato
+historico, evidencia anterior ou skill nunca cria autorizacao real. Em conflito,
+preservar a regra mais restritiva e registrar a divergencia no board canonico.
+
+### Precedência
+
+- Implementação: Developer Skill.
+- Coordenação, revisão e liberação operacional: Execution Manager Skill.
+- Mudança material de arquitetura ou risco: Architect Skill.
+
+Não carregar a skill de Arquitetura para decisões rotineiras já cobertas pelo
+Gerente ou Dev. `AGENTS.md` e as autorizações da plataforma permanecem acima
+das skills; nenhuma skill amplia sozinha a permissão para execução real.
+
+## Fluxo final recomendado
+
+```text
+ARQUITETO
+define envelope e direção
+        ↓
+GERENTE
+monta goal completo e delega
+        ↓
+DEV
+implementa + testa + corrige + publica
+        ↓
+TESTER
+valida de forma independente
+        ↓
+GERENTE
+revisa uma vez + libera + consolida
+        ↓
+PRÓXIMO GOAL
+```
+
+O retorno padrão do Dev ao Gerente é:
+
+```text
+STATUS
+GOAL
+PARTS_COMPLETED
+FILES_CHANGED
+TESTS
+SECURITY
+COMPATIBILITY
+COMMIT
+PR
+OPERATIONAL_READINESS
+BLOCKERS
+NEXT_STEP
 ```

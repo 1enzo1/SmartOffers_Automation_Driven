@@ -15,19 +15,26 @@ O projeto e seguro por padrao. Qualquer acao real deve estar bloqueada ate um MV
 - Nao expor IPs internos, URLs reais, tokens, senhas, cookies, bearer ou secrets.
 - Nao versionar ZIPs brutos de APIs ou JSONs brutos de ambiente.
 
-## Categorias de risco futuras
+## Categorias de risco vigentes
 
-`SAFE_READ`: leitura planejada ou simulada, sem mutacao e sem rede real no estado atual.
+`SAFE_LOCAL`: trabalho local sem sistema externo.
 
-`MOCK_ONLY`: acao permitida apenas para simulacao local.
+`MOCK_ONLY`: simulacao local; contato real proibido.
 
-`HOMOLOG_CONTROLLED`: acao futura restrita a ambiente homologado com controles adicionais.
+`QA4_READ_ONLY_FAST_TRACK`: classe contratual para leitura QA4. Nao e
+autorizacao operacional e, no Alpha atual, o transporte real continua bloqueado.
 
-`REAL_QA_OPT_IN`: acao futura real em QA4, com opt-in explicito e allowlist.
+`QA4_CONTROLLED_MUTATION`: mutacao QA4. Implementacao mockada pode ser preparada;
+execucao exige MVP e autorizacoes especificas.
 
 `PROD_BLOCKED`: qualquer acao contra producao.
 
-`DESTRUCTIVE_OPERATION`: mutacao, delete, rollback, publicacao ou operacao irreversivel. Deve permanecer bloqueada ate decisao explicita de produto.
+`DESTRUCTIVE_OPERATION`: mutacao irreversivel ou de alto impacto. Exige decisao
+e autorizacao especificas antes da operacao.
+
+`SAFE_READ`, `HOMOLOG_CONTROLLED` e `REAL_QA_OPT_IN` sao nomes historicos. Ao
+abrir trabalho novo, mapear para a taxonomia acima e preservar o guardrail mais
+restritivo.
 
 ## Regras para MVP7.6.1
 
@@ -51,3 +58,7 @@ Antes de qualquer chamada real opt-in em QA4, o projeto deve ter:
 - testes de allow e deny.
 
 Sem essas condicoes, `mode=real` deve continuar bloqueado.
+
+Contratos, preflights, checkpoints ou tokens anteriores nao substituem
+autorizacao atual. Ver `ALPHA_GOVERNANCE.md` para o estado canonico e as
+divergencias abertas.

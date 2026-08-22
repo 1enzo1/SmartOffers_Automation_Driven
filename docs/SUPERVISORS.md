@@ -6,11 +6,18 @@ Supervisores sao contratos de dominio do produto. Eles descrevem como o SmartOff
 
 No MVP7.6.1, supervisores sao Markdown. Eles nao executam LLM externo, nao chamam sistemas reais e nao alteram comportamento do app.
 
+Eles nao sao os agentes do fluxo de desenvolvimento. Architect, Execution
+Manager, Developer, Tester/Reviewer e Researcher/Debugger sao papeis de trabalho
+definidos em `AGENTS.md`; os contratos abaixo continuam sem ferramentas,
+autonomia, poder de aprovacao ou autoridade operacional.
+
 ## Supervisores previstos
 
 ### smartoffers-architect-supervisor
 
-Responsavel por receber uma intencao e direcionar quais supervisores ou skills devem atuar.
+Responsavel por receber uma intencao de dominio e indicar conceitualmente quais
+supervisores ou skills do produto seriam relevantes. Nao e o Architect de
+desenvolvimento e os dois papeis nao devem ser fundidos.
 
 Exemplos:
 
@@ -52,12 +59,12 @@ Responsavel por decidir se uma unidade de trabalho e dry-run, adapter-run mockad
 
 Responsavel por classificar risco e bloquear operacoes fora da politica.
 
-Categorias previstas:
+Categorias vigentes:
 
-- `SAFE_READ`
+- `SAFE_LOCAL`
 - `MOCK_ONLY`
-- `HOMOLOG_CONTROLLED`
-- `REAL_QA_OPT_IN`
+- `QA4_READ_ONLY_FAST_TRACK`
+- `QA4_CONTROLLED_MUTATION`
 - `PROD_BLOCKED`
 - `DESTRUCTIVE_OPERATION`
 
@@ -78,3 +85,6 @@ Categorias previstas:
 ## Regra de seguranca
 
 Nenhum supervisor ou skill pode habilitar execucao real por si so. Qualquer acao real exige MVP especifico, opt-in, ambiente permitido, policy explicita, testes e bloqueio de producao.
+
+No estado Alpha atual, chamadas reais a Oracle, APIs, Kafka e Jenkins permanecem
+bloqueadas. Ver `ALPHA_GOVERNANCE.md`.

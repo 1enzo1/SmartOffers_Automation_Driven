@@ -5,11 +5,15 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 ## Estado atual
 
 - Branch base atual: `qa/mvp4-integration`
+- Baseline imutavel pre-alpha: `v0.0.0-pre-alpha.1` em `e1263595aa736de3855234b6f9a0379b944fe70e`
+- Branch de continuacao de governanca Alpha: `codex/alpha`
 - Observacao sobre a branch: linha evolutiva atual do produto, apesar do nome historico ligado ao MVP4
 - Produto atual: `SmartOffers_Automation_Driven`
-- MVP atual em planejamento controlado: MVP7.8.3B - First QA4 Real Smoke Manual
-- Ultimo MVP aprovado: MVP7.8.3A.2 - Basic and Full QA4 Smoke Profiles
-- MVP7.8.3B: Execution Plan, guardrails mockados e executor manual em revisao; execucao real permanece bloqueada sem `EXECUTION_APPROVED` e `OPERATIONAL_EXECUTION_RELEASED`
+- MVP atual autorizado para desenvolvimento mock-first: MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy
+- Ultimo recorte aceito pelo Owner: MVP7.8.3B DB-only
+- MVP7.8.3B DB-only: checkpoints ACM_CUSTOM, ACM, BDA e BASIC registrados como `OK` em evidencia historica; API `NOT_READY`; `BASIC_SMOKE_OK=false`; `FULL_SMOKE_OK=false`
+- Snapshot canonico e board: `docs/ALPHA_GOVERNANCE.md`
+- Divergencia aberta: gate circular entre ACM (`BASIC_SMOKE_OK`) e API (`ACM_DB_CHECKPOINT_OK`); resolver em card mock-first sem alterar runtime nesta sincronizacao
 - Estado funcional anterior: MVP7.8.3A - Runtime Preflight seguro para execucao QA manual
 - Protecao local de runtime secrets: concluida no commit `de9d1e77cfba11b1b81aa9640cb36a7aacf5fd71`
 - PR do MVP7.6: `#12`
@@ -60,6 +64,8 @@ A execucao real continua bloqueada por padrao. Qualquer MVP futuro que tente cha
 | MVP7.8.2 | Concluido/Aprovado | Real QA Runtime Binding & Legacy Config Externalization |
 | MVP7.8.3A | Concluido/Aprovado | Runtime Preflight seguro para execucao QA manual |
 | MVP7.8.3A.1 | Concluido/Aprovado | Multi-resource Runtime Contract |
+| MVP7.8.3A.2 | Concluido/Aprovado | Basic and Full QA4 Smoke Profiles |
+| MVP7.8.3B | Concluido no recorte DB-only | Checkpoints DB aceitos; API e smokes consolidados permanecem incompletos |
 
 ## MVP7.6
 
@@ -129,9 +135,10 @@ post-vivo-next-habilitacao-de-linha-a79ab2e31c
 
 ## Roadmap ajustado
 
-O roadmap futuro parte do estado atual MVP7.8.3A.1. Os MVPs 7.6.x e 7.7.x abaixo permanecem registrados como historico concluido/aprovado, nao como pendencia futura.
+O roadmap futuro parte do recorte MVP7.8.3B DB-only aceito. Os MVPs 7.6.x e
+7.7.x abaixo permanecem registrados como historico concluido/aprovado, nao como
+pendencia futura.
 
-- MVP7.8.3B - First QA4 Real Smoke manual
 - MVP7.8.4 - QA4 Sanity Runner Standard/Variant/Copy
 - MVP7.8.5 - Real Campaign Scenario Pack 01
 - MVP7.8.6 - Evidence Comparison & Runner Hardening
