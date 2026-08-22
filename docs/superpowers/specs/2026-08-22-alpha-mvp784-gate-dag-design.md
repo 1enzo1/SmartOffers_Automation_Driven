@@ -1,8 +1,8 @@
 # Alpha MVP7.8.4 Gate DAG Design
 
-Date: 2026-08-22  
-Goal: `ALPHA-MVP784-002`  
-Task class: `DEVELOPMENT`  
+Date: 2026-08-22
+Goal: `ALPHA-MVP784-002`
+Task class: `DEVELOPMENT`
 Decision source: the accepted Architect decision for Option A / `DB_FIRST_API_LAST`
 
 ## Objective
