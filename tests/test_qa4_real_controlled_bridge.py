@@ -18,6 +18,85 @@ def _context():
     }
 
 
+class _ManualClient:
+    is_real_manual_client = True
+
+    def __init__(self, status_code):
+        self.status_code = status_code
+        self.calls = []
+
+    def send(self, sanitized_request, runtime_secrets, timeout_seconds):
+        self.calls.append((dict(sanitized_request), timeout_seconds))
+        return {
+            "status_code": self.status_code,
+            "ok": 200 <= self.status_code < 300,
+            "elapsed_ms": 1,
+            "body_recorded": False,
+        }
+
+
+class _TransportMarkedManualClient(_ManualClient):
+    is_real_transport_client = True
+
+
+def _offers_runtime_environment():
+    return {
+        "SMARTOFFERS_QA4_API_URL": "https://qa4.example.invalid/smartoffers",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN": "safe-acm-custom-dsn",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER": "safe-acm-custom-user",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD": "safe-acm-custom-password",
+        "SMARTOFFERS_QA4_ACM_DB_DSN": "safe-acm-dsn",
+        "SMARTOFFERS_QA4_ACM_DB_USER": "safe-acm-user",
+        "SMARTOFFERS_QA4_ACM_DB_PASSWORD": "safe-acm-password",
+        "SMARTOFFERS_QA4_BDA_DB_DSN": "safe-bda-dsn",
+        "SMARTOFFERS_QA4_BDA_DB_USER": "safe-bda-user",
+        "SMARTOFFERS_QA4_BDA_DB_PASSWORD": "safe-bda-password",
+        "SMARTOFFERS_ORACLE_CLIENT_LIB_DIR": "safe-oracle-client-dir",
+        "SMARTOFFERS_QA4_TEST_MSISDN": "5511999999999",
+        "SMARTOFFERS_QA4_TEST_OFFER": "QA4_SYNTHETIC_OFFER",
+    }
+
+
+def _executor_inputs():
+    api_id = "post-vivo-next-habilitacao-de-cliente-ade0841563"
+    return {
+        "runtime_refs": {
+            "QA4_HOST_REF": "runtime-ref:qa4-host",
+            "AUTH_REF": "runtime-ref:qa4-auth",
+            "SENSITIVE_HEADERS_REF": "runtime-ref:qa4-headers",
+            "TEST_PAYLOAD_REF": "runtime-ref:qa4-body",
+            "CORRELATION_ID": "corr-safe-001",
+        },
+        "runtime_secrets": {
+            "endpoint": "in-memory-endpoint",
+            "auth": "in-memory-auth",
+            "headers": {"content-type": "application/json"},
+            "body": b"unused",
+            "correlation_id": "corr-safe-001",
+            "timeout_seconds": 5,
+        },
+        "policy": {
+            "runtime_flags": {"REAL_EXECUTION_ENABLED": True, "REAL_EXECUTION_KILL_SWITCH": False},
+            "first_qa4_allowlist": {
+                "allowed_api_ids": [api_id],
+                "items": {api_id: {"api_id": api_id, "method": "POST", "environment": "QA4", "timeout_seconds": 5, "retry_count": 0, "status": "manual_offers_customer"}},
+            },
+        },
+        "approval": {"approved": True, "risk_acceptance": True, "approver_ref": "apr-safe-001", "ticket_ref": "chg-safe-001", "approved_api_id": api_id, "approved_environment": "QA4", "approved_at_ref": "time-safe-001"},
+    }
+
+
+def _one_run_opt_in():
+    return {
+        "approved": True,
+        "operation": "ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN",
+        "environment": "QA4",
+        "max_attempts": 1,
+        "retry_count": 0,
+        "fallback": False,
+    }
+
+
 def test_real_controlled_bridge_runs_standard_facade_then_blocks_before_fake_send(monkeypatch):
     facade_calls = []
 
@@ -43,6 +122,121 @@ def test_real_controlled_bridge_runs_standard_facade_then_blocks_before_fake_sen
     ]
     assert "secret" not in str(result).lower()
     assert "payload" not in str(result).lower()
+
+
+def test_real_controlled_bridge_uses_local_offers_adapter_before_zero_transport(monkeypatch):
+    adapter_calls = []
+
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "run_standard_qa4_application_mock",
+        lambda context, *, mode, evaluated_at: {"result": "PASS"},
+    )
+
+    def adapter(context, **kwargs):
+        adapter_calls.append(context)
+        return {
+            "decision": "READY",
+            "operation": "CREATE_OFFERS_CUSTOMER",
+            "attempt_policy": {"max_attempts": 1, "retry_count": 0, "fallback": False},
+            "transport_permitted": False,
+            "send_attempted": False,
+        }
+
+    monkeypatch.setattr(qa4_real_controlled_bridge, "execute_qa4_offers_customer_create", adapter)
+
+    result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(), mode="real-controlled", evaluated_at=EVALUATED_AT
+    )
+
+    assert adapter_calls == [_context() | {"event_time": EVALUATED_AT}]
+    assert result["result"] == "BLOCKED"
+    assert result["offers_adapter"]["operation"] == "CREATE_OFFERS_CUSTOMER"
+    assert result["offers_adapter"]["attempt_policy"]["max_attempts"] == 1
+    assert result["offers_adapter"]["attempt_policy"]["retry_count"] == 0
+    assert result["offers_adapter"]["attempt_policy"]["fallback"] is False
+    assert result["real_call_executed"] is False
+    assert result["fake_client_send_calls"] == 0
+
+
+def test_real_controlled_bridge_passes_evaluated_timestamp_to_offers_adapter():
+    result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(), mode="real-controlled", evaluated_at=EVALUATED_AT
+    )
+
+    assert "INVALID_EVENT_TIME" not in result["offers_adapter"]["blockers"]
+
+
+def test_real_controlled_bridge_routes_exact_offers_request_to_injected_executor_client(monkeypatch):
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "run_standard_qa4_application_mock",
+        lambda context, *, mode, evaluated_at: {"result": "PASS"},
+    )
+    client = _ManualClient(202)
+
+    result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(),
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        environ=_offers_runtime_environment(),
+        client=client,
+        **_executor_inputs(),
+    )
+
+    assert result["result"] == "PASS"
+    assert result["guard_decision"] == "manual_call_completed"
+    assert result["evidence"]["status_code"] == 202
+    assert result["real_call_executed"] is True
+    assert len(client.calls) == 1
+    assert client.calls[0][0]["api_id"] == "post-vivo-next-habilitacao-de-cliente-ade0841563"
+    assert client.calls[0][1] == 5
+
+
+def test_real_controlled_bridge_surfaces_exact_offers_failure_without_retry(monkeypatch):
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "run_standard_qa4_application_mock",
+        lambda context, *, mode, evaluated_at: {"result": "PASS"},
+    )
+    client = _ManualClient(503)
+
+    result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(),
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        environ=_offers_runtime_environment(),
+        client=client,
+        **_executor_inputs(),
+    )
+
+    assert result["result"] == "FAIL"
+    assert result["guard_decision"] == "manual_call_completed"
+    assert result["evidence"]["status_code"] == 503
+    assert len(client.calls) == 1
+    assert result["offers_adapter"]["attempt_policy"] == {"max_attempts": 1, "retry_count": 0, "fallback": False}
+
+
+def test_real_controlled_bridge_forwards_bounded_one_run_opt_in_to_transport_gate(monkeypatch):
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "run_standard_qa4_application_mock",
+        lambda context, *, mode, evaluated_at: {"result": "PASS"},
+    )
+    client = _TransportMarkedManualClient(202)
+
+    result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(),
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        environ=_offers_runtime_environment(),
+        client=client,
+        owner_opt_in=_one_run_opt_in(),
+        **_executor_inputs(),
+    )
+
+    assert result["result"] == "PASS"
+    assert len(client.calls) == 1
 
 
 def test_real_controlled_bridge_has_no_transport_imports():

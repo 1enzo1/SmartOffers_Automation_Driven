@@ -1,0 +1,363 @@
+"""Local, zero-transport wrapper for the legacy Offers customer-create shape."""
+
+import json
+from os import environ as process_environ
+from threading import Lock
+
+from core.api_catalog import get_api_catalog_entry
+from core.legacy_execution.runtime_config import resolve_legacy_runtime_config
+from core.real_execution.executor import execute_first_qa4_call_manual
+from core.real_execution.runtime_profiles import get_sanitized_runtime_profile
+from core.utils.evidence_payload_builders import build_postpaid_payload
+
+
+_QA4_ENVIRONMENT = "qa4"
+_STANDARD_PROFILE = "smartoffers_qa4_full_smoke"
+_OPERATION = "CREATE_OFFERS_CUSTOMER"
+_CATALOG_API_ID = "post-vivo-next-habilitacao-de-cliente-ade0841563"
+_LEGACY_OPERATION = "processEvent"
+_TEST_MSISDN_REF = "SMARTOFFERS_QA4_TEST_MSISDN"
+_TEST_OFFER_REF = "SMARTOFFERS_QA4_TEST_OFFER"
+_ATTEMPT_POLICY = {"max_attempts": 1, "retry_count": 0, "fallback": False}
+_ONE_RUN_OPT_IN = "ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN"
+
+
+class OneRunAttemptLedger:
+    """Process-local, thread-safe budget for explicitly scoped one-shot runs."""
+
+    def __init__(self):
+        self._lock = Lock()
+        self._consumed_scopes = set()
+
+    def consume(self, scope):
+        with self._lock:
+            if scope in self._consumed_scopes:
+                return False
+            self._consumed_scopes.add(scope)
+            return True
+
+
+_DEFAULT_ATTEMPT_LEDGER = OneRunAttemptLedger()
+
+
+def prepare_qa4_offers_customer_create(context, *, environ=None, approval=None):
+    """Preflight the legacy POST payload without exposing it or sending it."""
+
+    context_data = context if isinstance(context, dict) else {}
+    blockers = _context_blockers(context_data)
+    catalog_contract = _catalog_contract()
+    if not catalog_contract["operationally_released"] and not _approval_matches_operation(
+        approval
+    ):
+        blockers.append("REAL_QA4_OPERATION_NOT_CONFIRMED")
+    runtime_config = _runtime_config(environ)
+
+    if not runtime_config["valid"]:
+        blockers.append("QA4_CREDENTIAL_OR_CONFIG_REQUIRED")
+
+    test_data = _test_data(environ)
+    if not test_data["available"]:
+        blockers.append("QA4_TEST_DATA_REQUIRED")
+
+    builder_applied = False
+    if not _payload_build_blockers(blockers):
+        try:
+            build_postpaid_payload(
+                test_data["msisdn"],
+                test_data["offer"],
+                context_data["event_time"],
+            )
+            builder_applied = True
+        except (TypeError, ValueError):
+            blockers.append("LEGACY_PAYLOAD_CONTRACT_INVALID")
+
+    blockers = sorted(set(blockers))
+    local_preflight_ready = not any(
+        blocker != "REAL_QA4_OPERATION_NOT_CONFIRMED" for blocker in blockers
+    )
+    return {
+        "decision": "READY" if not blockers else "BLOCKED",
+        "operation": _OPERATION,
+        "blockers": blockers,
+        "preflight_status": "READY" if local_preflight_ready else "BLOCKED",
+        "runtime_preflight": _sanitized_runtime_preflight(runtime_config),
+        "test_data": {"available": test_data["available"]},
+        "request_contract": {
+            **catalog_contract["request_contract"],
+            "legacy_builder_applied": builder_applied,
+        },
+        "attempt_policy": dict(_ATTEMPT_POLICY),
+        "transport_permitted": False,
+        "send_attempted": False,
+        "real_call_executed": False,
+    }
+
+
+def execute_qa4_offers_customer_create(
+    context,
+    *,
+    environ=None,
+    runtime_refs=None,
+    runtime_secrets=None,
+    policy=None,
+    client=None,
+    approval=None,
+    owner_opt_in=None,
+    ledger=None,
+):
+    """Route the exact Offers contract through the existing manual executor.
+
+    A transport-marked client may pass only the one-run QA4 gate.  The ordinary
+    default is still a zero-send preflight because no runtime inputs or opt-in are
+    supplied by application entrypoints.
+    """
+
+    preflight = prepare_qa4_offers_customer_create(
+        context, environ=environ, approval=approval
+    )
+    if preflight["decision"] != "READY":
+        return _terminal_result("BLOCKED", preflight, None)
+    if _is_real_transport_client(client):
+        transport_blockers = _transport_gate_blockers(
+            context, preflight, policy, approval, owner_opt_in
+        )
+        if not transport_blockers:
+            if not _consume_one_run_budget(ledger):
+                return _terminal_result(
+                    "BLOCKED",
+                    preflight,
+                    {
+                        "decision": "blocked",
+                        "blocked_reasons": [f"{_ONE_RUN_OPT_IN}_BUDGET_EXHAUSTED"],
+                        "evidence": {"attempt_budget": "EXHAUSTED"},
+                    },
+                )
+            return _execute_with_manual_executor(
+                context,
+                environ,
+                runtime_refs,
+                runtime_secrets,
+                policy,
+                client,
+                approval,
+                preflight,
+            )
+        return _terminal_result(
+            "BLOCKED",
+            preflight,
+            {"decision": "blocked", "blocked_reasons": transport_blockers},
+        )
+
+    return _execute_with_manual_executor(
+        context,
+        environ,
+        runtime_refs,
+        runtime_secrets,
+        policy,
+        client,
+        approval,
+        preflight,
+    )
+
+
+def _execute_with_manual_executor(
+    context,
+    environ,
+    runtime_refs,
+    runtime_secrets,
+    policy,
+    client,
+    approval,
+    preflight,
+):
+    request = _executor_request(preflight["request_contract"])
+    executor_result = execute_first_qa4_call_manual(
+        request,
+        runtime_refs if isinstance(runtime_refs, dict) else {},
+        _runtime_secrets_with_legacy_body(context, environ, runtime_secrets),
+        policy if isinstance(policy, dict) else {},
+        client,
+        approval if isinstance(approval, dict) else {},
+    )
+    return _terminal_result(_terminal_status(executor_result), preflight, executor_result)
+
+
+def _transport_gate_blockers(context, preflight, policy, approval, owner_opt_in):
+    context_data = context if isinstance(context, dict) else {}
+    policy_data = policy if isinstance(policy, dict) else {}
+    opt_in = owner_opt_in if isinstance(owner_opt_in, dict) else {}
+    blockers = []
+    if preflight.get("preflight_status") != "READY" or context_data.get("environment") != _QA4_ENVIRONMENT:
+        blockers.append("QA4_PREFLIGHT_REQUIRED")
+    if not _approval_is_complete_for_operation(approval):
+        blockers.append("MANUAL_APPROVAL_REQUIRED")
+    if not _bounded_one_run_opt_in_matches(opt_in):
+        blockers.append(f"{_ONE_RUN_OPT_IN}_OPT_IN_REQUIRED")
+    runtime_flags = policy_data.get("runtime_flags") or {}
+    if runtime_flags.get("REAL_EXECUTION_ENABLED") is not True:
+        blockers.append("REAL_EXECUTION_ENABLED_REQUIRED")
+    if runtime_flags.get("REAL_EXECUTION_KILL_SWITCH") is not False:
+        blockers.append("REAL_EXECUTION_KILL_SWITCH_MUST_BE_FALSE")
+    return sorted(set(blockers))
+
+
+def _approval_is_complete_for_operation(approval):
+    approval_data = approval if isinstance(approval, dict) else {}
+    required_refs = ("approver_ref", "ticket_ref", "approved_at_ref")
+    return _approval_matches_operation(approval_data) and all(
+        approval_data.get(key) for key in required_refs
+    )
+
+
+def _bounded_one_run_opt_in_matches(opt_in):
+    return (
+        opt_in.get("approved") is True
+        and opt_in.get("operation") == _ONE_RUN_OPT_IN
+        and opt_in.get("environment") == "QA4"
+        and opt_in.get("max_attempts") == _ATTEMPT_POLICY["max_attempts"]
+        and opt_in.get("retry_count") == _ATTEMPT_POLICY["retry_count"]
+        and opt_in.get("fallback") is _ATTEMPT_POLICY["fallback"]
+    )
+
+
+def _consume_one_run_budget(ledger):
+    active_ledger = ledger if hasattr(ledger, "consume") else _DEFAULT_ATTEMPT_LEDGER
+    return active_ledger.consume(_ONE_RUN_OPT_IN) is True
+
+
+def _context_blockers(context):
+    blockers = []
+    if context.get("environment") != _QA4_ENVIRONMENT:
+        blockers.append("ENVIRONMENT_NOT_QA4")
+    if context.get("workflow_profile") != _STANDARD_PROFILE:
+        blockers.append("WORKFLOW_PROFILE_NOT_ALLOWED")
+    if not isinstance(context.get("event_time"), str) or not context["event_time"]:
+        blockers.append("INVALID_EVENT_TIME")
+    return blockers
+
+
+def _payload_build_blockers(blockers):
+    return [
+        blocker
+        for blocker in blockers
+        if blocker != "REAL_QA4_OPERATION_NOT_CONFIRMED"
+    ]
+
+
+def _runtime_config(environ):
+    return resolve_legacy_runtime_config(
+        get_sanitized_runtime_profile(_STANDARD_PROFILE), base_env=environ
+    )
+
+
+def _test_data(environ):
+    env = environ if isinstance(environ, dict) else process_environ
+    msisdn = env.get(_TEST_MSISDN_REF)
+    offer = env.get(_TEST_OFFER_REF)
+    return {
+        "available": bool(str(msisdn or "").strip()) and bool(str(offer or "").strip()),
+        "msisdn": msisdn,
+        "offer": offer,
+    }
+
+
+def _sanitized_runtime_preflight(runtime_config):
+    preflight = runtime_config.get("preflight") or {}
+    return {
+        "status": preflight.get("status"),
+        "environment": preflight.get("environment"),
+        "profile": preflight.get("profile"),
+        "resources": list(preflight.get("resources") or []),
+        "missing_refs": list(preflight.get("missing_refs") or []),
+    }
+
+
+def _catalog_contract():
+    entry = get_api_catalog_entry(_CATALOG_API_ID) or {}
+    request_contract = {
+        "api_id": entry.get("api_id"),
+        "method": entry.get("method"),
+        "path": entry.get("path"),
+        "legacy_operation": _LEGACY_OPERATION,
+    }
+    valid_shape = (
+        entry.get("api_id") == _CATALOG_API_ID
+        and entry.get("method") == "POST"
+        and entry.get("path") == "/ws/integration/online/process"
+        and "QA4" in (entry.get("supported_environments") or [])
+    )
+    return {
+        "request_contract": request_contract,
+        "operationally_released": valid_shape
+        and entry.get("execution_status") != "blocked"
+        and entry.get("safe_for_real_execution") is True,
+    }
+
+
+def _approval_matches_operation(approval):
+    approval_data = approval if isinstance(approval, dict) else {}
+    return (
+        approval_data.get("approved") is True
+        and approval_data.get("risk_acceptance") is True
+        and approval_data.get("approved_api_id") == _CATALOG_API_ID
+        and approval_data.get("approved_environment") == "QA4"
+    )
+
+
+def _executor_request(request_contract):
+    return {
+        "api_id": request_contract.get("api_id"),
+        "method": request_contract.get("method"),
+        "environment": "QA4",
+        "explicit_opt_in": True,
+        "timeout_seconds": 5,
+        "retry_count": 0,
+        "source": "alpha-offers-customer-create",
+    }
+
+
+def _runtime_secrets_with_legacy_body(context, environ, runtime_secrets):
+    secrets = dict(runtime_secrets) if isinstance(runtime_secrets, dict) else {}
+    test_data = _test_data(environ)
+    if test_data["available"]:
+        payload, _ = build_postpaid_payload(
+            test_data["msisdn"], test_data["offer"], context["event_time"]
+        )
+        secrets["body"] = json.dumps(
+            payload, ensure_ascii=False, separators=(",", ":")
+        ).encode("utf-8")
+    return secrets
+
+
+def _terminal_status(executor_result):
+    decision = (executor_result or {}).get("decision")
+    if decision == "manual_call_completed":
+        status_code = ((executor_result or {}).get("evidence") or {}).get("status_code")
+        return "PASS" if isinstance(status_code, int) and 200 <= status_code < 300 else "FAIL"
+    if decision == "client_error_after_send":
+        return "FAIL"
+    return "BLOCKED"
+
+
+def _terminal_result(result, preflight, executor_result):
+    executor_data = executor_result or {}
+    return {
+        "result": result,
+        "operation": _OPERATION,
+        "blockers": list(executor_data.get("blocked_reasons") or preflight["blockers"]),
+        "request_contract": dict(preflight["request_contract"]),
+        "attempt_policy": dict(_ATTEMPT_POLICY),
+        "preflight": preflight,
+        "executor_decision": executor_data.get("decision", "not_called"),
+        "evidence": dict(executor_data.get("evidence") or {}),
+        "real_call_executed": executor_data.get("real_call_executed") is True,
+        "send_attempted": executor_data.get("real_call_executed") is True
+        or executor_data.get("decision") == "client_error_after_send",
+    }
+
+
+def _is_real_transport_client(client):
+    return client is not None and (
+        getattr(client, "is_real_transport_client", False) is True
+        or client.__class__.__module__ == "core.real_execution.real_http_client"
+    )

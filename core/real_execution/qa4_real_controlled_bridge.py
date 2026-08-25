@@ -1,8 +1,6 @@
-"""Local-only bridge from Standard evidence to the QA4 manual guard."""
+"""Local-only bridge from Standard evidence to the existing QA4 executor."""
 
-from core.real_execution.executor import execute_first_qa4_call_manual
-from core.real_execution.http_client import FakeHttpClient
-from core.real_execution.policy import CANDIDATE_QA4_API_ID
+from core.real_execution.qa4_offers_customer_adapter import execute_qa4_offers_customer_create
 from core.real_execution.qa4_standard_mock_facade import run_standard_qa4_application_mock
 
 
@@ -13,20 +11,49 @@ _BLOCKERS = (
 )
 
 
-def run_standard_qa4_real_controlled(context, *, mode, evaluated_at):
-    """Show the controlled QA4 boundary without permitting transport."""
+def run_standard_qa4_real_controlled(
+    context,
+    *,
+    mode,
+    evaluated_at,
+    environ=None,
+    runtime_refs=None,
+    runtime_secrets=None,
+    policy=None,
+    client=None,
+    approval=None,
+    owner_opt_in=None,
+    ledger=None,
+):
+    """Run Standard first, then delegate the exact Offers contract to legacy gates.
+
+    The default call provides no client, refs, secrets, policy, or approval, so it
+    remains a zero-send ``BLOCKED`` preflight.  The injected seam is intentionally
+    local-test-only and delegates to the existing manual executor through the
+    Offers adapter; it does not create a second execution implementation.
+    """
 
     if mode != "real-controlled" or not _is_standard_context(context):
-        return _blocked_report({"result": "BLOCKED"}, 0)
+        return _terminal_report({"result": "BLOCKED"}, {})
 
     standard_report = run_standard_qa4_application_mock(
         context, mode="mock", evaluated_at=evaluated_at
     )
-    client = FakeHttpClient()
-    guard_result = execute_first_qa4_call_manual(
-        _placeholder_request(), {}, {}, _disabled_policy(), client, {}
+    if standard_report.get("result") != "PASS":
+        return _terminal_report(standard_report, {})
+
+    offers_adapter = execute_qa4_offers_customer_create(
+        {**context, "event_time": evaluated_at},
+        environ=environ,
+        runtime_refs=runtime_refs,
+        runtime_secrets=runtime_secrets,
+        policy=policy,
+        client=client,
+        approval=approval,
+        owner_opt_in=owner_opt_in,
+        ledger=ledger,
     )
-    return _blocked_report(standard_report, len(client.sent_requests), guard_result)
+    return _terminal_report(standard_report, offers_adapter)
 
 
 def _is_standard_context(context):
@@ -37,28 +64,27 @@ def _is_standard_context(context):
     )
 
 
-def _placeholder_request():
+def _terminal_report(standard_report, offers_adapter):
+    adapter_data = offers_adapter if isinstance(offers_adapter, dict) else {}
+    result = adapter_data.get("result")
+    if result not in {"PASS", "FAIL", "BLOCKED"}:
+        result = standard_report.get("result") if standard_report.get("result") in {"FAIL", "BLOCKED"} else "BLOCKED"
     return {
-        "api_id": CANDIDATE_QA4_API_ID,
-        "method": "POST",
-        "environment": "QA4",
-        "explicit_opt_in": False,
-        "timeout_seconds": 5,
-        "retry_count": 0,
-        "source": "alpha-real-controlled-bridge",
-    }
-
-
-def _disabled_policy():
-    return {"runtime_flags": {"REAL_EXECUTION_ENABLED": False}}
-
-
-def _blocked_report(standard_report, send_calls, guard_result=None):
-    return {
-        "result": "BLOCKED",
+        "result": result,
         "standard_report": standard_report,
-        "blockers": list(_BLOCKERS),
-        "guard_decision": (guard_result or {}).get("decision", "blocked"),
-        "real_call_executed": False,
-        "fake_client_send_calls": send_calls,
+        "blockers": _ordered_blockers(adapter_data.get("blockers") or _BLOCKERS),
+        "guard_decision": adapter_data.get("executor_decision", "not_called"),
+        "offers_adapter": adapter_data,
+        "evidence": dict(adapter_data.get("evidence") or {}),
+        "real_call_executed": adapter_data.get("real_call_executed") is True,
+        "executor_send_attempted": adapter_data.get("send_attempted") is True,
+        # Compatibility field: the bridge no longer constructs a FakeHttpClient.
+        "fake_client_send_calls": 0,
     }
+
+
+def _ordered_blockers(blockers):
+    blocker_set = set(blockers)
+    return [blocker for blocker in _BLOCKERS if blocker in blocker_set] + sorted(
+        blocker_set.difference(_BLOCKERS)
+    )
