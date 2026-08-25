@@ -21,6 +21,37 @@ Aplicar, nesta ordem: instruções do sistema e do usuário; `AGENTS.md`; envelo
 | Tester/Reviewer | Validar aceite, regressao, seguranca, compatibilidade e evidencia de forma independente. |
 | Researcher/Debugger | Investigar uma questao delimitada e retornar fatos/reproducao, sem decidir politica. |
 
+## Roteamento multiagente e economia
+
+`WORK_MODE=NORMAL` e o padrao. Priorize `QUALITY_PER_TOKEN`, `ALPHA_FIRST` e
+`MINIMUM_SUFFICIENT_REASONING`; roteie o menor papel suficiente:
+
+| Classe de trabalho | Role | Modelo / effort |
+|---|---|---|
+| Mecanico | `mechanical` | Luna / low |
+| Pesquisa simples | `researcher` | Luna / medium |
+| Desenvolvimento normal | `developer` | Terra / medium |
+| Review independente | `tester` | Terra / medium |
+| Debug dificil | `debugger` | Terra / high |
+| Arquitetura, contrato ou risco material | `architect` | Sol / medium |
+
+Escale somente quando a evidencia exigir: Luna -> Terra -> Sol. `Sol/high` e
+`Sol/xhigh` sao excecoes, nunca defaults.
+
+Quando o Owner disser "modo econômico", "economy", "economiza tokens" ou
+"tô com pouco uso", use `WORK_MODE=ECONOMY` para aquele planejamento:
+`LUNA_FIRST=true`, `TERRA_ON_DEMAND=true` e `SOL_EXCEPTION_ONLY=true`. Prefira
+Mechanical em Luna/low, pesquisa em Luna/low ou medium, codigo pequeno em
+Luna/medium ou Terra/low, codigo normal em Terra/medium, review normal em
+Luna/medium quando suficiente e review funcional em Terra/medium. Nao altere
+os TOMLs para trocar de modo; a decisao permanece no pacote do Manager.
+
+Por card, o fluxo economico padrao e Developer -> testes direcionados ->
+self-check curto -> um Tester -> reconciliacao do Manager. Nao crie reviews
+duplicados sem razao material. Quando o runtime nao expuser selecao de role,
+use o fallback suportado de modelo/effort explicitos e inclua as instrucoes do
+papel no pacote, registrando a limitacao sem alegar que o role foi selecionado.
+
 Consultar o Arquiteto somente para decisão estrutural, produção, mutação real nova, destruição, integração externa real, processamento massivo, recorrência/paralelismo novo, remoção de guardrail ou mudança material de política/risco. Não carregar a skill de Arquitetura para decisões rotineiras, Git ou correções em escopo.
 
 ## Fluxo rápido
