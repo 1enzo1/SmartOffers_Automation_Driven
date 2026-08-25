@@ -54,6 +54,24 @@ def test_standard_mock_api_runs_only_allowlisted_context_once(app_client_factory
     assert "must-not-appear" not in response.get_data(as_text=True)
 
 
+def test_standard_mock_api_runs_the_real_local_facade_inside_any_valid_window(
+    app_client_factory,
+):
+    client, _ = app_client_factory("qa4-standard-api")
+
+    response = client.post(
+        "/api/qa4/standard/mock-run",
+        json=_payload(
+            window_started_at="2026-08-25T12:00:00+00:00",
+            window_expires_at="2026-08-25T12:15:00+00:00",
+            evaluated_at="2026-08-25T12:10:00+00:00",
+        ),
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["result"] == "PASS"
+
+
 def test_standard_mock_api_blocks_real_mode_without_invoking_facade(app_client_factory, monkeypatch):
     client, _ = app_client_factory("qa4-standard-api")
     monkeypatch.setattr(

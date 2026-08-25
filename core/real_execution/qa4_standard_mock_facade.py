@@ -23,20 +23,23 @@ def run_standard_qa4_application_mock(context, *, mode, evaluated_at):
                 "acm_custom_db",
                 "smartoffers_basic_smoke",
                 "CONNECT_AND_READ_OK",
+                evaluated_at,
             ),
             acm_executor=lambda _context: _db_result(
                 "ORACLE_ACM_TECHNICAL_READ_ONLY_01",
                 "acm_db",
                 _STANDARD_PROFILE,
                 "CONNECT_AND_READ_OK",
+                evaluated_at,
             ),
             bda_executor=lambda _context: _db_result(
                 "ORACLE_BDA_TECHNICAL_READ_ONLY_01",
                 "bda_db",
                 _STANDARD_PROFILE,
                 "BDA_DB_CHECKPOINT_OK",
+                evaluated_at,
             ),
-            api_client=lambda _context, _bundle: _api_result(),
+            api_client=lambda _context, _bundle: _api_result(evaluated_at),
         )
     )
 
@@ -61,10 +64,10 @@ def _with_terminal_result(output):
     return {**output, "result": result}
 
 
-def _db_result(checkpoint, resource_id, profile, status):
+def _db_result(checkpoint, resource_id, profile, status, timestamp):
     return {
         "execution_id": f"mock-{resource_id}",
-        "timestamp": "2026-08-22T12:05:00+00:00",
+        "timestamp": timestamp,
         "environment": "qa4",
         "profile": profile,
         "checkpoint": checkpoint,
@@ -86,10 +89,10 @@ def _db_result(checkpoint, resource_id, profile, status):
     }
 
 
-def _api_result():
+def _api_result(timestamp):
     return {
         "execution_id": "mock-smartoffers-api",
-        "timestamp": "2026-08-22T12:06:00+00:00",
+        "timestamp": timestamp,
         "environment": "qa4",
         "profile": _STANDARD_PROFILE,
         "checkpoint": "SMARTOFFERS_API_QA4_TECHNICAL_READ_ONLY_01",

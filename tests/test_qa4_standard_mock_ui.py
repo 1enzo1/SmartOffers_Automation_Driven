@@ -14,6 +14,12 @@ def test_home_contains_an_isolated_standard_qa4_mock_control_seam():
     assert "getRunStatusMeta" in html
 
 
+def test_standard_qa4_mock_control_uses_the_http_contract_environment_value():
+    html = Path("templates/index.html").read_text(encoding="utf-8")
+
+    assert '<option value="QA4" selected>QA4</option>' in html
+
+
 def test_standard_qa4_mock_handler_uses_text_only_result_rendering():
     html = Path("templates/index.html").read_text(encoding="utf-8")
     start = html.index("async function runQa4StandardMock()")
