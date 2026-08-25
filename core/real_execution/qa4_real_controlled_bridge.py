@@ -40,6 +40,11 @@ def run_standard_qa4_real_controlled(
 
     if mode != "real-controlled" or not _is_standard_context(context):
         return _terminal_report({"result": "BLOCKED"}, {})
+    if scenario_id is not None and scenario_id != SYNTHETIC_OFFERS_SCENARIO:
+        return _terminal_report(
+            {"result": "BLOCKED"},
+            {"result": "BLOCKED", "blockers": ["SCENARIO_NOT_ALLOWED"]},
+        )
 
     standard_report = run_standard_qa4_application_mock(
         context, mode="mock", evaluated_at=evaluated_at

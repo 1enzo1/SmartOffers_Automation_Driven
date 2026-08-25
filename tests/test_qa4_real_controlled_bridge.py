@@ -212,6 +212,33 @@ def test_selected_synthetic_scenario_routes_standard_pass_to_one_synthetic_adapt
     assert result["executor_send_attempted"] is False
 
 
+def test_direct_bridge_blocks_unsupported_selected_scenario_before_runner_or_adapter(monkeypatch):
+    for collaborator in (
+        "run_standard_qa4_application_mock",
+        "execute_one_synthetic_qa4_offers_customer_create",
+        "execute_qa4_offers_customer_create",
+    ):
+        monkeypatch.setattr(
+            qa4_real_controlled_bridge,
+            collaborator,
+            lambda *args, **kwargs: (_ for _ in ()).throw(
+                AssertionError("unsupported scenario must not invoke collaborator")
+            ),
+        )
+
+    result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(),
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        scenario_id="UNSUPPORTED_SCENARIO",
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert result["blockers"] == ["SCENARIO_NOT_ALLOWED"]
+    assert result["real_call_executed"] is False
+    assert result["executor_send_attempted"] is False
+
+
 def test_real_controlled_bridge_passes_evaluated_timestamp_to_offers_adapter():
     result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
         _context(), mode="real-controlled", evaluated_at=EVALUATED_AT
