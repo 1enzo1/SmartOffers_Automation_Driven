@@ -4,6 +4,8 @@ Registro de andamento, decisoes e proximos passos do SmartOffers Automation Driv
 
 ## Estado atual
 
+- PR #19 fechado: `CONTRACT_CONFLICT-001` foi resolvido com DAG DB-first/API-last e evidencia de checkpoints estruturada.
+- PR #20 e a base oficial atual no SHA `87d0cb08b46d98e4ae7ab89c1c8c9bc09321c999`; e necessario recarregar a configuracao local do Codex.
 - Branch base atual: `qa/mvp4-integration`
 - Baseline imutavel pre-alpha: `v0.0.0-pre-alpha.1` em `e1263595aa736de3855234b6f9a0379b944fe70e`
 - Branch de continuacao de governanca Alpha: `codex/alpha`

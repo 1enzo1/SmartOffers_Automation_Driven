@@ -2,6 +2,12 @@ approval_policy = "on-request"
 approvals_reviewer = "auto_review"
 sandbox_mode = "workspace-write"
 
+[sandbox_workspace_write]
+writable_roots = [
+  "C:\\Users\\322249\\AppData\\Local\\Temp\\smartoffers-alpha-delivery",
+]
+network_access = false
+
 [agents]
 enabled = true
 max_concurrent_threads_per_session = 2
