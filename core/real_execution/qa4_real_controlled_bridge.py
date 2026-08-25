@@ -1,6 +1,9 @@
 """Local-only bridge from Standard evidence to the existing QA4 executor."""
 
-from core.real_execution.qa4_offers_customer_adapter import execute_qa4_offers_customer_create
+from core.real_execution.qa4_offers_customer_adapter import (
+    execute_one_synthetic_qa4_offers_customer_create,
+    execute_qa4_offers_customer_create,
+)
 from core.real_execution.qa4_standard_mock_facade import run_standard_qa4_application_mock
 
 
@@ -9,6 +12,7 @@ _BLOCKERS = (
     "QA4_TEST_DATA_REQUIRED",
     "QA4_CREDENTIAL_OR_CONFIG_REQUIRED",
 )
+SYNTHETIC_OFFERS_SCENARIO = "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
 
 
 def run_standard_qa4_real_controlled(
@@ -24,6 +28,7 @@ def run_standard_qa4_real_controlled(
     approval=None,
     owner_opt_in=None,
     ledger=None,
+    scenario_id=None,
 ):
     """Run Standard first, then delegate the exact Offers contract to legacy gates.
 
@@ -42,17 +47,30 @@ def run_standard_qa4_real_controlled(
     if standard_report.get("result") != "PASS":
         return _terminal_report(standard_report, {})
 
-    offers_adapter = execute_qa4_offers_customer_create(
-        {**context, "event_time": evaluated_at},
-        environ=environ,
-        runtime_refs=runtime_refs,
-        runtime_secrets=runtime_secrets,
-        policy=policy,
-        client=client,
-        approval=approval,
-        owner_opt_in=owner_opt_in,
-        ledger=ledger,
-    )
+    if scenario_id == SYNTHETIC_OFFERS_SCENARIO:
+        offers_adapter = execute_one_synthetic_qa4_offers_customer_create(
+            context,
+            environ=environ,
+            runtime_refs=runtime_refs,
+            runtime_secrets=runtime_secrets,
+            policy=policy,
+            client=client,
+            approval=approval,
+            owner_opt_in=owner_opt_in,
+            ledger=ledger,
+        )
+    else:
+        offers_adapter = execute_qa4_offers_customer_create(
+            {**context, "event_time": evaluated_at},
+            environ=environ,
+            runtime_refs=runtime_refs,
+            runtime_secrets=runtime_secrets,
+            policy=policy,
+            client=client,
+            approval=approval,
+            owner_opt_in=owner_opt_in,
+            ledger=ledger,
+        )
     return _terminal_report(standard_report, offers_adapter)
 
 

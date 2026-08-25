@@ -35,7 +35,10 @@ from core.legacy_execution import (
 from core.real_execution.environments import list_sanitized_qa_environments
 from core.real_execution.runtime_profiles import list_sanitized_runtime_profiles
 from core.real_execution import run_standard_qa4_application_mock
-from core.real_execution.qa4_real_controlled_bridge import run_standard_qa4_real_controlled
+from core.real_execution.qa4_real_controlled_bridge import (
+    SYNTHETIC_OFFERS_SCENARIO,
+    run_standard_qa4_real_controlled,
+)
 from core.simulation import run_dry_run, save_dry_run_report
 from core.templates import get_template, list_template_categories, list_templates
 
@@ -196,6 +199,8 @@ def api_standard_qa4_real_controlled_run():
         return _standard_qa4_api_block("MALFORMED_REQUEST")
     if data.get("mode") != "real-controlled":
         return _standard_qa4_api_block("MODE_NOT_ALLOWED")
+    if data.get("scenario_id") != SYNTHETIC_OFFERS_SCENARIO:
+        return _standard_qa4_api_block("SCENARIO_NOT_ALLOWED")
 
     validation_data = {**data, "mode": "mock"}
     context, evaluated_at, reason = _standard_qa4_api_context(validation_data)
@@ -203,7 +208,10 @@ def api_standard_qa4_real_controlled_run():
         return _standard_qa4_api_block(reason)
 
     report = run_standard_qa4_real_controlled(
-        context, mode="real-controlled", evaluated_at=evaluated_at
+        context,
+        mode="real-controlled",
+        evaluated_at=evaluated_at,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
     )
     return jsonify(report)
 

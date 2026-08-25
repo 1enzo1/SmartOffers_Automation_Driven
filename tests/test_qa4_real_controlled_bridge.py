@@ -5,6 +5,7 @@ from core.real_execution import qa4_real_controlled_bridge
 
 
 EVALUATED_AT = "2026-08-25T12:00:00+00:00"
+SYNTHETIC_OFFERS_SCENARIO = "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
 
 
 def _context():
@@ -159,6 +160,58 @@ def test_real_controlled_bridge_uses_local_offers_adapter_before_zero_transport(
     assert result["fake_client_send_calls"] == 0
 
 
+def test_selected_synthetic_scenario_routes_standard_pass_to_one_synthetic_adapter(monkeypatch):
+    adapter_calls = []
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "run_standard_qa4_application_mock",
+        lambda context, *, mode, evaluated_at: {"result": "PASS"},
+    )
+
+    def synthetic_adapter(context, **kwargs):
+        adapter_calls.append((context, kwargs))
+        return {
+            "result": "PASS",
+            "operation": "CREATE_OFFERS_CUSTOMER",
+            "evidence": {"synthetic": True},
+            "send_attempted": False,
+            "real_call_executed": False,
+        }
+
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "execute_one_synthetic_qa4_offers_customer_create",
+        synthetic_adapter,
+    )
+
+    result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(),
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
+    )
+
+    assert result["result"] == "PASS"
+    assert adapter_calls == [
+        (
+            _context(),
+            {
+                "environ": None,
+                "runtime_refs": None,
+                "runtime_secrets": None,
+                "policy": None,
+                "client": None,
+                "approval": None,
+                "owner_opt_in": None,
+                "ledger": None,
+            },
+        )
+    ]
+    assert result["evidence"] == {"synthetic": True}
+    assert result["real_call_executed"] is False
+    assert result["executor_send_attempted"] is False
+
+
 def test_real_controlled_bridge_passes_evaluated_timestamp_to_offers_adapter():
     result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
         _context(), mode="real-controlled", evaluated_at=EVALUATED_AT
@@ -257,7 +310,7 @@ def test_real_controlled_api_entry_returns_sanitized_blocked_bridge(app_client_f
     monkeypatch.setattr(
         app_module,
         "run_standard_qa4_real_controlled",
-        lambda context, *, mode, evaluated_at: {
+        lambda context, *, mode, evaluated_at, scenario_id: {
             "result": "BLOCKED",
             "standard_report": {"result": "PASS"},
             "blockers": ["REAL_QA4_OPERATION_NOT_CONFIRMED"],
@@ -272,6 +325,7 @@ def test_real_controlled_api_entry_returns_sanitized_blocked_bridge(app_client_f
             **_context(),
             "environment": "QA4",
             "mode": "real-controlled",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
             "evaluated_at": EVALUATED_AT,
             "secret": "must-not-appear",
         },
@@ -280,3 +334,79 @@ def test_real_controlled_api_entry_returns_sanitized_blocked_bridge(app_client_f
     assert response.status_code == 200
     assert response.get_json()["result"] == "BLOCKED"
     assert "must-not-appear" not in response.get_data(as_text=True)
+
+
+def test_selected_synthetic_scenario_api_routes_only_qa4_to_real_controlled_bridge(
+    app_client_factory, monkeypatch
+):
+    client, _ = app_client_factory("qa4-selected-scenario")
+    bridge_calls = []
+
+    def bridge(context, *, mode, evaluated_at, scenario_id):
+        bridge_calls.append((context, mode, evaluated_at, scenario_id))
+        return {
+            "result": "BLOCKED",
+            "blockers": ["AUTH_CONTRACT_UNREADY"],
+            "real_call_executed": False,
+            "executor_send_attempted": False,
+        }
+
+    monkeypatch.setattr(app_module, "run_standard_qa4_real_controlled", bridge)
+    response = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={
+            **_context(),
+            "environment": "QA4",
+            "mode": "real-controlled",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "evaluated_at": EVALUATED_AT,
+            "secret": "must-not-appear",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["result"] == "BLOCKED"
+    assert bridge_calls == [
+        (
+            _context() | {"environment": "qa4"},
+            "real-controlled",
+            EVALUATED_AT,
+            SYNTHETIC_OFFERS_SCENARIO,
+        )
+    ]
+    assert "must-not-appear" not in response.get_data(as_text=True)
+
+
+def test_selected_synthetic_scenario_api_blocks_wrong_environment_or_scenario_before_bridge(
+    app_client_factory, monkeypatch
+):
+    client, _ = app_client_factory("qa4-selected-scenario-blocked")
+    monkeypatch.setattr(
+        app_module,
+        "run_standard_qa4_real_controlled",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("bridge must not run")),
+    )
+
+    production = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={
+            **_context(),
+            "environment": "PRODUCTION",
+            "mode": "real-controlled",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "evaluated_at": EVALUATED_AT,
+        },
+    )
+    wrong_scenario = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={
+            **_context(),
+            "environment": "QA4",
+            "mode": "real-controlled",
+            "scenario_id": "UNSUPPORTED_SCENARIO",
+            "evaluated_at": EVALUATED_AT,
+        },
+    )
+
+    assert production.get_json() == {"result": "BLOCKED", "reason": "ENVIRONMENT_NOT_ALLOWED"}
+    assert wrong_scenario.get_json() == {"result": "BLOCKED", "reason": "SCENARIO_NOT_ALLOWED"}
