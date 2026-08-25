@@ -1880,6 +1880,22 @@ pre {
                         <button class="success" id="runAdapterButton" type="button" onclick="runAdapterRun()" disabled>Executar adapter-run</button>
                         <button class="secondary" type="button" onclick="refreshAdapters()">Atualizar adapters</button>
                     </div>
+                    <div class="adapter-toolbar" aria-label="Standard QA4 mock">
+                        <div class="field">
+                            <label for="qa4StandardEnvironment">Ambiente QA4</label>
+                            <select id="qa4StandardEnvironment" aria-label="Ambiente QA4 Standard mock">
+                                <option value="qa4" selected>QA4</option>
+                            </select>
+                        </div>
+                        <div class="field">
+                            <label for="qa4StandardProfile">Perfil Standard</label>
+                            <select id="qa4StandardProfile" aria-label="Perfil Standard mock">
+                                <option value="smartoffers_qa4_full_smoke" selected>Standard QA4</option>
+                            </select>
+                        </div>
+                        <button class="success" id="runQa4StandardMockButton" type="button" onclick="runQa4StandardMock()">Executar Standard mock</button>
+                    </div>
+                    <div id="qa4StandardMockResult" class="message" aria-live="polite"></div>
                     <div id="adapterMessage" class="message"></div>
 
                     <div class="adapter-grid">
@@ -3083,6 +3099,48 @@ async function runAdapterRun(){
         updateAdaptersState("erro")
     } finally {
         button.disabled = !(currentGeneratedScenario && currentGeneratedScenario.id)
+    }
+}
+
+async function runQa4StandardMock(){
+    const button = document.getElementById("runQa4StandardMockButton")
+    const result = document.getElementById("qa4StandardMockResult")
+    const now = new Date()
+    const windowStartedAt = new Date(now.getTime() - 60 * 1000).toISOString()
+    const windowExpiresAt = new Date(now.getTime() + 14 * 60 * 1000).toISOString()
+    const context = {
+        environment: document.getElementById("qa4StandardEnvironment").value || "qa4",
+        mode: "mock",
+        workflow_profile: document.getElementById("qa4StandardProfile").value || "smartoffers_qa4_full_smoke",
+        orchestration_id: "alpha-ui-standard-mock",
+        operational_window_ref: "alpha-ui-window-ref",
+        window_started_at: windowStartedAt,
+        window_expires_at: windowExpiresAt,
+        evaluated_at: now.toISOString(),
+    }
+
+    button.disabled = true
+    result.textContent = "Executando Standard mock local..."
+    result.className = "message"
+
+    try {
+        const response = await fetch("/api/qa4/standard/mock-run", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify(context),
+        })
+        const data = await response.json()
+        const status = data.result || data.report?.result || "BLOCKED"
+        const meta = getRunStatusMeta(status)
+        const reason = data.reason || data.report?.full?.status || "SEM_DETALHE"
+        result.textContent = `Standard mock ${meta.text}: ${reason}`
+        result.className = `message ${meta.logClass}`.trim()
+    } catch (_error) {
+        const meta = getRunStatusMeta("BLOCKED")
+        result.textContent = `Standard mock ${meta.text}: API_INDISPONIVEL`
+        result.className = `message ${meta.logClass}`.trim()
+    } finally {
+        button.disabled = false
     }
 }
 
