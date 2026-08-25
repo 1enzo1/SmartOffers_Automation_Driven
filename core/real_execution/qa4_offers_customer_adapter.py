@@ -1,6 +1,7 @@
 """Local, zero-transport wrapper for the legacy Offers customer-create shape."""
 
 import json
+import re
 from datetime import datetime
 from os import environ as process_environ
 from random import randint
@@ -22,6 +23,8 @@ _TEST_MSISDN_REF = "SMARTOFFERS_QA4_TEST_MSISDN"
 _TEST_OFFER_REF = "SMARTOFFERS_QA4_TEST_OFFER"
 _ATTEMPT_POLICY = {"max_attempts": 1, "retry_count": 0, "fallback": False}
 _ONE_RUN_OPT_IN = "ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN"
+_EVENT_TIME_FORMAT = "%d-%m-%Y %H:%M:%S"
+_EVENT_TIME_PATTERN = re.compile(r"\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
 
 
 class OneRunAttemptLedger:
@@ -107,9 +110,14 @@ def prepare_one_synthetic_qa4_offers_customer_create(
     same one-time candidate is carried through its internal preflight.
     """
 
-    candidate = _generate_synthetic_customer(random_int=random_int)
+    context_with_today = _context_with_today(context, current_time=current_time)
+    candidate = (
+        _generate_synthetic_customer(random_int=random_int)
+        if context_with_today.get("event_time")
+        else None
+    )
     return prepare_qa4_offers_customer_create(
-        _context_with_today(context, current_time=current_time),
+        context_with_today,
         environ=environ,
         approval=approval,
         synthetic_customer=candidate,
@@ -132,9 +140,14 @@ def execute_one_synthetic_qa4_offers_customer_create(
 ):
     """Execute the one-shot path without persisting or reporting test data."""
 
-    candidate = _generate_synthetic_customer(random_int=random_int)
+    context_with_today = _context_with_today(context, current_time=current_time)
+    candidate = (
+        _generate_synthetic_customer(random_int=random_int)
+        if context_with_today.get("event_time")
+        else None
+    )
     return execute_qa4_offers_customer_create(
-        _context_with_today(context, current_time=current_time),
+        context_with_today,
         environ=environ,
         runtime_refs=runtime_refs,
         runtime_secrets=runtime_secrets,
@@ -406,10 +419,23 @@ def _generate_synthetic_customer(*, random_int=None):
 
 
 def _context_with_today(context, *, current_time=None):
-    timestamp = current_time() if callable(current_time) else datetime.now().strftime("%d-%m-%Y %H:%M:%S")
-    if not isinstance(timestamp, str) or not timestamp:
-        raise ValueError("current time must use the postpaid event-time format")
-    return {**(context if isinstance(context, dict) else {}), "event_time": timestamp}
+    raw_timestamp = current_time() if callable(current_time) else datetime.now()
+    timestamp = (
+        raw_timestamp.strftime(_EVENT_TIME_FORMAT)
+        if isinstance(raw_timestamp, datetime)
+        else raw_timestamp
+    )
+    event_time = timestamp if _is_local_today_event_time(timestamp) else None
+    return {**(context if isinstance(context, dict) else {}), "event_time": event_time}
+
+
+def _is_local_today_event_time(timestamp):
+    if not isinstance(timestamp, str) or not _EVENT_TIME_PATTERN.fullmatch(timestamp):
+        return False
+    try:
+        return datetime.strptime(timestamp, _EVENT_TIME_FORMAT).date() == datetime.now().date()
+    except ValueError:
+        return False
 
 
 def _sanitized_test_data(test_data):

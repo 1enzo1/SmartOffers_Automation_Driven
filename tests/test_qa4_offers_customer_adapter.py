@@ -1,5 +1,9 @@
+import json
+from datetime import datetime, timedelta
+
 from core.real_execution.qa4_offers_customer_adapter import (
     OneRunAttemptLedger,
+    execute_one_synthetic_qa4_offers_customer_create,
     execute_qa4_offers_customer_create,
     prepare_one_synthetic_qa4_offers_customer_create,
     prepare_qa4_offers_customer_create,
@@ -59,6 +63,26 @@ class TransportMarkedLocalClient(LocalManualClient):
     """In-memory stand-in for the isolated real client; it never opens a socket."""
 
     is_real_transport_client = True
+
+
+class ContractInspectingTransportClient(TransportMarkedLocalClient):
+    def __init__(self, status_code, expected_event_time):
+        super().__init__(status_code)
+        self.expected_event_time = expected_event_time
+        self.body_contract_ok = False
+
+    def send(self, sanitized_request, runtime_secrets, timeout_seconds):
+        payload = json.loads(runtime_secrets["body"].decode("utf-8"))
+        attributes = payload["attributes"]
+        account = attributes["447500851"]
+        self.body_contract_ok = (
+            payload["operation"] == "processEvent"
+            and payload["eventTime"] == self.expected_event_time
+            and attributes["1667261676"].startswith("119")
+            and account == attributes["1667261676"][3:]
+            and attributes["1597489127"] == f"NEXT_{account}"
+        )
+        return super().send(sanitized_request, runtime_secrets, timeout_seconds)
 
 
 def _runtime_refs():
@@ -182,7 +206,7 @@ def test_preflight_blocks_when_synthetic_customer_reference_is_absent():
 def test_one_synthetic_preflight_generates_one_candidate_uses_today_and_keeps_values_out_of_evidence():
     runtime_env = _runtime_env()
     runtime_env.pop("SMARTOFFERS_QA4_TEST_MSISDN")
-    fixed_now = "25-08-2026 12:00:00"
+    fixed_now = datetime.now().strftime("%d-%m-%Y 12:00:00")
 
     result = prepare_one_synthetic_qa4_offers_customer_create(
         _context(),
@@ -201,6 +225,63 @@ def test_one_synthetic_preflight_generates_one_candidate_uses_today_and_keeps_va
     assert "119" not in rendered
     assert "NEXT_" not in rendered
     assert fixed_now not in rendered
+
+
+def test_one_synthetic_execute_uses_one_candidate_with_today_and_sanitized_evidence():
+    runtime_env = _runtime_env()
+    runtime_env.pop("SMARTOFFERS_QA4_TEST_MSISDN")
+    today = datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    generator_calls = []
+    client = ContractInspectingTransportClient(201, today)
+
+    result = execute_one_synthetic_qa4_offers_customer_create(
+        _context(),
+        environ=runtime_env,
+        runtime_refs=_runtime_refs(),
+        runtime_secrets=_runtime_secrets(),
+        policy=_policy(),
+        client=client,
+        approval=_approval(),
+        owner_opt_in=_one_offers_customer_create_opt_in(),
+        ledger=OneRunAttemptLedger(),
+        current_time=lambda: today,
+        random_int=lambda lower, upper: generator_calls.append((lower, upper)) or lower,
+    )
+
+    assert result["result"] == "PASS"
+    assert generator_calls == [(20_000_000, 99_999_999)]
+    assert len(client.calls) == 1
+    assert client.body_contract_ok is True
+    rendered = str(result)
+    assert "119" not in rendered
+    assert "NEXT_" not in rendered
+    assert runtime_env["SMARTOFFERS_QA4_TEST_OFFER"] not in rendered
+
+
+def test_one_synthetic_execute_blocks_malformed_or_historical_date_without_send():
+    runtime_env = _runtime_env()
+    runtime_env.pop("SMARTOFFERS_QA4_TEST_MSISDN")
+    client = TransportMarkedLocalClient(201)
+    historical = (datetime.now() - timedelta(days=1)).strftime("%d-%m-%Y %H:%M:%S")
+
+    for clock_value in ("invalid-date", historical):
+        result = execute_one_synthetic_qa4_offers_customer_create(
+            _context(),
+            environ=runtime_env,
+            runtime_refs=_runtime_refs(),
+            runtime_secrets=_runtime_secrets(),
+            policy=_policy(),
+            client=client,
+            approval=_approval(),
+            owner_opt_in=_one_offers_customer_create_opt_in(),
+            ledger=OneRunAttemptLedger(),
+            current_time=lambda value=clock_value: value,
+        )
+
+        assert result["result"] == "BLOCKED"
+        assert "INVALID_EVENT_TIME" in result["blockers"]
+
+    assert client.calls == []
 
 
 def test_preflight_blocks_non_qa4_context_before_any_payload_is_built():
