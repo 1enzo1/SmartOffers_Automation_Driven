@@ -1,7 +1,9 @@
 """Local, zero-transport wrapper for the legacy Offers customer-create shape."""
 
 import json
+from datetime import datetime
 from os import environ as process_environ
+from random import randint
 from threading import Lock
 
 from core.api_catalog import get_api_catalog_entry
@@ -40,7 +42,9 @@ class OneRunAttemptLedger:
 _DEFAULT_ATTEMPT_LEDGER = OneRunAttemptLedger()
 
 
-def prepare_qa4_offers_customer_create(context, *, environ=None, approval=None):
+def prepare_qa4_offers_customer_create(
+    context, *, environ=None, approval=None, synthetic_customer=None
+):
     """Preflight the legacy POST payload without exposing it or sending it."""
 
     context_data = context if isinstance(context, dict) else {}
@@ -55,7 +59,7 @@ def prepare_qa4_offers_customer_create(context, *, environ=None, approval=None):
     if not runtime_config["valid"]:
         blockers.append("QA4_CREDENTIAL_OR_CONFIG_REQUIRED")
 
-    test_data = _test_data(environ)
+    test_data = _test_data(environ, synthetic_customer=synthetic_customer)
     if not test_data["available"]:
         blockers.append("QA4_TEST_DATA_REQUIRED")
 
@@ -81,7 +85,7 @@ def prepare_qa4_offers_customer_create(context, *, environ=None, approval=None):
         "blockers": blockers,
         "preflight_status": "READY" if local_preflight_ready else "BLOCKED",
         "runtime_preflight": _sanitized_runtime_preflight(runtime_config),
-        "test_data": {"available": test_data["available"]},
+        "test_data": _sanitized_test_data(test_data),
         "request_contract": {
             **catalog_contract["request_contract"],
             "legacy_builder_applied": builder_applied,
@@ -91,6 +95,56 @@ def prepare_qa4_offers_customer_create(context, *, environ=None, approval=None):
         "send_attempted": False,
         "real_call_executed": False,
     }
+
+
+def prepare_one_synthetic_qa4_offers_customer_create(
+    context, *, environ=None, approval=None, current_time=None, random_int=None
+):
+    """Prepare exactly one synthetic QA4 candidate entirely in memory.
+
+    The candidate is deliberately absent from the returned evidence.  A caller
+    intending a controlled mutation must use the matching execute helper so the
+    same one-time candidate is carried through its internal preflight.
+    """
+
+    candidate = _generate_synthetic_customer(random_int=random_int)
+    return prepare_qa4_offers_customer_create(
+        _context_with_today(context, current_time=current_time),
+        environ=environ,
+        approval=approval,
+        synthetic_customer=candidate,
+    )
+
+
+def execute_one_synthetic_qa4_offers_customer_create(
+    context,
+    *,
+    environ=None,
+    runtime_refs=None,
+    runtime_secrets=None,
+    policy=None,
+    client=None,
+    approval=None,
+    owner_opt_in=None,
+    ledger=None,
+    current_time=None,
+    random_int=None,
+):
+    """Execute the one-shot path without persisting or reporting test data."""
+
+    candidate = _generate_synthetic_customer(random_int=random_int)
+    return execute_qa4_offers_customer_create(
+        _context_with_today(context, current_time=current_time),
+        environ=environ,
+        runtime_refs=runtime_refs,
+        runtime_secrets=runtime_secrets,
+        policy=policy,
+        client=client,
+        approval=approval,
+        owner_opt_in=owner_opt_in,
+        ledger=ledger,
+        synthetic_customer=candidate,
+    )
 
 
 def execute_qa4_offers_customer_create(
@@ -104,6 +158,7 @@ def execute_qa4_offers_customer_create(
     approval=None,
     owner_opt_in=None,
     ledger=None,
+    synthetic_customer=None,
 ):
     """Route the exact Offers contract through the existing manual executor.
 
@@ -113,7 +168,10 @@ def execute_qa4_offers_customer_create(
     """
 
     preflight = prepare_qa4_offers_customer_create(
-        context, environ=environ, approval=approval
+        context,
+        environ=environ,
+        approval=approval,
+        synthetic_customer=synthetic_customer,
     )
     if preflight["decision"] != "READY":
         return _terminal_result("BLOCKED", preflight, None)
@@ -141,6 +199,7 @@ def execute_qa4_offers_customer_create(
                 client,
                 approval,
                 preflight,
+                synthetic_customer=synthetic_customer,
             )
         return _terminal_result(
             "BLOCKED",
@@ -157,6 +216,7 @@ def execute_qa4_offers_customer_create(
         client,
         approval,
         preflight,
+        synthetic_customer=synthetic_customer,
     )
 
 
@@ -169,12 +229,15 @@ def _execute_with_manual_executor(
     client,
     approval,
     preflight,
+    synthetic_customer=None,
 ):
     request = _executor_request(preflight["request_contract"])
     executor_result = execute_first_qa4_call_manual(
         request,
         runtime_refs if isinstance(runtime_refs, dict) else {},
-        _runtime_secrets_with_legacy_body(context, environ, runtime_secrets),
+        _runtime_secrets_with_legacy_body(
+            context, environ, runtime_secrets, synthetic_customer=synthetic_customer
+        ),
         policy if isinstance(policy, dict) else {},
         client,
         approval if isinstance(approval, dict) else {},
@@ -250,14 +313,16 @@ def _runtime_config(environ):
     )
 
 
-def _test_data(environ):
+def _test_data(environ, *, synthetic_customer=None):
     env = environ if isinstance(environ, dict) else process_environ
-    msisdn = env.get(_TEST_MSISDN_REF)
+    candidate = synthetic_customer if isinstance(synthetic_customer, dict) else {}
+    msisdn = candidate.get("msisdn") or env.get(_TEST_MSISDN_REF)
     offer = env.get(_TEST_OFFER_REF)
     return {
         "available": bool(str(msisdn or "").strip()) and bool(str(offer or "").strip()),
         "msisdn": msisdn,
         "offer": offer,
+        "source": "synthetic" if candidate else "runtime_ref",
     }
 
 
@@ -316,9 +381,11 @@ def _executor_request(request_contract):
     }
 
 
-def _runtime_secrets_with_legacy_body(context, environ, runtime_secrets):
+def _runtime_secrets_with_legacy_body(
+    context, environ, runtime_secrets, *, synthetic_customer=None
+):
     secrets = dict(runtime_secrets) if isinstance(runtime_secrets, dict) else {}
-    test_data = _test_data(environ)
+    test_data = _test_data(environ, synthetic_customer=synthetic_customer)
     if test_data["available"]:
         payload, _ = build_postpaid_payload(
             test_data["msisdn"], test_data["offer"], context["event_time"]
@@ -327,6 +394,29 @@ def _runtime_secrets_with_legacy_body(context, environ, runtime_secrets):
             payload, ensure_ascii=False, separators=(",", ":")
         ).encode("utf-8")
     return secrets
+
+
+def _generate_synthetic_customer(*, random_int=None):
+    generator = random_int if callable(random_int) else randint
+    suffix = generator(20_000_000, 99_999_999)
+    if not isinstance(suffix, int) or not 20_000_000 <= suffix <= 99_999_999:
+        raise ValueError("synthetic MSISDN suffix must be an eight-digit integer")
+    msisdn = f"119{suffix}"
+    return {"msisdn": msisdn, "account": msisdn[3:], "external_id": f"NEXT_{msisdn[3:]}"}
+
+
+def _context_with_today(context, *, current_time=None):
+    timestamp = current_time() if callable(current_time) else datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    if not isinstance(timestamp, str) or not timestamp:
+        raise ValueError("current time must use the postpaid event-time format")
+    return {**(context if isinstance(context, dict) else {}), "event_time": timestamp}
+
+
+def _sanitized_test_data(test_data):
+    result = {"available": test_data["available"]}
+    if test_data.get("source") == "synthetic":
+        result["source"] = "synthetic"
+    return result
 
 
 def _terminal_status(executor_result):

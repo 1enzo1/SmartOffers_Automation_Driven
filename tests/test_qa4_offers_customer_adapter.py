@@ -1,6 +1,7 @@
 from core.real_execution.qa4_offers_customer_adapter import (
     OneRunAttemptLedger,
     execute_qa4_offers_customer_create,
+    prepare_one_synthetic_qa4_offers_customer_create,
     prepare_qa4_offers_customer_create,
 )
 
@@ -176,6 +177,30 @@ def test_preflight_blocks_when_synthetic_customer_reference_is_absent():
     ]
     assert result["request_contract"]["legacy_builder_applied"] is False
     assert result["send_attempted"] is False
+
+
+def test_one_synthetic_preflight_generates_one_candidate_uses_today_and_keeps_values_out_of_evidence():
+    runtime_env = _runtime_env()
+    runtime_env.pop("SMARTOFFERS_QA4_TEST_MSISDN")
+    fixed_now = "25-08-2026 12:00:00"
+
+    result = prepare_one_synthetic_qa4_offers_customer_create(
+        _context(),
+        environ=runtime_env,
+        current_time=lambda: fixed_now,
+        random_int=lambda lower, upper: lower,
+    )
+
+    assert result["decision"] == "BLOCKED"
+    assert result["preflight_status"] == "READY"
+    assert result["test_data"] == {"available": True, "source": "synthetic"}
+    assert result["request_contract"]["legacy_builder_applied"] is True
+    assert result["attempt_policy"] == {"max_attempts": 1, "retry_count": 0, "fallback": False}
+    assert result["send_attempted"] is False
+    rendered = str(result)
+    assert "119" not in rendered
+    assert "NEXT_" not in rendered
+    assert fixed_now not in rendered
 
 
 def test_preflight_blocks_non_qa4_context_before_any_payload_is_built():
