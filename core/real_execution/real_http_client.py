@@ -10,6 +10,7 @@ class RealHttpClient:
     """
 
     is_real_manual_client = True
+    is_real_transport_client = True
 
     def send(self, sanitized_request, runtime_secrets, timeout_seconds):
         if not timeout_seconds:

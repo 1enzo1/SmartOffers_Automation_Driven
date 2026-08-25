@@ -8,6 +8,8 @@ from core.real_execution.qa4_offers_customer_adapter import (
     prepare_one_synthetic_qa4_offers_customer_create,
     prepare_qa4_offers_customer_create,
 )
+from core.real_execution.real_http_client import RealHttpClient
+import core.real_execution.real_http_client as real_http_client
 
 
 def _context():
@@ -83,6 +85,29 @@ class ContractInspectingTransportClient(TransportMarkedLocalClient):
             and attributes["1597489127"] == f"NEXT_{account}"
         )
         return super().send(sanitized_request, runtime_secrets, timeout_seconds)
+
+
+class LocalUrlopenResponse:
+    status = 201
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc, traceback):
+        return False
+
+    def getcode(self):
+        return self.status
+
+    def read(self, size):
+        assert size == 0
+        return b""
+
+
+class LocalUrlopenRequest:
+    def __init__(self, *args, **kwargs):
+        self.args = args
+        self.kwargs = kwargs
 
 
 def _runtime_refs():
@@ -282,6 +307,69 @@ def test_one_synthetic_execute_blocks_malformed_or_historical_date_without_send(
         assert "INVALID_EVENT_TIME" in result["blockers"]
 
     assert client.calls == []
+
+
+def test_actual_real_http_client_without_bounded_opt_in_blocks_before_urlopen(monkeypatch):
+    runtime_env = _runtime_env()
+    runtime_env.pop("SMARTOFFERS_QA4_TEST_MSISDN")
+    urlopen_calls = []
+    monkeypatch.setattr(
+        real_http_client.urllib.request,
+        "urlopen",
+        lambda *args, **kwargs: urlopen_calls.append((args, kwargs)),
+    )
+
+    result = execute_one_synthetic_qa4_offers_customer_create(
+        _context(),
+        environ=runtime_env,
+        runtime_refs=_runtime_refs(),
+        runtime_secrets=_runtime_secrets(),
+        policy=_policy(),
+        client=RealHttpClient(),
+        approval=_approval(),
+        ledger=OneRunAttemptLedger(),
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert result["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_OPT_IN_REQUIRED"]
+    assert urlopen_calls == []
+
+
+def test_actual_real_http_client_has_explicit_transport_marker():
+    assert getattr(RealHttpClient(), "is_real_transport_client", False) is True
+
+
+def test_actual_real_http_client_with_one_run_opt_in_sends_once_then_exhausts_budget(monkeypatch):
+    runtime_env = _runtime_env()
+    runtime_env.pop("SMARTOFFERS_QA4_TEST_MSISDN")
+    urlopen_calls = []
+    monkeypatch.setattr(
+        real_http_client.urllib.request,
+        "urlopen",
+        lambda *args, **kwargs: urlopen_calls.append((args, kwargs)) or LocalUrlopenResponse(),
+    )
+    monkeypatch.setattr(real_http_client.urllib.request, "Request", LocalUrlopenRequest)
+    ledger = OneRunAttemptLedger()
+    inputs = {
+        "environ": runtime_env,
+        "runtime_refs": _runtime_refs(),
+        "runtime_secrets": _runtime_secrets(),
+        "policy": _policy(),
+        "client": RealHttpClient(),
+        "approval": _approval(),
+        "owner_opt_in": _one_offers_customer_create_opt_in(),
+        "ledger": ledger,
+        "current_time": lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    }
+
+    first = execute_one_synthetic_qa4_offers_customer_create(_context(), **inputs)
+    second = execute_one_synthetic_qa4_offers_customer_create(_context(), **inputs)
+
+    assert first["result"] == "PASS"
+    assert second["result"] == "BLOCKED"
+    assert second["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_BUDGET_EXHAUSTED"]
+    assert len(urlopen_calls) == 1
 
 
 def test_preflight_blocks_non_qa4_context_before_any_payload_is_built():

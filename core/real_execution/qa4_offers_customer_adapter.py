@@ -473,7 +473,4 @@ def _terminal_result(result, preflight, executor_result):
 
 
 def _is_real_transport_client(client):
-    return client is not None and (
-        getattr(client, "is_real_transport_client", False) is True
-        or client.__class__.__module__ == "core.real_execution.real_http_client"
-    )
+    return client is not None and getattr(client, "is_real_transport_client", False) is True
