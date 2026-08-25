@@ -11,6 +11,7 @@ BDA_PROFILE = "smartoffers_qa4_full_smoke"
 BDA_RESOURCE_ID = "bda_db"
 BDA_RUNTIME_READY = "BDA_RUNTIME_READY"
 BDA_RUNTIME_BLOCKED = "BDA_RUNTIME_BLOCKED"
+QA4_BDA_OFFER_DISCOVERY = "QA4_BDA_OFFER_DISCOVERY"
 
 BDA_REQUIRED_REFS = (
     "SMARTOFFERS_QA4_BDA_SMOKE_SQL",
@@ -41,6 +42,9 @@ def preflight_bda_local_runtime(request, environ=None):
         and sql_hash_validation == "MATCH"
         and fingerprint_validation == "MATCH"
     )
+    offer_discovery_allowed = is_ready and _offer_discovery_is_authorized(
+        request_data
+    )
 
     return {
         "status": BDA_RUNTIME_READY if is_ready else BDA_RUNTIME_BLOCKED,
@@ -54,8 +58,8 @@ def preflight_bda_local_runtime(request, environ=None):
         "fingerprint_validation": fingerprint_validation,
         "checked_refs": checked_refs,
         "missing_refs": missing_refs,
-        "connection_allowed": False,
-        "sql_execution_allowed": False,
+        "connection_allowed": offer_discovery_allowed,
+        "sql_execution_allowed": offer_discovery_allowed,
     }
 
 
@@ -67,6 +71,13 @@ def _allowlist_validation(request):
         "resource_id": BDA_RESOURCE_ID,
     }
     return "MATCH" if all(request.get(key) == value for key, value in expected.items()) else "DENIED"
+
+
+def _offer_discovery_is_authorized(request):
+    return (
+        request.get("operation") == QA4_BDA_OFFER_DISCOVERY
+        and request.get("read_only_discovery_authorized") is True
+    )
 
 
 def _sql_hash_validation(environment):

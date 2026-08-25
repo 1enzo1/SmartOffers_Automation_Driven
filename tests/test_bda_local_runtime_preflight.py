@@ -65,6 +65,20 @@ def test_bda_preflight_returns_ready_only_for_complete_matching_runtime():
     }
 
 
+def test_bda_preflight_enables_only_the_explicit_offer_discovery_operation():
+    result = preflight_bda_local_runtime(
+        _request(
+            operation="QA4_BDA_OFFER_DISCOVERY",
+            read_only_discovery_authorized=True,
+        ),
+        _fake_runtime(),
+    )
+
+    assert result["status"] == BDA_RUNTIME_READY
+    assert result["connection_allowed"] is True
+    assert result["sql_execution_allowed"] is True
+
+
 @pytest.mark.parametrize("missing_ref", BDA_REQUIRED_REFS)
 def test_bda_preflight_blocks_each_missing_required_ref(missing_ref):
     runtime = _fake_runtime()
