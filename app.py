@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from flask import Flask, Response, jsonify, render_template, request, send_file
 
 from core.api_catalog import get_api_catalog_entry, list_api_catalog_entries
@@ -32,11 +34,74 @@ from core.legacy_execution import (
 )
 from core.real_execution.environments import list_sanitized_qa_environments
 from core.real_execution.runtime_profiles import list_sanitized_runtime_profiles
+from core.real_execution import run_standard_qa4_application_mock
 from core.simulation import run_dry_run, save_dry_run_report
 from core.templates import get_template, list_template_categories, list_templates
 
 
 app = Flask(__name__)
+
+
+_STANDARD_QA4_PROFILE = "smartoffers_qa4_full_smoke"
+_STANDARD_QA4_CONTEXT_FIELDS = (
+    "orchestration_id",
+    "operational_window_ref",
+    "window_started_at",
+    "window_expires_at",
+)
+
+
+def _standard_qa4_api_block(reason):
+    return jsonify({"result": "BLOCKED", "reason": reason}), 400
+
+
+def _parse_standard_qa4_timestamp(value):
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        return datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+
+
+def _standard_qa4_api_context(data):
+    """Return a closed, mock-only context or a stable validation reason."""
+
+    if not isinstance(data, dict):
+        return None, None, "MALFORMED_REQUEST"
+
+    values = {field: data.get(field) for field in _STANDARD_QA4_CONTEXT_FIELDS}
+    if any(not isinstance(value, str) or not value for value in values.values()):
+        return None, None, "MISSING_ORCHESTRATION_CONTEXT"
+    if data.get("mode") != "mock":
+        return None, None, "MODE_NOT_ALLOWED"
+    if data.get("environment") != "QA4":
+        return None, None, "ENVIRONMENT_NOT_ALLOWED"
+    if data.get("workflow_profile") != _STANDARD_QA4_PROFILE:
+        return None, None, "WORKFLOW_PROFILE_NOT_ALLOWED"
+
+    window_started_at = _parse_standard_qa4_timestamp(values["window_started_at"])
+    window_expires_at = _parse_standard_qa4_timestamp(values["window_expires_at"])
+    if (
+        window_started_at is None
+        or window_expires_at is None
+        or window_started_at >= window_expires_at
+    ):
+        return None, None, "INVALID_OPERATIONAL_WINDOW"
+
+    evaluated_at = data.get("evaluated_at")
+    if _parse_standard_qa4_timestamp(evaluated_at) is None:
+        return None, None, "INVALID_EVALUATED_AT"
+
+    return (
+        {
+            "environment": "qa4",
+            "workflow_profile": _STANDARD_QA4_PROFILE,
+            **values,
+        },
+        evaluated_at,
+        None,
+    )
 
 
 @app.route("/")
@@ -109,6 +174,18 @@ def api_adapters_health():
     checks = adapters_healthcheck()
     status = "passed" if all(item["status"] == "passed" for item in checks) else "failed"
     return jsonify({"status": status, "adapters": checks})
+
+
+@app.route("/api/qa4/standard/mock-run", methods=["POST"])
+def api_standard_qa4_mock_run():
+    context, evaluated_at, reason = _standard_qa4_api_context(request.get_json(silent=True))
+    if reason:
+        return _standard_qa4_api_block(reason)
+
+    report = run_standard_qa4_application_mock(
+        context, mode="mock", evaluated_at=evaluated_at
+    )
+    return jsonify({"result": report["result"], "report": report})
 
 
 @app.route("/api/api-catalog")
