@@ -40,6 +40,10 @@ def validate_first_qa4_allowlist(request, allowlist=None):
             blocked_reasons.append("timeout_not_allowlisted")
         if request_data.get("retry_count") != item["retry_count"]:
             blocked_reasons.append("retry_not_allowlisted")
+        if item.get("operation") and request_data.get("operation") != item["operation"]:
+            blocked_reasons.append("operation_not_allowlisted")
+        if item.get("scenario_id") and request_data.get("scenario_id") != item["scenario_id"]:
+            blocked_reasons.append("scenario_not_allowlisted")
 
     return {
         "valid": not blocked_reasons,
@@ -58,4 +62,7 @@ def _sanitized_item(item):
         "timeout_seconds": item["timeout_seconds"],
         "retry_count": item["retry_count"],
         "status": item["status"],
+        "operation": item.get("operation"),
+        "scenario_id": item.get("scenario_id"),
+        "auth_required": item.get("auth_required", True),
     }

@@ -42,12 +42,14 @@ RAW_VALUE_PATTERNS = (
 )
 
 
-def validate_runtime_contract(runtime):
+def validate_runtime_contract(runtime, *, auth_required=True):
     """Validate injected runtime references without I/O or mutation."""
     runtime_data = runtime if isinstance(runtime, dict) else {}
     blocked_reasons = []
 
     for key in REQUIRED_RUNTIME_KEYS:
+        if key == "AUTH_REF" and auth_required is False:
+            continue
         if not runtime_data.get(key):
             blocked_reasons.append(f"missing_{key.lower()}")
 
@@ -62,12 +64,14 @@ def validate_runtime_contract(runtime):
     }
 
 
-def validate_runtime_secrets_contract(runtime_secrets):
+def validate_runtime_secrets_contract(runtime_secrets, *, auth_required=True):
     """Validate in-memory runtime material presence without returning values."""
     runtime_data = runtime_secrets if isinstance(runtime_secrets, dict) else {}
     blocked_reasons = []
 
     for key in REQUIRED_RUNTIME_SECRET_KEYS:
+        if key == "auth" and auth_required is False:
+            continue
         if not runtime_data.get(key):
             blocked_reasons.append(f"missing_runtime_{key}")
 

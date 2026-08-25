@@ -9,6 +9,9 @@ from core.risk import classify_adapter_risk
 
 
 _IP_PATTERN = re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b")
+_NO_AUTH_API_ID = "post-vivo-next-habilitacao-de-cliente-ade0841563"
+_NO_AUTH_OPERATION = "CREATE_OFFERS_CUSTOMER"
+_NO_AUTH_SCENARIO = "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
 
 
 def prepare_first_qa4_call(request, runtime, policy, client):
@@ -75,10 +78,18 @@ def execute_first_qa4_call_manual(request, runtime_refs, runtime_secrets, policy
 
     blocked_reasons = []
     approval_result = _validate_manual_approval(approval_data, request_data)
-    runtime_refs_result = validate_runtime_contract(runtime_refs_data)
-    runtime_secrets_result = validate_runtime_secrets_contract(runtime_secrets_data)
     allowlist = policy_data.get("first_qa4_allowlist") or build_first_qa4_allowlist()
     allowlist_result = validate_first_qa4_allowlist(request_data, allowlist)
+    allowlist_item = allowlist_result.get("allowlist_item") or {}
+    auth_required = not _is_exact_no_auth_scope(
+        request_data, allowlist_result, allowlist_item
+    )
+    runtime_refs_result = validate_runtime_contract(
+        runtime_refs_data, auth_required=auth_required
+    )
+    runtime_secrets_result = validate_runtime_secrets_contract(
+        runtime_secrets_data, auth_required=auth_required
+    )
     risk_result = classify_adapter_risk(_manual_risk_work_item(request_data, allowlist_result))
     readiness_policy = _readiness_policy(policy_data, allowlist_result)
     readiness_request = _readiness_request(request_data, risk_result)
@@ -161,6 +172,23 @@ def execute_first_qa4_call_manual(request, runtime_refs, runtime_secrets, policy
         client_response=client_response,
         send_attempted=True,
         error=None,
+    )
+
+
+def _is_exact_no_auth_scope(request_data, allowlist_result, allowlist_item):
+    return (
+        allowlist_result.get("valid") is True
+        and allowlist_item.get("auth_required") is False
+        and allowlist_item.get("api_id") == _NO_AUTH_API_ID
+        and allowlist_item.get("method") == "POST"
+        and allowlist_item.get("environment") == "QA4"
+        and allowlist_item.get("operation") == _NO_AUTH_OPERATION
+        and allowlist_item.get("scenario_id") == _NO_AUTH_SCENARIO
+        and request_data.get("api_id") == _NO_AUTH_API_ID
+        and request_data.get("method") == "POST"
+        and request_data.get("environment") == "QA4"
+        and request_data.get("operation") == _NO_AUTH_OPERATION
+        and request_data.get("scenario_id") == _NO_AUTH_SCENARIO
     )
 
 

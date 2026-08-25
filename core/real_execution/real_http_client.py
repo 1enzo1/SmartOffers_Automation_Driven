@@ -19,7 +19,7 @@ class RealHttpClient:
         endpoint = runtime_secrets["endpoint"]
         body = runtime_secrets["body"]
         headers = dict(runtime_secrets["headers"])
-        auth_value = runtime_secrets["auth"]
+        auth_value = runtime_secrets.get("auth")
         if auth_value:
             headers["Authorization"] = auth_value
 

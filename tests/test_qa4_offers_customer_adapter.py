@@ -151,6 +151,19 @@ def _policy():
     }
 
 
+def _no_auth_policy():
+    policy = _policy()
+    item = next(iter(policy["first_qa4_allowlist"]["items"].values()))
+    item.update(
+        {
+            "operation": "CREATE_OFFERS_CUSTOMER",
+            "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+            "auth_required": False,
+        }
+    )
+    return policy
+
+
 def _approval():
     return {
         "approved": True,
@@ -370,6 +383,95 @@ def test_actual_real_http_client_with_one_run_opt_in_sends_once_then_exhausts_bu
     assert second["result"] == "BLOCKED"
     assert second["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_BUDGET_EXHAUSTED"]
     assert len(urlopen_calls) == 1
+
+
+def test_exact_allowlisted_synthetic_qa4_create_can_send_without_authorization_header(monkeypatch):
+    runtime_env = _runtime_env()
+    runtime_env.pop("SMARTOFFERS_QA4_TEST_MSISDN")
+    captured_requests = []
+    monkeypatch.setattr(
+        real_http_client.urllib.request,
+        "urlopen",
+        lambda request, **kwargs: captured_requests.append(request) or LocalUrlopenResponse(),
+    )
+    monkeypatch.setattr(real_http_client.urllib.request, "Request", LocalUrlopenRequest)
+    runtime_refs = _runtime_refs()
+    runtime_refs.pop("AUTH_REF")
+    runtime_secrets = _runtime_secrets()
+    runtime_secrets.pop("auth")
+
+    result = execute_one_synthetic_qa4_offers_customer_create(
+        _context(),
+        environ=runtime_env,
+        runtime_refs=runtime_refs,
+        runtime_secrets=runtime_secrets,
+        policy=_no_auth_policy(),
+        client=RealHttpClient(),
+        approval=_approval(),
+        owner_opt_in=_one_offers_customer_create_opt_in(),
+        ledger=OneRunAttemptLedger(),
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    )
+
+    assert result["result"] == "PASS"
+    assert len(captured_requests) == 1
+    assert "Authorization" not in captured_requests[0].kwargs["headers"]
+
+
+def test_no_auth_exception_fails_closed_for_another_scenario_before_send():
+    client = TransportMarkedLocalClient(201)
+    policy = _no_auth_policy()
+    item = next(iter(policy["first_qa4_allowlist"]["items"].values()))
+    item["scenario_id"] = "OTHER_SCENARIO"
+    runtime_refs = _runtime_refs()
+    runtime_refs.pop("AUTH_REF")
+    runtime_secrets = _runtime_secrets()
+    runtime_secrets.pop("auth")
+
+    result = execute_one_synthetic_qa4_offers_customer_create(
+        _context(),
+        environ=_runtime_env(),
+        runtime_refs=runtime_refs,
+        runtime_secrets=runtime_secrets,
+        policy=policy,
+        client=client,
+        approval=_approval(),
+        owner_opt_in=_one_offers_customer_create_opt_in(),
+        ledger=OneRunAttemptLedger(),
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert client.calls == []
+
+
+def test_no_auth_flag_without_exact_operation_scope_remains_auth_required():
+    client = TransportMarkedLocalClient(201)
+    policy = _policy()
+    item = next(iter(policy["first_qa4_allowlist"]["items"].values()))
+    item["auth_required"] = False
+    runtime_refs = _runtime_refs()
+    runtime_refs.pop("AUTH_REF")
+    runtime_secrets = _runtime_secrets()
+    runtime_secrets.pop("auth")
+
+    result = execute_one_synthetic_qa4_offers_customer_create(
+        _context(),
+        environ=_runtime_env(),
+        runtime_refs=runtime_refs,
+        runtime_secrets=runtime_secrets,
+        policy=policy,
+        client=client,
+        approval=_approval(),
+        owner_opt_in=_one_offers_customer_create_opt_in(),
+        ledger=OneRunAttemptLedger(),
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert "missing_auth_ref" in result["blockers"]
+    assert "missing_runtime_auth" in result["blockers"]
+    assert client.calls == []
 
 
 def test_preflight_blocks_non_qa4_context_before_any_payload_is_built():

@@ -17,6 +17,7 @@ from core.utils.evidence_payload_builders import build_postpaid_payload
 _QA4_ENVIRONMENT = "qa4"
 _STANDARD_PROFILE = "smartoffers_qa4_full_smoke"
 _OPERATION = "CREATE_OFFERS_CUSTOMER"
+_SYNTHETIC_SCENARIO = "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
 _CATALOG_API_ID = "post-vivo-next-habilitacao-de-cliente-ade0841563"
 _LEGACY_OPERATION = "processEvent"
 _TEST_MSISDN_REF = "SMARTOFFERS_QA4_TEST_MSISDN"
@@ -244,7 +245,10 @@ def _execute_with_manual_executor(
     preflight,
     synthetic_customer=None,
 ):
-    request = _executor_request(preflight["request_contract"])
+    request = _executor_request(
+        preflight["request_contract"],
+        scenario_id=_SYNTHETIC_SCENARIO if synthetic_customer else None,
+    )
     executor_result = execute_first_qa4_call_manual(
         request,
         runtime_refs if isinstance(runtime_refs, dict) else {},
@@ -382,7 +386,7 @@ def _approval_matches_operation(approval):
     )
 
 
-def _executor_request(request_contract):
+def _executor_request(request_contract, *, scenario_id=None):
     return {
         "api_id": request_contract.get("api_id"),
         "method": request_contract.get("method"),
@@ -391,6 +395,8 @@ def _executor_request(request_contract):
         "timeout_seconds": 5,
         "retry_count": 0,
         "source": "alpha-offers-customer-create",
+        "operation": _OPERATION,
+        "scenario_id": scenario_id,
     }
 
 
