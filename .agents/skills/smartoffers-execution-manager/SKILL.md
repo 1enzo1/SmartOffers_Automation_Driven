@@ -38,6 +38,32 @@ Aplicar, nesta ordem: instruções do sistema e do usuário; `AGENTS.md`; envelo
 Escale somente quando a evidencia exigir: Luna -> Terra -> Sol. `Sol/high` e
 `Sol/xhigh` sao excecoes, nunca defaults.
 
+## Contrato canônico de despacho
+
+Antes de qualquer `spawn`, o Manager classifica a tarefa em exatamente uma
+destas classes canônicas; não criar classes adicionais:
+
+| Task class | Agent | Model / effort |
+|---|---|---|
+| `MECHANICAL` | `mechanical` | `gpt-5.6-luna` / `low` |
+| `RESEARCH` | `researcher` | `gpt-5.6-luna` / `medium` |
+| `DEVELOPMENT` | `developer` | `gpt-5.6-terra` / `medium` |
+| `REVIEW` | `tester` | `gpt-5.6-terra` / `medium` |
+| `DEBUG` | `debugger` | `gpt-5.6-terra` / `high` |
+| `MATERIAL_ARCHITECTURE` | `architect` | `gpt-5.6-sol` / `medium` |
+
+Quando o runtime suportar overrides no spawn, informar explicitamente
+`agent_type`, `model` e `reasoning_effort` conforme a tabela. Não depender
+apenas da herança do root. Manter o Manager e no máximo dois especialistas
+simultâneos.
+
+Usar `architect` somente para `MATERIAL_ARCHITECTURE` e `debugger` somente para
+`DEBUG`. Usar `mechanical` para trabalho repetitivo/simples, `researcher` para
+descoberta/análise, `developer` para implementação e um único `tester`
+independente após mudança relevante de código. Evitar Sol rotineiro, Terra/high
+em tarefas comuns, múltiplos reviewers para o mesmo delta, spawns desnecessários
+e review storm.
+
 Quando o Owner disser "modo econômico", "economy", "economiza tokens" ou
 "tô com pouco uso", use `WORK_MODE=ECONOMY` para aquele planejamento:
 `LUNA_FIRST=true`, `TERRA_ON_DEMAND=true` e `SOL_EXCEPTION_ONLY=true`. Prefira
