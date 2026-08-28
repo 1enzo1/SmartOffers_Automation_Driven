@@ -2,6 +2,8 @@ import json
 from pathlib import Path
 from uuid import uuid4
 
+import pytest
+
 from core.real_execution.sanitized_evidence import (
     load_sanitized_real_run_evidence,
     list_sanitized_real_run_evidence,
@@ -97,6 +99,88 @@ def test_sent_report_without_response_cannot_be_persisted_as_pass():
     path.unlink()
     path.parent.rmdir()
     evidence_root.rmdir()
+
+
+@pytest.mark.parametrize(
+    ("status_code", "expected_result", "expected_class"),
+    [(201, "PASS", "2xx"), (400, "FAIL", "4xx"), (503, "FAIL", "5xx")],
+)
+def test_sent_response_status_and_post_reservation_ledger_are_persisted_sanitized(
+    status_code, expected_result, expected_class
+):
+    evidence_root = Path("evidencias") / f"test-status-{uuid4().hex}"
+    saved = persist_sanitized_real_run_evidence(
+        {
+            "result": expected_result,
+            "executor_send_attempted": True,
+            "offers_adapter": {
+                "attempt_ledger": {
+                    "attempts_before": 0,
+                    "attempts_used": 1,
+                    "attempts_after": 1,
+                    "max_attempts": 1,
+                    "retry_count": 0,
+                },
+            },
+            # ``status_code`` is what the executor has historically emitted.
+            "evidence": {"status_code": status_code, "response_received": True},
+        },
+        context={"run_id": "ALPHA_REAL_RUN_02", "environment": "qa4"},
+        evidence_root=evidence_root,
+    )
+    record = json.loads((evidence_root / "real-controlled" / "ALPHA_REAL_RUN_02.json").read_text(encoding="utf-8"))
+
+    assert saved["recorded"] is True
+    assert record["response_received"] is True
+    assert record["http_status_class"] == expected_class
+    assert record["result"] == expected_result
+    assert record["attempts_before"] == 0
+    assert record["attempts_after"] == 1
+    assert record["attempt_ledger"] == {
+        "attempts_used": 1, "max_attempts": 1, "retry_count": 0,
+    }
+    assert "status_code" not in (evidence_root / "real-controlled" / "ALPHA_REAL_RUN_02.json").read_text(encoding="utf-8")
+    (evidence_root / "real-controlled" / "ALPHA_REAL_RUN_02.json").unlink()
+    (evidence_root / "real-controlled").rmdir()
+    evidence_root.rmdir()
+
+
+def test_sent_timeout_persists_no_response_and_consumed_ledger_without_retry():
+    evidence_root = Path("evidencias") / f"test-timeout-{uuid4().hex}"
+    persist_sanitized_real_run_evidence(
+        {
+            "result": "FAIL", "executor_send_attempted": True,
+            "offers_adapter": {"attempt_ledger": {
+                "attempts_before": 0, "attempts_used": 1, "attempts_after": 1,
+                "max_attempts": 1, "retry_count": 0,
+            }},
+            "evidence": {"response_received": False, "error": "TimeoutError"},
+        },
+        context={"run_id": "ALPHA_REAL_RUN_02", "environment": "qa4"}, evidence_root=evidence_root,
+    )
+    record = json.loads((evidence_root / "real-controlled" / "ALPHA_REAL_RUN_02.json").read_text(encoding="utf-8"))
+
+    assert record["result"] == "FAIL"
+    assert record["response_received"] is False
+    assert record["http_status_class"] == "none"
+    assert record["attempts_after"] == 1
+    assert record["retry_count"] == 0
+    (evidence_root / "real-controlled" / "ALPHA_REAL_RUN_02.json").unlink()
+    (evidence_root / "real-controlled").rmdir()
+    evidence_root.rmdir()
+
+
+def test_evidence_writer_failure_is_reported_to_its_caller(monkeypatch):
+    def fail(*args, **kwargs):
+        raise OSError("offline test failure")
+
+    monkeypatch.setattr(Path, "open", fail)
+    with pytest.raises(OSError):
+        persist_sanitized_real_run_evidence(
+            {"result": "FAIL", "executor_send_attempted": True},
+            context={"run_id": "ALPHA_REAL_RUN_02", "environment": "qa4"},
+            evidence_root=Path("evidencias") / f"test-writer-failure-{uuid4().hex}",
+        )
 
 
 def test_public_evidence_reader_uses_fixed_run_ids_and_field_allowlist():

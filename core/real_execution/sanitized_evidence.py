@@ -72,15 +72,14 @@ def _record(report, context, *, run_id, timestamp):
     adapter = report.get("offers_adapter") if isinstance(report.get("offers_adapter"), dict) else {}
     evidence = report.get("evidence") if isinstance(report.get("evidence"), dict) else {}
     result = report.get("result") if report.get("result") in _ALLOWED_RESULTS else "BLOCKED"
-    status = evidence.get("http_status")
+    status = evidence.get("http_status", evidence.get("status_code"))
     status_class = _status_class(status)
     response_received = evidence.get("response_received") is True
-    # A request consumes the one-shot ledger even if the adapter did not return
-    # its own ledger snapshot.  More importantly, a transport report without a
-    # response and a success status can never be recorded as a successful run.
+    # A transport report without a response and a success status can never be
+    # recorded as a successful run.
     if result == "PASS" and not (response_received and status_class == "2xx"):
         result = "FAIL"
-    attempt_ledger = {"attempts_used": 1, "max_attempts": 1, "retry_count": 0}
+    attempt_ledger = _attempt_ledger(adapter, evidence)
     return {
         "schema_version": "1",
         "evidence_capture_version": EVIDENCE_CAPTURE_VERSION,
@@ -100,9 +99,13 @@ def _record(report, context, *, run_id, timestamp):
         "request_sent": report.get("executor_send_attempted") is True,
         "response_received": response_received,
         "http_status_class": status_class,
-        "attempts_before": 0,
-        "attempts_after": attempt_ledger["attempts_used"],
-        "attempt_ledger": attempt_ledger,
+        "attempts_before": attempt_ledger["attempts_before"],
+        "attempts_after": attempt_ledger["attempts_after"],
+        "attempt_ledger": {
+            "attempts_used": attempt_ledger["attempts_used"],
+            "max_attempts": attempt_ledger["max_attempts"],
+            "retry_count": attempt_ledger["retry_count"],
+        },
         "retry_count": 0,
         "result": result,
         "standard_runner_real_path": context.get("standard_runner_real_path") is True,
@@ -131,8 +134,20 @@ def _status_class(value):
 
 
 def _attempt_ledger(adapter, evidence):
-    attempts = adapter.get("attempts_used", evidence.get("attempts_used"))
-    return {"attempts_used": int(attempts) if isinstance(attempts, int) else None, "max_attempts": 1, "retry_count": 0}
+    snapshot = adapter.get("attempt_ledger") if isinstance(adapter.get("attempt_ledger"), dict) else {}
+    attempts = snapshot.get("attempts_used", adapter.get("attempts_used", evidence.get("attempts_used")))
+    # The writer is only invoked after ``executor_send_attempted``.  The
+    # executor reserves the one-shot immediately before send, so older
+    # compatibility callers without its new snapshot still retain the factual
+    # post-send one-shot state.
+    used = int(attempts) if isinstance(attempts, int) else 1
+    return {
+        "attempts_before": snapshot.get("attempts_before", 0),
+        "attempts_used": used,
+        "attempts_after": snapshot.get("attempts_after", used),
+        "max_attempts": snapshot.get("max_attempts", 1),
+        "retry_count": snapshot.get("retry_count", 0),
+    }
 
 
 def load_sanitized_real_run_evidence(run_id, *, evidence_root="evidencias"):

@@ -526,6 +526,51 @@ def test_run_02_binds_exact_authorization_to_governed_atomic_boundary(app_client
     assert calls[0]["bda_authorization"]["owner_authorization"] == "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
 
 
+def test_sent_report_returns_sanitized_evidence_writer_failure(app_client_factory, monkeypatch):
+    """Persistence failure is reportable after a simulated send, never retried."""
+    client, _ = app_client_factory("qa4-evidence-writer-failure")
+    monkeypatch.setattr(app_module, "_atomic_static_preflight_ready", lambda *args: True)
+    monkeypatch.setattr(
+        app_module, "_trusted_local_now", lambda: datetime.fromisoformat("2026-08-25T12:00:00+00:00")
+    )
+    monkeypatch.setattr(
+        app_module,
+        "run_atomic_qa4_bda_offer_discovery_and_offers_create",
+        lambda *args, **kwargs: {
+            "result": "FAIL",
+            "executor_send_attempted": True,
+            "real_call_executed": False,
+            "evidence": {"response_received": False},
+        },
+    )
+
+    def evidence_writer_failure(*args, **kwargs):
+        raise OSError("offline writer failure")
+
+    monkeypatch.setattr(app_module, "persist_sanitized_real_run_evidence", evidence_writer_failure)
+    response = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={
+            **_context(),
+            "environment": "QA4",
+            "mode": "real-controlled",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+            "evaluated_at": EVALUATED_AT,
+            "run_id": "ALPHA_REAL_RUN_02",
+            "owner_authorization": "ONE_QA4_REPEATABILITY_SMOKE_RUN_02",
+            "window_started_at": "2026-08-25T11:00:00+00:00",
+            "window_expires_at": "2026-08-25T13:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["evidence_recording"] == {
+        "recorded": False,
+        "reason": "LOCAL_EVIDENCE_PERSISTENCE_FAILED",
+    }
+
+
 def test_selected_synthetic_scenario_api_blocks_wrong_environment_or_scenario_before_bridge(
     app_client_factory, monkeypatch
 ):

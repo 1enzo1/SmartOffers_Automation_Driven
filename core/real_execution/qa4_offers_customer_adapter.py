@@ -44,6 +44,13 @@ class OneRunAttemptLedger:
             self._consumed_scopes.add(scope)
             return True
 
+    def snapshot(self, scope):
+        """Return the sanitized state for one scope without exposing its value."""
+        with self._lock:
+            used = 1 if scope in self._consumed_scopes else 0
+        return {"attempts_before": 0, "attempts_used": used, "attempts_after": used,
+                "max_attempts": 1, "retry_count": 0}
+
 
 _DEFAULT_ATTEMPT_LEDGER = OneRunAttemptLedger()
 
@@ -569,6 +576,7 @@ def _terminal_result(result, preflight, executor_result):
         "preflight": preflight,
         "executor_decision": executor_data.get("decision", "not_called"),
         "evidence": dict(executor_data.get("evidence") or {}),
+        "attempt_ledger": dict(executor_data.get("attempt_ledger") or {}),
         "real_call_executed": executor_data.get("real_call_executed") is True,
         "send_attempted": executor_data.get("real_call_executed") is True
         or executor_data.get("decision") == "client_error_after_send",

@@ -154,12 +154,12 @@ def execute_first_qa4_call_manual(
             send_attempted=False, error=None,
         )
     if attempt_scope and not _consume_attempt_budget(attempt_ledger, attempt_scope):
-        return _manual_result(
+        return _with_attempt_ledger(_manual_result(
             "blocked", [f"{attempt_scope}_BUDGET_EXHAUSTED"], request_data,
             approval_result, runtime_refs_result, runtime_secrets_result,
             allowlist_result, risk_result, readiness_result, client_response=None,
             send_attempted=False, error=None,
-        )
+        ), attempt_ledger, attempt_scope, reserved=False)
     try:
         client_response = active_client.send(
             sanitized_request,
@@ -167,7 +167,7 @@ def execute_first_qa4_call_manual(
             item.get("timeout_seconds"),
         )
     except Exception as exc:
-        return _manual_result(
+        return _with_attempt_ledger(_manual_result(
             "client_error_after_send",
             [],
             request_data,
@@ -180,9 +180,9 @@ def execute_first_qa4_call_manual(
             client_response=None,
             send_attempted=True,
             error=exc,
-        )
+        ), attempt_ledger, attempt_scope, reserved=bool(attempt_scope))
 
-    return _manual_result(
+    return _with_attempt_ledger(_manual_result(
         "manual_call_completed",
         [],
         request_data,
@@ -195,11 +195,36 @@ def execute_first_qa4_call_manual(
         client_response=client_response,
         send_attempted=True,
         error=None,
-    )
+    ), attempt_ledger, attempt_scope, reserved=bool(attempt_scope))
 
 
 def _consume_attempt_budget(ledger, scope):
     return hasattr(ledger, "consume") and ledger.consume(scope) is True
+
+
+def _with_attempt_ledger(result, ledger, scope, *, reserved):
+    """Attach the post-reservation one-shot state to the sanitized result.
+
+    The standard ledger exposes a read-only snapshot.  The narrow fallback is
+    only for compatibility with injected test ledgers that predate snapshots.
+    """
+    if not scope:
+        return result
+    snapshot = ledger.snapshot(scope) if hasattr(ledger, "snapshot") else None
+    if not isinstance(snapshot, dict):
+        used = 1 if reserved else 0
+        snapshot = {
+            "attempts_before": 0,
+            "attempts_used": used,
+            "attempts_after": used,
+            "max_attempts": 1,
+            "retry_count": 0,
+        }
+    result["attempt_ledger"] = {
+        key: snapshot.get(key)
+        for key in ("attempts_before", "attempts_used", "attempts_after", "max_attempts", "retry_count")
+    }
+    return result
 
 
 def _is_exact_no_auth_scope(request_data, allowlist_result, allowlist_item, policy_data, attempt_scope=None):
@@ -373,6 +398,7 @@ def _manual_result(
     error,
 ):
     real_call_executed = send_attempted and client_response is not None
+    status_code = client_response.get("status_code") if isinstance(client_response, dict) else None
     evidence = {
         "api_id": request_data.get("api_id"),
         "method": request_data.get("method"),
@@ -381,8 +407,13 @@ def _manual_result(
         "approval_reference": (approval_result.get("sanitized_approval") or {}).get("approver_reference"),
         "ticket_reference": (approval_result.get("sanitized_approval") or {}).get("ticket_reference"),
         "correlation_reference": (runtime_refs_result.get("sanitized_runtime") or {}).get("correlation_reference"),
-        "status_code": (client_response or {}).get("status_code"),
-        "elapsed_ms": (client_response or {}).get("elapsed_ms"),
+        # Both names are intentionally sanitized primitives.  ``http_status``
+        # is the evidence-writer contract; ``status_code`` preserves existing
+        # adapter consumers.
+        "status_code": status_code,
+        "http_status": status_code,
+        "response_received": client_response is not None,
+        "elapsed_ms": (client_response or {}).get("elapsed_ms") if isinstance(client_response, dict) else None,
         "real_call_executed": real_call_executed,
         "body_recorded": False,
         "error": _sanitize_error(error),

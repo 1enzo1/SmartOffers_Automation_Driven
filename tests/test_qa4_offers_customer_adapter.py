@@ -621,6 +621,12 @@ def test_transport_marked_client_requires_bounded_owner_opt_in_before_one_local_
     assert result["result"] == "PASS"
     assert len(client.calls) == 1
     assert client.calls[0]["request"]["api_id"] == "post-vivo-next-habilitacao-de-cliente-ade0841563"
+    assert result["evidence"]["http_status"] == 201
+    assert result["evidence"]["response_received"] is True
+    assert result["attempt_ledger"] == {
+        "attempts_before": 0, "attempts_used": 1, "attempts_after": 1,
+        "max_attempts": 1, "retry_count": 0,
+    }
 
 
 def test_transport_marked_client_is_blocked_without_owner_opt_in_before_send():
@@ -686,6 +692,9 @@ def test_transport_attempt_ledger_blocks_second_send_after_first_failure():
     assert second["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN_BUDGET_EXHAUSTED"]
     assert second["evidence"]["decision"] == "blocked"
     assert len(client.calls) == 1
+    assert first["evidence"]["http_status"] == 503
+    assert first["evidence"]["response_received"] is True
+    assert first["attempt_ledger"]["attempts_after"] == 1
 
 
 def test_real_transport_contract_defaults_to_denied_without_explicit_transport_flag():
@@ -825,3 +834,7 @@ def test_real_transport_contract_never_consumes_budget_before_all_gates_and_keep
     assert failed["result"] == "FAIL"
     assert ledger.consumed == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN"]
     assert client.calls == [{"boundary": "entered"}]
+    assert failed["evidence"]["response_received"] is False
+    assert failed["evidence"]["http_status"] is None
+    assert failed["attempt_ledger"]["attempts_after"] == 1
+    assert failed["attempt_ledger"]["retry_count"] == 0
