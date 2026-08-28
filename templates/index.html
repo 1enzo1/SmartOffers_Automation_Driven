@@ -3463,7 +3463,7 @@ function resetProductValidation(){
 
 function productCapabilityNote(test){
     if(test.id === "create-customer-basic"){
-        return "Customer/line local simulation is ready. Real QA4 execution requires Owner authorization. A governed create binding and approved read-only customer or line lookup contract are still required for real validation."
+        return "Create Customer with Offer uses the local mock. REAL EXECUTION CONTRACT READY - AUTHORIZATION REQUIRED. Post-execution validation: NOT AVAILABLE."
     }
     if(test.availability === "BLOCKED_EXTERNAL_INFORMATION"){
         return "Add Offer needs approved integration details before it can be prepared. No request was sent."
@@ -3500,6 +3500,7 @@ function renderProductResult(data){
     ]
     const capabilityNote = productCapabilityNote(test)
     if(capabilityNote) rows.push(["Execution", capabilityNote])
+    if(test.id === "create-customer-basic") rows.push(["Post-execution validation", "NOT AVAILABLE"])
     if(data.validation) {
         const isLocalCustomerSimulation = data.validation.strategy === "LOCAL_CUSTOMER_LINE_SIMULATION" || data.validation.strategy === "LOCAL_MOCK_FACADE"
         const localValidationLabel = data.validation.result === "PASS"

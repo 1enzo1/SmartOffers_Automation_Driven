@@ -10,8 +10,8 @@ from core.api_catalog import get_api_catalog_entry as _get_catalog_entry
 PRODUCT_TESTS = (
     {
         "id": "create-customer-basic",
-        "name": "Create Customer Basic",
-        "description": "Prepares a synthetic QA4 customer through the safe local test flow.",
+        "name": "Create Customer with Offer",
+        "description": "Prepares a synthetic customer-with-offer through the safe local test flow.",
         "risk_level": "low",
         "environments": ["QA4"],
         "data_requirement": "Automatic synthetic data",
@@ -23,17 +23,27 @@ PRODUCT_TESTS = (
         "capability_status": "CAPABILITY_EXISTS",
         "evidence_status": "LOCAL_MOCK_SUMMARY",
         "local_mock_working": True,
-        "real_contract_ready": False,
+        "real_contract_ready": True,
         "read_only_validation_ready": False,
         "real_execution_requires_owner_authorization": True,
         "missing_capabilities": [
-            "Exact governed create binding",
             "Approved read-only customer or line lookup",
         ],
         "future_read_only_validation_prerequisite": (
             "Approved operation/scenario-scoped customer or line read-only lookup "
             "identity, hash, destination, and result shape."
         ),
+        "real_operation": "CREATE_OFFERS_CUSTOMER",
+        "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        "real_execution_status": "REAL EXECUTION CONTRACT READY - AUTHORIZATION REQUIRED",
+        "post_execution_validation": "NOT AVAILABLE",
+        "real_contract_references": {
+            "adapter": "qa4_offers_customer_adapter",
+            "bridge": "qa4_real_controlled_bridge",
+            "runner": "qa4_standard_mock_runner",
+            "ledger": "OneRunAttemptLedger",
+            "evidence": "sanitized_evidence",
+        },
     },
     {
         "id": "recharge-basic",

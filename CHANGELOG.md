@@ -19,8 +19,18 @@ source baseline.
   than internal catalog states.
 - Recorded the exact authoritative inputs required before Add Offer can be
   implemented.
-- Confirmed that a future Create Customer Run 03 is a new scoped real contract,
-  not a reuse of the existing Offers-controlled path.
+- Confirmed that a future standalone pure Create Customer run is a new scoped
+  real contract, not an implicit reuse of the existing Offers-controlled path.
+
+### Historical contract canonicalization
+
+- Renamed the product test to **Create Customer with Offer** so it truthfully
+  represents the recovered `CREATE_OFFERS_CUSTOMER` composite operation.
+- Bound product metadata to the existing Standard Runner, controlled bridge,
+  adapter, ledger, attestation, and sanitized evidence contract without
+  enabling transport.
+- Kept customer/line post-execution DB validation explicitly unavailable and
+  documented its exact external requirements.
 
 ## v0.0.0-alpha.1
 

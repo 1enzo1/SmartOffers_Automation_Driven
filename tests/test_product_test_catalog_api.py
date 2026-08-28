@@ -13,10 +13,14 @@ def test_product_catalog_exposes_only_three_curated_tests(app_client_factory):
         "create-customer-basic", "recharge-basic", "activate-offer-basic"
     ]
     assert [item["name"] for item in tests] == [
-        "Create Customer Basic", "Recharge Basic", "Add Offer Basic"
+        "Create Customer with Offer", "Recharge Basic", "Add Offer Basic"
     ]
     assert tests[0]["availability"] == "READY"
     assert tests[0]["execution_available"] is True
+    assert tests[0]["real_operation"] == "CREATE_OFFERS_CUSTOMER"
+    assert tests[0]["scenario_id"] == "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
+    assert tests[0]["real_execution_status"] == "REAL EXECUTION CONTRACT READY - AUTHORIZATION REQUIRED"
+    assert tests[0]["post_execution_validation"] == "NOT AVAILABLE"
     assert tests[1]["availability"] == "READY"
     assert tests[1]["execution_available"] is True
     assert tests[1]["execution_mode_notice"] == "Local simulation - no QA4 request"
@@ -137,13 +141,10 @@ def test_create_customer_catalog_truthfully_describes_real_readiness():
     test = get_product_test("create-customer-basic")
 
     assert test["local_mock_working"] is True
-    assert test["real_contract_ready"] is False
+    assert test["real_contract_ready"] is True
     assert test["read_only_validation_ready"] is False
     assert test["real_execution_requires_owner_authorization"] is True
-    assert test["missing_capabilities"] == [
-        "Exact governed create binding",
-        "Approved read-only customer or line lookup",
-    ]
+    assert test["missing_capabilities"] == ["Approved read-only customer or line lookup"]
     assert test["future_read_only_validation_prerequisite"] == (
         "Approved operation/scenario-scoped customer or line read-only lookup "
         "identity, hash, destination, and result shape."
@@ -279,10 +280,12 @@ def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app
     assert "Loading evidence availability..." in html
     assert 'list.textContent = "Loading evidence availability..."' in html
     assert "productHumanStatus(test)" in html
+    assert "Create Customer with Offer" in html
+    assert "REAL EXECUTION CONTRACT READY - AUTHORIZATION REQUIRED" in html
+    assert "NOT AVAILABLE" in html
     assert "data.execution_available !== true" in html
     assert 'isContractValidation ? "Validation" : "Status"' in html
-    assert "Customer/line local simulation" in html
-    assert "Real QA4 execution requires Owner authorization." in html
+    assert "Create Customer with Offer uses the local mock." in html
     assert "Local simulation &mdash; no QA4 request" in html
     assert "Customer/line local simulation passed" in html
     assert 'data.validation.strategy === "LOCAL_CUSTOMER_LINE_SIMULATION"' in html

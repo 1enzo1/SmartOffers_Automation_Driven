@@ -18,9 +18,9 @@ write, Oracle query, or production capability.
 
 ### Truthful limitations
 
-- Create Customer Basic has no real operation, adapter, bridge, or approved
-  customer/line read-only verification lookup. The existing Offers path is a
-  different operation and cannot be reused implicitly.
+- Create Customer with Offer reuses the historical composite Offers operation
+  and is ready for a separately authorized controlled execution. It does not
+  have approved post-execution customer/line read-only validation.
 - Recharge Basic has a sanitized catalog mapping but no governed real binding
   or approved read-only validation contract.
 - Add Offer Basic's exact external requirements are documented in
@@ -39,7 +39,8 @@ write, Oracle query, or production capability.
 | Future evidence capture regression coverage | READY |
 | Tiered local testing | READY |
 | New real QA4 write | NOT AUTHORIZED |
-| Run 03 source/contract readiness | NOT READY |
+| Recovered composite execution contract | READY FOR SEPARATE AUTHORIZATION |
+| Post-execution customer/line DB validation | NOT READY |
 
 The `v0.0.0-alpha.1` tag remains the historical Alpha baseline. A later tag
 may be created only after independent Tester and Critic acceptance of the

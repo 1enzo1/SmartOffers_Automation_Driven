@@ -24,7 +24,7 @@ mode allowed by the selected catalog entry.
 
 | Test | Product status | Current permitted behavior | Real readiness |
 |---|---|---|---|
-| Create Customer Basic | LOCAL READY | Deterministic synthetic customer/line simulation and local verification | No `CREATE_CUSTOMER_BASIC` real operation, adapter, bridge, or read-only customer/line lookup exists. A new scoped contract is required; it cannot reuse the Offers contract. |
+| Create Customer with Offer | REAL EXECUTION CONTRACT READY | Existing local mock plus the recovered `CREATE_OFFERS_CUSTOMER` controlled execution contract | Separate post-execution customer/line DB validation is not available. The composite Offers operation requires authorization and must not be called a pure customer creation. |
 | Recharge Basic | LOCAL READY | Existing deterministic recharge template through the fake adapter and local plan verification | The sanitized catalog is explicitly blocked for real use. A governed operation/scenario binding and approved read-only result validation are missing. |
 | Add Offer Basic | UNAVAILABLE | Safely blocked before discovery, planning, or transport | The exact authoritative requirements are in `ADD_OFFER_EXTERNAL_REQUIREMENTS.md`. |
 
@@ -57,10 +57,8 @@ is the default local product check.
 
 ## Run 03 status
 
-`READY_FOR_RUN_03=false`. No Run 03 scenario, authorization, or source
-contract exists yet. Research confirmed that the adjacent controlled path is
-only `CREATE_OFFERS_CUSTOMER`; it must not be relabeled as Create Customer.
-A future Create Customer Basic run requires a scoped operation and scenario,
-adapter/bridge binding, synthetic-data contract, approved read-only
-customer/line lookup with identity/hash/destination/result shape, evidence
-mapping, one-shot ledger mapping, and a separate explicit Owner authorization.
+`READY_FOR_RUN_03_EXECUTION_PREAUTH=true` for the recovered composite
+`CREATE_OFFERS_CUSTOMER` contract, subject to a new explicit Owner
+authorization and all existing runtime gates. `READY_FOR_RUN_03_WITH_DB_VALIDATION=false`:
+there is no approved customer/line read-only lookup. See
+`CREATE_CUSTOMER_EXTERNAL_REQUIREMENTS.md`.
