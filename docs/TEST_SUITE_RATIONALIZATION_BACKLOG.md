@@ -65,6 +65,73 @@ scoped authorization and environment review:
 
 The tier classification is a routing rule, not an execution authorization.
 
+## Practical execution commands
+
+The following commands turn the routing note into a repeatable local workflow.
+They all use pytest's cache provider disabled so they do not depend on writable
+cache directories. They do not include the manual/external-risk tier.
+
+### TIER_0_FAST
+
+Run for any small change before selecting a feature suite:
+
+```powershell
+python -m pytest -p no:cacheprovider `
+  tests/test_generation.py `
+  tests/test_simulation.py `
+  tests/test_product_test_catalog_api.py `
+  tests/test_sanitized_evidence.py `
+  tests/test_gate_dag.py `
+  tests/test_api_catalog.py -q
+```
+
+This is the current import/config/safety smoke group: 193 tests in about three
+seconds on the local session that created this document.
+
+### TIER_1_FEATURE
+
+Run the tests directly owned by the changed feature in addition to TIER_0.
+Current examples:
+
+- product catalog or UI: `tests/test_product_test_catalog_api.py`
+- generation/template work: `tests/test_generation.py tests/test_template_library.py`
+- adapter work: `tests/test_adapters.py tests/test_adapter_risk_classifier.py`
+- evidence work: `tests/test_sanitized_evidence.py`
+- controlled Offers path: `tests/test_qa4_offers_customer_adapter.py tests/test_qa4_real_controlled_bridge.py`
+
+### TIER_2_INTEGRATION_OFFLINE
+
+Run for a feature milestone, selecting the relevant broader group. For the
+current product/controlled boundary, use:
+
+```powershell
+python -m pytest -p no:cacheprovider `
+  tests/test_product_test_catalog_api.py `
+  tests/test_adapters.py `
+  tests/test_qa4_standard_mock_facade.py `
+  tests/test_qa4_offers_customer_adapter.py `
+  tests/test_qa4_real_controlled_bridge.py `
+  tests/test_sanitized_evidence.py -q
+```
+
+### TIER_3_FULL
+
+Run only for a release or milestone regression, after confirming the process
+environment cannot select a manual/external path:
+
+```powershell
+python -m pytest tests -q
+```
+
+If that environment condition cannot be established, run the relevant TIER_2
+groups instead and record the limitation; do not accidentally trigger a manual
+smoke path.
+
+Default developer workflow: `TIER_0_FAST` (currently 193 tests) plus the
+smallest relevant TIER_1 feature group. A normal catalog/UI change therefore
+starts at 193 tests and adds its already-included feature test only when the
+full TIER_0 has been run; a narrower edit may run just its TIER_1 test first.
+
 ## Obvious overlap and candidates
 
 - The three `test_qa4_standard_mock_*` files cover adjacent mock API, facade,
