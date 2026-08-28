@@ -14,6 +14,9 @@ _BLOCKERS = (
 )
 SYNTHETIC_OFFERS_SCENARIO = "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
 ATOMIC_BDA_AUTHORIZATION = "ONE_ATOMIC_QA4_BDA_DISCOVERY_AND_OFFERS_CREATE_RUN"
+RUN_02_BDA_AUTHORIZATION = "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
+RUN_01_ID = "ALPHA_REAL_RUN_01"
+RUN_02_ID = "ALPHA_REAL_RUN_02"
 
 
 def run_standard_qa4_real_controlled(
@@ -137,7 +140,7 @@ def run_atomic_qa4_bda_offer_discovery_and_offers_create(
         or not _is_standard_context(context)
         or (bda_driver is None and not callable(bda_driver_factory))
         or not isinstance(bda_authorization, dict)
-        or bda_authorization.get("owner_authorization") != ATOMIC_BDA_AUTHORIZATION
+        or not _atomic_bda_authorization_matches_context(context, bda_authorization)
     ):
         return _atomic_report({"status": "QA4_BDA_OFFER_DISCOVERY_BLOCKED"}, None)
 
@@ -170,6 +173,19 @@ def run_atomic_qa4_bda_offer_discovery_and_offers_create(
         offer=discovered_offer[0],
     )
     return _atomic_report(discovery, report)
+
+
+def _atomic_bda_authorization_matches_context(context, bda_authorization):
+    """Bind the one BDA authorization to its exact Alpha run before discovery."""
+    run_id = context.get("run_id") if isinstance(context, dict) else None
+    expected = (
+        RUN_02_BDA_AUTHORIZATION
+        if run_id == RUN_02_ID
+        else ATOMIC_BDA_AUTHORIZATION
+        if run_id in (None, RUN_01_ID)
+        else None
+    )
+    return expected is not None and bda_authorization.get("owner_authorization") == expected
 
 
 def _is_standard_context(context):

@@ -12,6 +12,10 @@ _IP_PATTERN = re.compile(r"\b(?:[0-9]{1,3}\.){3}[0-9]{1,3}\b")
 _NO_AUTH_API_ID = "post-vivo-next-habilitacao-de-cliente-ade0841563"
 _NO_AUTH_OPERATION = "CREATE_OFFERS_CUSTOMER"
 _NO_AUTH_SCENARIO = "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
+_ALLOWED_ONE_RUN_AUTHORIZATIONS = {
+    "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+    "ONE_QA4_REPEATABILITY_SMOKE_RUN_02",
+}
 
 
 def prepare_first_qa4_call(request, runtime, policy, client):
@@ -84,7 +88,7 @@ def execute_first_qa4_call_manual(
     allowlist_result = validate_first_qa4_allowlist(request_data, allowlist)
     allowlist_item = allowlist_result.get("allowlist_item") or {}
     auth_required = not _is_exact_no_auth_scope(
-        request_data, allowlist_result, allowlist_item, policy_data
+        request_data, allowlist_result, allowlist_item, policy_data, attempt_scope
     )
     runtime_refs_result = validate_runtime_contract(
         runtime_refs_data, auth_required=auth_required
@@ -198,7 +202,8 @@ def _consume_attempt_budget(ledger, scope):
     return hasattr(ledger, "consume") and ledger.consume(scope) is True
 
 
-def _is_exact_no_auth_scope(request_data, allowlist_result, allowlist_item, policy_data):
+def _is_exact_no_auth_scope(request_data, allowlist_result, allowlist_item, policy_data, attempt_scope=None):
+    scoped_no_auth = policy_data.get("operation_scoped_no_auth") or {}
     return (
         allowlist_result.get("valid") is True
         and allowlist_item.get("auth_required") is False
@@ -207,14 +212,16 @@ def _is_exact_no_auth_scope(request_data, allowlist_result, allowlist_item, poli
         and allowlist_item.get("environment") == "QA4"
         and allowlist_item.get("operation") == _NO_AUTH_OPERATION
         and allowlist_item.get("scenario_id") == _NO_AUTH_SCENARIO
-        and policy_data.get("operation_scoped_no_auth")
+        and scoped_no_auth
         == {
-            "authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+            "authorization": scoped_no_auth.get("authorization"),
             "operation": _NO_AUTH_OPERATION,
             "scenario_id": _NO_AUTH_SCENARIO,
             "environment": "QA4",
             "auth_required": False,
         }
+        and scoped_no_auth.get("authorization") in _ALLOWED_ONE_RUN_AUTHORIZATIONS
+        and scoped_no_auth.get("authorization") == attempt_scope
         and (policy_data.get("runtime_flags") or {}).get("GLOBAL_NO_AUTH_ENABLED") is False
         and request_data.get("api_id") == _NO_AUTH_API_ID
         and request_data.get("method") == "POST"

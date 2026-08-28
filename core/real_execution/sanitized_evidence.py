@@ -15,6 +15,8 @@ from uuid import uuid4
 
 
 _ALLOWED_RESULTS = {"PASS", "FAIL", "BLOCKED"}
+EVIDENCE_CAPTURE_VERSION = "2"
+_ALLOWED_RUN_IDS = {"ALPHA_REAL_RUN_01", "ALPHA_REAL_RUN_02"}
 
 
 def persist_sanitized_real_run_evidence(report, *, context, evidence_root="evidencias"):
@@ -28,7 +30,8 @@ def persist_sanitized_real_run_evidence(report, *, context, evidence_root="evide
         return {"recorded": False, "reason": "REQUEST_NOT_SENT"}
 
     timestamp = datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-    run_id = "run-" + uuid4().hex
+    requested_run_id = context.get("run_id") if isinstance(context, dict) else None
+    run_id = requested_run_id if requested_run_id in _ALLOWED_RUN_IDS else "run-" + uuid4().hex
     record = _record(report, context, run_id=run_id, timestamp=timestamp)
     destination = Path(evidence_root) / "real-controlled" / f"{run_id}.json"
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -49,6 +52,7 @@ def _record(report, context, *, run_id, timestamp):
     status_class = _status_class(status)
     return {
         "schema_version": "1",
+        "evidence_capture_version": EVIDENCE_CAPTURE_VERSION,
         "run_id": run_id,
         "timestamp": timestamp,
         "environment": _qa4_only(context.get("environment")),
@@ -58,11 +62,19 @@ def _record(report, context, *, run_id, timestamp):
         "operational_preflight": _terminal_preflight(context.get("operational_preflight")),
         "destination_attestation": _terminal_preflight(context.get("destination_attestation")),
         "authorization_verification": _terminal_preflight(context.get("authorization_verification")),
+        "bda_discovery_executed": context.get("bda_discovery_executed") is True,
+        "bda_read_only_confirmed": context.get("bda_read_only_confirmed") is True,
+        "test_offer_ready": context.get("test_offer_ready") is True,
+        "atomic_in_process_handoff": context.get("atomic_in_process_handoff") is True,
         "request_sent": report.get("executor_send_attempted") is True,
         "response_received": evidence.get("response_received") is True,
         "http_status_class": status_class,
+        "attempts_before": 0,
+        "attempts_after": _attempt_ledger(adapter, evidence)["attempts_used"],
         "attempt_ledger": _attempt_ledger(adapter, evidence),
+        "retry_count": 0,
         "result": result,
+        "standard_runner_real_path": context.get("standard_runner_real_path") is True,
         "source_revision": _source_revision(),
     }
 

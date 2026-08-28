@@ -485,6 +485,30 @@ def test_no_auth_exception_fails_closed_for_another_scenario_before_send():
     assert client.calls == []
 
 
+def test_policy_and_owner_opt_in_authorizations_must_match_before_client_factory():
+    policy = _no_auth_policy()
+    policy["operation_scoped_no_auth"]["authorization"] = "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
+    factory_calls = []
+
+    result = execute_qa4_offers_customer_create(
+        _context(),
+        environ=_runtime_env(),
+        runtime_refs=_runtime_refs(),
+        runtime_secrets=_runtime_secrets(),
+        policy=policy,
+        approval=_approval(),
+        owner_opt_in=_one_offers_customer_create_opt_in(),
+        ledger=OneRunAttemptLedger(),
+        client_factory=lambda: factory_calls.append("constructed") or TransportMarkedLocalClient(201),
+        synthetic_customer={"msisdn": "11999999999"},
+        offer="LOCAL_TEST_OFFER",
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert "OPERATION_SCOPED_NO_AUTH_REQUIRED" in result["blockers"]
+    assert factory_calls == []
+
+
 def test_no_auth_flag_without_exact_operation_scope_remains_auth_required():
     client = TransportMarkedLocalClient(201)
     policy = _policy()

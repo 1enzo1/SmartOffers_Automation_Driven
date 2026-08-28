@@ -24,6 +24,8 @@ _TEST_MSISDN_REF = "SMARTOFFERS_QA4_TEST_MSISDN"
 _TEST_OFFER_REF = "SMARTOFFERS_QA4_TEST_OFFER"
 _ATTEMPT_POLICY = {"max_attempts": 1, "retry_count": 0, "fallback": False}
 _ONE_RUN_OPT_IN = "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN"
+_RUN_02_OPT_IN = "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
+_ALLOWED_ONE_RUN_OPT_INS = {_ONE_RUN_OPT_IN, _RUN_02_OPT_IN}
 _EVENT_TIME_FORMAT = "%d-%m-%Y %H:%M:%S"
 _EVENT_TIME_PATTERN = re.compile(r"\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}")
 
@@ -230,6 +232,7 @@ def execute_qa4_offers_customer_create(
                 client,
                 approval,
                 preflight,
+                owner_opt_in=owner_opt_in,
                 ledger=ledger,
                 synthetic_customer=synthetic_customer,
                 offer=offer,
@@ -250,6 +253,7 @@ def execute_qa4_offers_customer_create(
         client,
         approval,
         preflight,
+        owner_opt_in=owner_opt_in,
         synthetic_customer=synthetic_customer,
         offer=offer,
         client_factory=client_factory,
@@ -265,6 +269,7 @@ def _execute_with_manual_executor(
     client,
     approval,
     preflight,
+    owner_opt_in=None,
     ledger=None,
     synthetic_customer=None,
     offer=None,
@@ -288,7 +293,7 @@ def _execute_with_manual_executor(
         client,
         approval if isinstance(approval, dict) else {},
         attempt_ledger=ledger if (_is_real_transport_client(client) or callable(client_factory)) else None,
-        attempt_scope=_ONE_RUN_OPT_IN if (_is_real_transport_client(client) or callable(client_factory)) else None,
+        attempt_scope=(owner_opt_in or {}).get("authorization") if (_is_real_transport_client(client) or callable(client_factory)) else None,
         client_factory=client_factory,
     )
     return _terminal_result(_terminal_status(executor_result), preflight, executor_result)
@@ -303,7 +308,8 @@ def _transport_gate_blockers(context, preflight, policy, approval, owner_opt_in)
         blockers.append("QA4_PREFLIGHT_REQUIRED")
     if not _approval_is_complete_for_operation(approval):
         blockers.append("MANUAL_APPROVAL_REQUIRED")
-    if not _bounded_one_run_opt_in_matches(opt_in):
+    bounded_opt_in = _bounded_one_run_opt_in_matches(opt_in)
+    if not bounded_opt_in:
         blockers.append(f"{_ONE_RUN_OPT_IN}_OPT_IN_REQUIRED")
     runtime_flags = policy_data.get("runtime_flags") or {}
     if runtime_flags.get("REAL_TRANSPORT_ALLOWED") is not True:
@@ -316,7 +322,7 @@ def _transport_gate_blockers(context, preflight, policy, approval, owner_opt_in)
         blockers.append("REAL_EXECUTION_ENABLED_REQUIRED")
     if runtime_flags.get("REAL_EXECUTION_KILL_SWITCH") is not False:
         blockers.append("REAL_EXECUTION_KILL_SWITCH_MUST_BE_FALSE")
-    if not _exact_no_auth_transport_scope(policy_data):
+    if bounded_opt_in and not _exact_no_auth_transport_scope(policy_data, opt_in):
         blockers.append("OPERATION_SCOPED_NO_AUTH_REQUIRED")
     if not _destination_attestation_matches(policy_data):
         blockers.append("DESTINATION_ATTESTATION_REQUIRED")
@@ -334,8 +340,8 @@ def _approval_is_complete_for_operation(approval):
 def _bounded_one_run_opt_in_matches(opt_in):
     return (
         opt_in.get("approved") is True
-        and opt_in.get("operation") == _ONE_RUN_OPT_IN
-        and opt_in.get("authorization") == _ONE_RUN_OPT_IN
+        and opt_in.get("operation") in _ALLOWED_ONE_RUN_OPT_INS
+        and opt_in.get("authorization") == opt_in.get("operation")
         and opt_in.get("environment") == "QA4"
         and opt_in.get("mode") == "real-controlled"
         and opt_in.get("scenario_id") == _SYNTHETIC_SCENARIO
@@ -347,9 +353,10 @@ def _bounded_one_run_opt_in_matches(opt_in):
     )
 
 
-def _exact_no_auth_transport_scope(policy_data):
+def _exact_no_auth_transport_scope(policy_data, opt_in):
     allowlist = policy_data.get("first_qa4_allowlist") or {}
     item = (allowlist.get("items") or {}).get(_CATALOG_API_ID) or {}
+    scoped_no_auth = policy_data.get("operation_scoped_no_auth") or {}
     return (
         item.get("api_id") == _CATALOG_API_ID
         and item.get("method") == "POST"
@@ -357,14 +364,16 @@ def _exact_no_auth_transport_scope(policy_data):
         and item.get("operation") == _OPERATION
         and item.get("scenario_id") == _SYNTHETIC_SCENARIO
         and item.get("auth_required") is False
-        and policy_data.get("operation_scoped_no_auth")
+        and scoped_no_auth
         == {
-            "authorization": _ONE_RUN_OPT_IN,
+            "authorization": scoped_no_auth.get("authorization"),
             "operation": _OPERATION,
             "scenario_id": _SYNTHETIC_SCENARIO,
             "environment": "QA4",
             "auth_required": False,
         }
+        and scoped_no_auth.get("authorization") in _ALLOWED_ONE_RUN_OPT_INS
+        and scoped_no_auth.get("authorization") == opt_in.get("authorization")
     )
 
 

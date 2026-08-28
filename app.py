@@ -64,6 +64,9 @@ _OFFERS_API_ID = "post-vivo-next-habilitacao-de-cliente-ade0841563"
 _ALPHA_CONTROLLED_CONTRACT_REF = "SMARTOFFERS_ALPHA_QA4_CONTROLLED_CONTRACT"
 _ALPHA_AUTHORIZATION = "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN"
 _ATOMIC_BDA_AUTHORIZATION = "ONE_ATOMIC_QA4_BDA_DISCOVERY_AND_OFFERS_CREATE_RUN"
+_RUN_02_ID = "ALPHA_REAL_RUN_02"
+_RUN_02_AUTHORIZATION = "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
+_RUN_02_BDA_AUTHORIZATION = "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
 _DEFAULT_BDA_DISCOVERY_LEDGER = BdaDiscoveryAttemptLedger()
 
 
@@ -81,6 +84,17 @@ class _RuntimeSecrets(dict):
         return "<runtime-secrets>"
 
 
+def _run_authorization(context):
+    context_data = context if isinstance(context, dict) else {}
+    if context_data.get("run_id") == _RUN_02_ID:
+        return _RUN_02_AUTHORIZATION
+    return _ALPHA_AUTHORIZATION
+
+
+def _run_bda_authorization(context):
+    return _RUN_02_BDA_AUTHORIZATION if _run_authorization(context) == _RUN_02_AUTHORIZATION else _ATOMIC_BDA_AUTHORIZATION
+
+
 def _qa4_owner_execution_inputs(context):
     """Compose only an attested Alpha contract; never resolve transport inputs here."""
 
@@ -89,7 +103,7 @@ def _qa4_owner_execution_inputs(context):
         return {}
 
     contract = _qa4_controlled_contract_from_environ()
-    if not _is_exact_alpha_controlled_contract(contract):
+    if not _is_exact_alpha_controlled_contract(contract, _run_authorization(context_data)):
         return {}
 
     from core.real_execution.qa4_offers_customer_adapter import (
@@ -161,7 +175,7 @@ def _qa4_lazy_runtime_inputs(contract, ledger):
 
 def _atomic_static_preflight_ready(context, contract):
     """Verify local, non-transport gates before constructing the BDA boundary."""
-    if not _is_exact_alpha_controlled_contract(contract):
+    if not _is_exact_alpha_controlled_contract(contract, _run_authorization(context)):
         return False
     from core.real_execution.api_health_local_runtime_preflight import (
         SCOPED_OFFERS_DESTINATION_ATTESTATION_READY,
@@ -211,7 +225,7 @@ def _is_exact_alpha_controlled_context(context):
     )
 
 
-def _is_exact_alpha_controlled_contract(contract):
+def _is_exact_alpha_controlled_contract(contract, authorization=_ALPHA_AUTHORIZATION):
     if not isinstance(contract, dict):
         return False
     opt_in = contract.get("owner_opt_in") or {}
@@ -222,8 +236,8 @@ def _is_exact_alpha_controlled_contract(contract):
     return (
         opt_in == {
             "approved": True,
-            "operation": _ALPHA_AUTHORIZATION,
-            "authorization": _ALPHA_AUTHORIZATION,
+            "operation": authorization,
+            "authorization": authorization,
             "environment": "QA4",
             "mode": "real-controlled",
             "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
@@ -234,7 +248,7 @@ def _is_exact_alpha_controlled_contract(contract):
             "production": False,
         }
         and flags == {"REAL_EXECUTION_ENABLED": True, "REAL_EXECUTION_KILL_SWITCH": False, "REAL_TRANSPORT_ALLOWED": True, "PRODUCTION": False, "GLOBAL_NO_AUTH_ENABLED": False}
-        and no_auth == {"authorization": _ALPHA_AUTHORIZATION, "operation": "CREATE_OFFERS_CUSTOMER", "scenario_id": SYNTHETIC_OFFERS_SCENARIO, "environment": "QA4", "auth_required": False}
+        and no_auth == {"authorization": authorization, "operation": "CREATE_OFFERS_CUSTOMER", "scenario_id": SYNTHETIC_OFFERS_SCENARIO, "environment": "QA4", "auth_required": False}
         and destination == {"source": "local_runtime_config", "environment": "QA4", "allowlist_match": True, "status": "MATCH"}
         and contract.get("approval") == {"approved": True, "risk_acceptance": True, "approver_ref": "local-controlled-ref", "ticket_ref": "local-controlled-ref", "approved_api_id": _OFFERS_API_ID, "approved_environment": "QA4", "approved_at_ref": "local-controlled-ref"}
         and contract.get("runtime_refs") == {"QA4_HOST_REF": "runtime-ref:qa4-host", "SENSITIVE_HEADERS_REF": "runtime-ref:qa4-headers", "TEST_PAYLOAD_REF": "runtime-ref:qa4-body", "CORRELATION_ID": "runtime-ref:qa4-correlation"}
@@ -461,6 +475,13 @@ def api_standard_qa4_real_controlled_run():
         return _standard_qa4_api_block("MODE_NOT_ALLOWED")
     if data.get("scenario_id") != SYNTHETIC_OFFERS_SCENARIO:
         return _standard_qa4_api_block("SCENARIO_NOT_ALLOWED")
+    requested_run_id = data.get("run_id")
+    if requested_run_id not in (None, _RUN_02_ID):
+        return _standard_qa4_api_block("RUN_ID_NOT_ALLOWED")
+    expected_authorization = _RUN_02_AUTHORIZATION if requested_run_id == _RUN_02_ID else _ALPHA_AUTHORIZATION
+    supplied_authorization = data.get("owner_authorization", _ALPHA_AUTHORIZATION)
+    if supplied_authorization != expected_authorization:
+        return _standard_qa4_api_block("OWNER_AUTHORIZATION_REQUIRED")
     validation_data = {**data, "mode": "mock"}
     context, evaluated_at, reason = _standard_qa4_api_context(validation_data)
     if reason:
@@ -473,6 +494,8 @@ def api_standard_qa4_real_controlled_run():
         "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
         "application_confirmation": _APPLICATION_CONFIRMATION,
     }
+    if requested_run_id:
+        controlled_context["run_id"] = requested_run_id
     window_status = _atomic_operation_window_status(controlled_context)
     if window_status:
         return jsonify({"result": "BLOCKED", "reason": window_status})
@@ -487,7 +510,7 @@ def api_standard_qa4_real_controlled_run():
         bda_environ=_RuntimeEnvironment(os.environ),
         bda_driver_factory=_governed_bda_driver,
         bda_authorization={
-            "owner_authorization": _ATOMIC_BDA_AUTHORIZATION,
+            "owner_authorization": _run_bda_authorization(controlled_context),
             "operation": "QA4_BDA_OFFER_DISCOVERY",
             "bda_operation": "OFFER_DISCOVERY",
             "read_only_discovery_authorized": True,
@@ -508,6 +531,12 @@ def api_standard_qa4_real_controlled_run():
         "operational_preflight": "READY",
         "destination_attestation": "READY",
         "authorization_verification": "READY",
+        "run_id": controlled_context.get("run_id", "ALPHA_REAL_RUN_01"),
+        "bda_discovery_executed": (report.get("bda_discovery") or {}).get("status") == "QA4_BDA_OFFER_DISCOVERY_OK",
+        "bda_read_only_confirmed": (report.get("bda_discovery") or {}).get("select_only") is True,
+        "test_offer_ready": (report.get("bda_discovery") or {}).get("found_valid_offer") is True,
+        "atomic_in_process_handoff": (report.get("bda_discovery") or {}).get("found_valid_offer") is True,
+        "standard_runner_real_path": report.get("real_call_executed") is True,
     }
     # A preflight/BDA block is not an execution result and must not generate a
     # misleading real-run artifact.  A sent request (including a failed one)

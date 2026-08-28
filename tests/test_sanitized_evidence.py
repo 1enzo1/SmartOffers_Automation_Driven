@@ -19,6 +19,7 @@ def test_real_run_evidence_is_immutable_allowlisted_and_redacted(monkeypatch):
         },
     }
     context = {
+        "run_id": "ALPHA_REAL_RUN_02",
         "environment": "qa4",
         "operation": "CREATE_OFFERS_CUSTOMER",
         "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
@@ -26,6 +27,11 @@ def test_real_run_evidence_is_immutable_allowlisted_and_redacted(monkeypatch):
         "operational_preflight": "READY",
         "destination_attestation": "READY",
         "authorization_verification": "READY",
+        "bda_discovery_executed": True,
+        "bda_read_only_confirmed": True,
+        "test_offer_ready": True,
+        "atomic_in_process_handoff": True,
+        "standard_runner_real_path": True,
         "msisdn": "must-not-appear",
     }
 
@@ -37,7 +43,17 @@ def test_real_run_evidence_is_immutable_allowlisted_and_redacted(monkeypatch):
 
     assert saved["recorded"] is True
     assert record["environment"] == "QA4"
+    assert record["run_id"] == "ALPHA_REAL_RUN_02"
+    assert record["evidence_capture_version"] == "2"
+    assert record["bda_discovery_executed"] is True
+    assert record["bda_read_only_confirmed"] is True
+    assert record["test_offer_ready"] is True
+    assert record["atomic_in_process_handoff"] is True
+    assert record["standard_runner_real_path"] is True
     assert record["http_status_class"] == "2xx"
+    assert record["attempts_before"] == 0
+    assert record["attempts_after"] == 1
+    assert record["retry_count"] == 0
     assert record["attempt_ledger"] == {"attempts_used": 1, "max_attempts": 1, "retry_count": 0}
     assert record["source_revision"] == "abc123"
     assert "must-not-appear" not in content

@@ -467,6 +467,65 @@ def test_selected_synthetic_scenario_api_binds_bridge_lazily_after_confirmation(
     assert "must-not-appear" not in response.get_data(as_text=True)
 
 
+def test_run_02_requires_its_exact_owner_authorization_before_bridge(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("qa4-run-02-authorization")
+    monkeypatch.setattr(app_module, "_trusted_local_now", lambda: datetime.fromisoformat("2026-08-25T12:00:00+00:00"))
+    payload = {
+        **_context(),
+        "environment": "QA4",
+        "mode": "real-controlled",
+        "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+        "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+        "evaluated_at": EVALUATED_AT,
+        "run_id": "ALPHA_REAL_RUN_02",
+    }
+
+    denied = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={**payload, "owner_authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN"},
+    )
+    allowed_shape = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={**payload, "owner_authorization": "ONE_QA4_REPEATABILITY_SMOKE_RUN_02", "window_started_at": "2026-08-25T11:00:00+00:00", "window_expires_at": "2026-08-25T13:00:00+00:00"},
+    )
+
+    assert denied.status_code == 400
+    assert denied.get_json() == {"result": "BLOCKED", "reason": "OWNER_AUTHORIZATION_REQUIRED"}
+    assert allowed_shape.status_code in {200, 400}
+    assert allowed_shape.get_json().get("reason") != "OWNER_AUTHORIZATION_REQUIRED"
+
+
+def test_run_02_binds_exact_authorization_to_governed_atomic_boundary(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("qa4-run-02-boundary")
+    calls = []
+    monkeypatch.setattr(app_module, "_atomic_static_preflight_ready", lambda *args: True)
+    monkeypatch.setattr(app_module, "_trusted_local_now", lambda: datetime.fromisoformat("2026-08-25T12:00:00+00:00"))
+    monkeypatch.setattr(
+        app_module,
+        "run_atomic_qa4_bda_offer_discovery_and_offers_create",
+        lambda *args, **kwargs: calls.append(kwargs) or {"result": "BLOCKED", "executor_send_attempted": False},
+    )
+
+    response = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={
+            **_context(),
+            "environment": "QA4",
+            "mode": "real-controlled",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+            "evaluated_at": EVALUATED_AT,
+            "run_id": "ALPHA_REAL_RUN_02",
+            "owner_authorization": "ONE_QA4_REPEATABILITY_SMOKE_RUN_02",
+            "window_started_at": "2026-08-25T11:00:00+00:00",
+            "window_expires_at": "2026-08-25T13:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    assert calls[0]["bda_authorization"]["owner_authorization"] == "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
+
+
 def test_selected_synthetic_scenario_api_blocks_wrong_environment_or_scenario_before_bridge(
     app_client_factory, monkeypatch
 ):
@@ -893,6 +952,28 @@ def test_atomic_discovery_hands_offer_to_real_controlled_run_without_persistence
     assert result["bda_discovery"]["status"] == "QA4_BDA_OFFER_DISCOVERY_OK"
     assert "DISCOVERED_OFFER" not in repr(result)
     assert "SMARTOFFERS_QA4_TEST_OFFER" not in repr(result)
+
+
+def test_atomic_run_id_authorization_mismatch_blocks_before_driver_or_discovery(monkeypatch):
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+
+    monkeypatch.setattr(
+        bda_discovery,
+        "run_qa4_bda_offer_discovery",
+        lambda **kwargs: (_ for _ in ()).throw(AssertionError("discovery must not run")),
+    )
+    result = qa4_real_controlled_bridge.run_atomic_qa4_bda_offer_discovery_and_offers_create(
+        _context() | {"run_id": "ALPHA_REAL_RUN_02"},
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
+        bda_environ={},
+        bda_driver_factory=lambda: (_ for _ in ()).throw(AssertionError("driver factory must not run")),
+        bda_authorization={"owner_authorization": "ONE_ATOMIC_QA4_BDA_DISCOVERY_AND_OFFERS_CREATE_RUN"},
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert result["bda_discovery"]["status"] == "QA4_BDA_OFFER_DISCOVERY_BLOCKED"
 
 
 def test_real_controlled_api_uses_atomic_handoff_and_never_constructs_http_on_bda_block(
