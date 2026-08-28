@@ -434,6 +434,36 @@ def api_product_tests():
     return jsonify({"tests": list_product_tests()})
 
 
+def _prepare_local_product_test_data(test):
+    """Build a deterministic, in-memory local customer/line simulation record.
+
+    The mock facade receives it in-process only.  It deliberately contains no
+    customer, line, account, or MSISDN value and is never returned as a request
+    payload or written to disk.
+    """
+    if test["id"] == "create-customer-basic":
+        return {
+            "entity": "customer_line",
+            "environment": "QA4",
+            "lifecycle": "CREATE",
+            "synthetic": True,
+            "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
+        }
+    return None
+
+
+def _validate_local_customer_line_simulation(record, mock_result):
+    """Validate only the ephemeral local simulation record and mock outcome."""
+    expected_record = {
+        "entity": "customer_line",
+        "environment": "QA4",
+        "lifecycle": "CREATE",
+        "synthetic": True,
+        "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
+    }
+    return "PASS" if record == expected_record and mock_result == "PASS" else "FAIL"
+
+
 @app.route("/api/product-tests/<test_id>/validate", methods=["POST"])
 def api_product_test_validate(test_id):
     test = get_product_test(test_id)
@@ -493,19 +523,44 @@ def api_product_test_execute(test_id):
             "attempts": "0/0",
         })
     # No real-controlled bridge is reachable from this product-facing endpoint.
+    synthetic_data = _prepare_local_product_test_data(test)
+    context = {"environment": "qa4", "workflow_profile": _STANDARD_QA4_PROFILE}
+    if synthetic_data:
+        context["test_data"] = synthetic_data
     report = run_standard_qa4_application_mock(
-        {"environment": "qa4", "workflow_profile": _STANDARD_QA4_PROFILE},
+        context,
         mode="mock",
         evaluated_at=datetime.now().astimezone().isoformat(),
     )
+    mock_result = report["result"]
+    local_result = (
+        _validate_local_customer_line_simulation(synthetic_data, mock_result)
+        if synthetic_data and mock_result == "PASS"
+        else mock_result
+    )
     return jsonify({
-        "result": report["result"],
+        "result": local_result,
         "test": test,
         "environment": "QA4",
         "duration_ms": 0,
         "attempts": "0/0",
-        "reason": "LOCAL_MOCK_COMPLETED",
+        "reason": "LOCAL_CUSTOMER_LINE_SIMULATION_COMPLETED",
         "evidence_reference": "MOCK_RUN_NOT_PERSISTED",
+        "validation": {
+            "result": local_result,
+            "strategy": "LOCAL_CUSTOMER_LINE_SIMULATION",
+            "external_read_only_lookup_used": False,
+        },
+        "evidence_summary": {
+            "preflight": mock_result,
+            "execution": mock_result,
+            "local_verification": local_result,
+            "request_sent": False,
+        },
+        "synthetic_data": {
+            "prepared": bool(synthetic_data),
+            "reference": synthetic_data["reference"] if synthetic_data else None,
+        },
         "report": report,
     })
 

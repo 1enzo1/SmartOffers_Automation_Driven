@@ -1770,6 +1770,7 @@ pre {
             <div class="field"><label for="productEnvironment">Environment</label><select id="productEnvironment"><option value="QA4">QA4</option></select></div>
             <div class="field"><label for="productTest">Test</label><select id="productTest" onchange="resetProductValidation()"><option value="">Select test</option></select></div>
             <div class="field"><span class="field-label">Test data</span><div class="suite-note">Automatic synthetic data</div></div>
+            <p class="suite-note" id="productModeNotice">Local simulation &mdash; no QA4 request. QA4 remains the selected target; real execution requires an approved binding and Owner authorization.</p>
             <button class="primary" id="productValidate" type="button" onclick="validateProductTest()">Validate</button>
             <div id="productChecks" class="check-grid" hidden></div>
             <button class="success" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute test</button>
@@ -3427,9 +3428,17 @@ function resetProductValidation(){
     const checks = document.getElementById("productChecks")
     checks.hidden = true
     checks.innerHTML = ""
+    const test = productCatalog.find(item => item.id === selectedProductTest())
+    const notice = document.getElementById("productModeNotice")
+    if(notice && test){
+        notice.textContent = test.execution_mode_notice || "Static plan - no QA4 request"
+    }
 }
 
 function productCapabilityNote(test){
+    if(test.id === "create-customer-basic"){
+        return "Customer/line local simulation is ready. Real QA4 execution requires Owner authorization. A governed create binding and approved read-only customer or line lookup contract are still required for real validation."
+    }
     if(test.availability !== "CONTRACT_READY") return ""
     const missing = Array.isArray(test.missing_capabilities) ? test.missing_capabilities.join(", ") : "real binding is required"
     return `Contract ready: local validation and planning are available. Execution remains disabled until ${missing}.`
@@ -3450,6 +3459,15 @@ function renderProductResult(data){
     ]
     const capabilityNote = productCapabilityNote(test)
     if(capabilityNote) rows.push(["Execution", capabilityNote])
+    if(data.validation) {
+        const isLocalCustomerSimulation = data.validation.strategy === "LOCAL_CUSTOMER_LINE_SIMULATION" || data.validation.strategy === "LOCAL_MOCK_FACADE"
+        const localValidationLabel = data.validation.result === "PASS"
+            ? "Customer/line local simulation passed"
+            : data.validation.result === "BLOCKED"
+                ? "Customer/line local simulation blocked"
+                : "Customer/line local simulation failed"
+        rows.push(["Validation", isLocalCustomerSimulation ? localValidationLabel : data.validation.result || "Completed"])
+    }
     if(data.contract_preview) rows.push(["Validation scope", "Existing QA4 contract checked. No request was sent."])
     body.innerHTML = rows.map(([key, value]) => `<div class="metric"><div class="k">${escapeHtml(key)}</div><div class="v">${escapeHtml(value)}</div></div>`).join("")
     productEvidenceReference = data.evidence_reference || "Local mock run: no persisted evidence artifact."

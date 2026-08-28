@@ -16,11 +16,24 @@ PRODUCT_TESTS = (
         "environments": ["QA4"],
         "data_requirement": "Automatic synthetic data",
         "execution_mode": "mock",
+        "execution_mode_notice": "Local simulation — no QA4 request",
         "validation_strategy": "Local deterministic validation",
         "availability": "READY",
         "execution_available": True,
         "capability_status": "CAPABILITY_EXISTS",
         "evidence_status": "LOCAL_MOCK_SUMMARY",
+        "local_mock_working": True,
+        "real_contract_ready": False,
+        "read_only_validation_ready": False,
+        "real_execution_requires_owner_authorization": True,
+        "missing_capabilities": [
+            "Exact governed create binding",
+            "Approved read-only customer or line lookup",
+        ],
+        "future_read_only_validation_prerequisite": (
+            "Approved operation/scenario-scoped customer or line read-only lookup "
+            "identity, hash, destination, and result shape."
+        ),
     },
     {
         "id": "recharge-basic",

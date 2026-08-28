@@ -34,8 +34,113 @@ def test_product_catalog_validate_and_execute_are_mock_only(app_client_factory, 
     assert validated.get_json()["result"] == "PASS"
     assert executed.get_json()["result"] == "PASS"
     assert executed.get_json()["attempts"] == "0/0"
-    assert calls[0][0] == {"environment": "qa4", "workflow_profile": "smartoffers_qa4_full_smoke"}
+    assert executed.get_json()["validation"] == {
+        "result": "PASS",
+        "strategy": "LOCAL_CUSTOMER_LINE_SIMULATION",
+        "external_read_only_lookup_used": False,
+    }
+    assert executed.get_json()["evidence_summary"] == {
+        "preflight": "PASS",
+        "execution": "PASS",
+        "local_verification": "PASS",
+        "request_sent": False,
+    }
+    assert calls[0][0] == {
+        "environment": "qa4",
+        "workflow_profile": "smartoffers_qa4_full_smoke",
+        "test_data": {
+            "entity": "customer_line",
+            "environment": "QA4",
+            "lifecycle": "CREATE",
+            "synthetic": True,
+            "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
+        },
+    }
     assert calls[0][1] == "mock"
+
+
+def test_create_customer_local_execution_keeps_synthetic_data_in_memory_and_returns_only_opaque_reference(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("product-catalog-synthetic-data")
+    received_contexts = []
+
+    def fake_mock(context, *, mode, evaluated_at):
+        received_contexts.append(context)
+        return {"result": "PASS"}
+
+    monkeypatch.setattr(app_module, "run_standard_qa4_application_mock", fake_mock)
+    response = client.post("/api/product-tests/create-customer-basic/execute")
+    body = response.get_json()
+
+    assert received_contexts[0]["test_data"] == {
+        "entity": "customer_line",
+        "environment": "QA4",
+        "lifecycle": "CREATE",
+        "synthetic": True,
+        "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
+    }
+    assert body["evidence_reference"] == "MOCK_RUN_NOT_PERSISTED"
+    assert body["synthetic_data"] == {
+        "prepared": True,
+        "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
+    }
+    assert body["validation"] == {
+        "result": "PASS",
+        "strategy": "LOCAL_CUSTOMER_LINE_SIMULATION",
+        "external_read_only_lookup_used": False,
+    }
+    assert "test_data" not in body
+    assert "msisdn" not in str(body).lower()
+
+
+def test_create_customer_local_validator_rejects_an_invalid_synthetic_record():
+    invalid_record = {
+        "entity": "customer_line",
+        "environment": "QA4",
+        "lifecycle": "CREATE",
+        "synthetic": False,
+        "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
+    }
+
+    assert app_module._validate_local_customer_line_simulation(invalid_record, "PASS") == "FAIL"
+
+
+def test_create_customer_local_execution_propagates_mock_failure_to_validation_and_evidence(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("product-catalog-local-fail")
+    monkeypatch.setattr(
+        app_module,
+        "run_standard_qa4_application_mock",
+        lambda *_args, **_kwargs: {"result": "FAIL"},
+    )
+
+    body = client.post("/api/product-tests/create-customer-basic/execute").get_json()
+
+    assert body["result"] == "FAIL"
+    assert body["validation"]["result"] == "FAIL"
+    assert body["evidence_summary"] == {
+        "preflight": "FAIL",
+        "execution": "FAIL",
+        "local_verification": "FAIL",
+        "request_sent": False,
+    }
+
+
+def test_create_customer_catalog_truthfully_describes_real_readiness():
+    from core.product_test_catalog import get_product_test
+
+    test = get_product_test("create-customer-basic")
+
+    assert test["local_mock_working"] is True
+    assert test["real_contract_ready"] is False
+    assert test["read_only_validation_ready"] is False
+    assert test["real_execution_requires_owner_authorization"] is True
+    assert test["missing_capabilities"] == [
+        "Exact governed create binding",
+        "Approved read-only customer or line lookup",
+    ]
+    assert test["future_read_only_validation_prerequisite"] == (
+        "Approved operation/scenario-scoped customer or line read-only lookup "
+        "identity, hash, destination, and result shape."
+    )
 
 
 def test_contract_ready_capabilities_validate_locally_but_never_execute(app_client_factory, monkeypatch):
@@ -137,6 +242,12 @@ def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app
     assert "Contract ready" in html
     assert "data.execution_available !== true" in html
     assert 'isContractValidation ? "Validation" : "Status"' in html
+    assert "Customer/line local simulation" in html
+    assert "Real QA4 execution requires Owner authorization." in html
+    assert "Local simulation &mdash; no QA4 request" in html
+    assert "Customer/line local simulation passed" in html
+    assert 'data.validation.strategy === "LOCAL_CUSTOMER_LINE_SIMULATION"' in html
+    assert 'data.validation.result === "PASS"' in html
     assert '"Ready for contract review"' in html
     assert '"Existing QA4 contract checked. No request was sent."' in html
     assert "Contract preview" not in html
