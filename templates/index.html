@@ -1013,6 +1013,10 @@ select.runner-select {
     color: var(--muted);
 }
 
+.product-result-status.status-pass { color: var(--good); }
+.product-result-status.status-fail { color: var(--bad); }
+.product-result-status.status-blocked { color: var(--blocked); }
+
 .scenarios,
 .structured-list,
 .review-grid {
@@ -1564,7 +1568,7 @@ pre {
         SmartOffers <span>/ automation</span>
     </div>
     <div class="header-right">
-        <span class="badge online">API ONLINE</span>
+        <span class="badge online">LOCAL APP</span>
         <span class="badge">DRY-RUN LOCAL</span>
         <span class="badge" id="clock">00:00:00</span>
     </div>
@@ -1769,6 +1773,7 @@ pre {
         <div class="card">
             <div class="field"><label for="productEnvironment">Environment</label><select id="productEnvironment"><option value="QA4">QA4</option></select></div>
             <div class="field"><label for="productTest">Test</label><select id="productTest" onchange="resetProductValidation()"><option value="">Select test</option></select></div>
+            <div id="productCatalogSummary" class="suite-note" hidden></div>
             <div class="field"><span class="field-label">Test data</span><div class="suite-note">Automatic synthetic data</div></div>
             <p class="suite-note" id="productModeNotice">Local simulation &mdash; no QA4 request. QA4 remains the selected target; real execution requires an approved binding and Owner authorization.</p>
             <button class="primary" id="productValidate" type="button" onclick="validateProductTest()">Validate</button>
@@ -1776,7 +1781,7 @@ pre {
             <button class="success" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute test</button>
         </div>
         <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="summary"></div><div id="productEvidence" class="suite-note" hidden></div><button class="secondary" id="productViewEvidence" type="button" hidden onclick="viewProductEvidence()">View evidence</button><pre id="productEvidenceDetails" class="suite-note" hidden></pre><details id="productTechnicalDetails" class="suite-note" hidden><summary>Advanced / Technical details</summary><pre id="productContractPreview"></pre></details></div>
-        <div class="card" id="controlledEvidence"><h2>Recent controlled evidence</h2><p class="subtitle">Separate from local mock results. Only persisted, sanitized controlled records appear here.</p><div id="controlledEvidenceList" class="suite-note">Loading evidence availability…</div><pre id="controlledEvidenceDetails" class="suite-note" hidden></pre></div>
+        <div class="card" id="controlledEvidence"><h2>Recent controlled evidence</h2><p class="subtitle">Separate from local mock results. Only persisted, sanitized controlled records appear here.</p><div id="controlledEvidenceList" class="suite-note">Loading evidence availability…</div><details id="controlledEvidenceDetails" class="suite-note" hidden><summary>View sanitized JSON</summary><pre id="controlledEvidenceJson"></pre></details></div>
         <details class="card"><summary class="field-label">Advanced / Technical details</summary><p class="subtitle">Legacy generation and runner controls remain available in their own workspace.</p></details>
     </div>
 </section>
@@ -3396,7 +3401,9 @@ async function loadControlledEvidence(){
             const button = document.createElement("button")
             button.type = "button"
             button.className = "secondary"
-            button.textContent = `View evidence: ${record.run_id} (${record.result})`
+            const reason = record.consistency_reason || record.reason || "Sanitized controlled record"
+            const timestamp = record.timestamp || "timestamp unavailable"
+            button.textContent = `Evidence: ${record.result} — ${record.run_id} — ${timestamp} — ${reason}`
             button.onclick = () => viewControlledEvidence(record.run_id)
             list.appendChild(button)
         })
@@ -3407,16 +3414,18 @@ async function loadControlledEvidence(){
 
 async function viewControlledEvidence(runId){
     const details = document.getElementById("controlledEvidenceDetails")
-    if(!details) return
+    const json = document.getElementById("controlledEvidenceJson")
+    if(!details || !json) return
     try {
         const response = await fetch(`/api/evidence/${encodeURIComponent(runId)}`)
         const data = await response.json()
         if(!response.ok || !data.evidence) throw new Error("Evidence unavailable")
-        details.textContent = JSON.stringify(data.evidence, null, 2)
+        json.textContent = JSON.stringify(data.evidence, null, 2)
     } catch (_) {
-        details.textContent = "Sanitized evidence is unavailable."
+        json.textContent = "Sanitized evidence is unavailable."
     }
     details.hidden = false
+    details.open = true
 }
 
 function selectedProductTest(){
@@ -3429,7 +3438,18 @@ function resetProductValidation(){
     const checks = document.getElementById("productChecks")
     checks.hidden = true
     checks.innerHTML = ""
+    document.getElementById("productResult").hidden = true
+    document.getElementById("productEvidence").hidden = true
+    document.getElementById("productEvidenceDetails").hidden = true
+    document.getElementById("productViewEvidence").hidden = true
+    document.getElementById("productTechnicalDetails").hidden = true
+    productEvidenceReference = ""
     const test = productCatalog.find(item => item.id === selectedProductTest())
+    const summary = document.getElementById("productCatalogSummary")
+    if(summary){
+        summary.hidden = !test
+        summary.textContent = test ? `${test.description} Status: ${test.availability === "READY" ? "Ready for local simulation" : test.availability === "CONTRACT_READY" ? "Contract review ready" : "Blocked — contract information required"}. Mode: ${test.execution_mode === "mock" ? "Local mock" : "Blocked"}. Validation: ${test.validation_strategy || "Not available"}.` : ""
+    }
     const notice = document.getElementById("productModeNotice")
     if(notice && test){
         notice.textContent = test.execution_mode_notice || "Static plan - no QA4 request"
@@ -3453,6 +3473,11 @@ function productReason(data){
         return "Integration details need approval. No request was sent."
     }
     return data.reason || "Validation completed"
+}
+
+function productResultStatusClass(value){
+    const status = String(value || "BLOCKED").toUpperCase()
+    return status === "PASS" ? "status-pass" : status === "FAIL" ? "status-fail" : "status-blocked"
 }
 
 function renderProductResult(data){
@@ -3480,7 +3505,7 @@ function renderProductResult(data){
         rows.push(["Validation", isLocalCustomerSimulation ? localValidationLabel : data.validation.result || "Completed"])
     }
     if(data.contract_preview) rows.push(["Validation scope", "Existing QA4 contract checked. No request was sent."])
-    body.innerHTML = rows.map(([key, value]) => `<div class="metric"><div class="k">${escapeHtml(key)}</div><div class="v">${escapeHtml(value)}</div></div>`).join("")
+    body.innerHTML = rows.map(([key, value], index) => `<div class="metric"><div class="k">${escapeHtml(key)}</div><div class="v ${index === 0 ? `product-result-status ${productResultStatusClass(data.result)}` : ""}">${escapeHtml(value)}</div></div>`).join("")
     const showEvidence = Boolean(data.evidence_reference) || data.result !== "BLOCKED"
     productEvidenceReference = data.evidence_reference || (showEvidence ? "Local mock run: no persisted evidence artifact." : "")
     const evidence = document.getElementById("productEvidence")
@@ -3519,8 +3544,15 @@ async function viewProductEvidence(){
 async function validateProductTest(){
     const testId = selectedProductTest()
     if(!testId){ renderProductResult({result:"BLOCKED", reason:"Select a test first"}); return }
-    const response = await fetch(`/api/product-tests/${encodeURIComponent(testId)}/validate`, {method:"POST"})
-    const data = await response.json()
+    let data
+    try {
+        const response = await fetch(`/api/product-tests/${encodeURIComponent(testId)}/validate`, {method:"POST"})
+        if(!response.ok) throw new Error("validation request failed")
+        data = await response.json()
+    } catch (error) {
+        renderProductResult({result:"BLOCKED", reason:"Validation unavailable. Try again later."})
+        return
+    }
     productValidated = data.result === "PASS"
     document.getElementById("productExecute").disabled = !productValidated || data.execution_available !== true
     const checks = document.getElementById("productChecks")
@@ -3532,8 +3564,13 @@ async function validateProductTest(){
 async function executeProductTest(){
     const testId = selectedProductTest()
     if(!productValidated || !testId) return
-    const response = await fetch(`/api/product-tests/${encodeURIComponent(testId)}/execute`, {method:"POST"})
-    renderProductResult(await response.json())
+    try {
+        const response = await fetch(`/api/product-tests/${encodeURIComponent(testId)}/execute`, {method:"POST"})
+        if(!response.ok) throw new Error("execution request failed")
+        renderProductResult(await response.json())
+    } catch (error) {
+        renderProductResult({result:"BLOCKED", reason:"Execution unavailable. Try again later."})
+    }
 }
 
 function escapeHtml(value){

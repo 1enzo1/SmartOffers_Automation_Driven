@@ -2,6 +2,11 @@
 
 ## Estado atual
 
+> Current product state is maintained in `PROJECT_STATE.md`; this roadmap keeps
+> historical MVP context and records future direction. The active product work
+> branch is `codex/post-alpha-ux`. The historical references below are not a
+> grant of operational authority.
+
 O `SmartOffers_Automation_Driven` possui baseline pre-alpha imutavel na tag
 `v0.0.0-pre-alpha.1`, integrada em `qa/mvp4-integration`. O Owner aceitou o
 MVP7.8.3B no recorte DB-only; API e smokes consolidados permanecem incompletos.

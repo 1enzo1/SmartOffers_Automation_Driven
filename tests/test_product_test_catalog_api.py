@@ -12,6 +12,9 @@ def test_product_catalog_exposes_only_three_curated_tests(app_client_factory):
     assert [item["id"] for item in tests] == [
         "create-customer-basic", "recharge-basic", "activate-offer-basic"
     ]
+    assert [item["name"] for item in tests] == [
+        "Create Customer Basic", "Recharge Basic", "Add Offer Basic"
+    ]
     assert tests[0]["availability"] == "READY"
     assert tests[0]["execution_available"] is True
     assert tests[1]["availability"] == "READY"
@@ -287,6 +290,19 @@ def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app
     assert "operation-scoped" not in html
     assert "governed offer input" not in html
     assert "Integration details need approval. No request was sent." in html
+    assert "product-result-status" in html
+    assert 'document.getElementById("productResult").hidden = true' in html
+    assert "productEvidenceReference = \"\"" in html
+    assert "catch (error)" in html
+    assert "LOCAL APP" in html
+    assert "View sanitized JSON" in html
+    assert "Evidence:" in html
+    assert 'id="productCatalogSummary"' in html
+    assert "Ready for local simulation" in html
+    assert "Contract review ready" in html
+    assert "timestamp unavailable" in html
+    assert "consistency_reason" in html
+    assert "details.open = true" in html
     assert 'const showEvidence = Boolean(data.evidence_reference) || data.result !== "BLOCKED"' in html
     assert "productReason(data)" in html
     assert "Contract preview" not in html

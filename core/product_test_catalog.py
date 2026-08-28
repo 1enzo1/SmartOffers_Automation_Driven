@@ -10,7 +10,7 @@ from core.api_catalog import get_api_catalog_entry as _get_catalog_entry
 PRODUCT_TESTS = (
     {
         "id": "create-customer-basic",
-        "name": "Create Customer",
+        "name": "Create Customer Basic",
         "description": "Prepares a synthetic QA4 customer through the safe local test flow.",
         "risk_level": "low",
         "environments": ["QA4"],
@@ -37,7 +37,7 @@ PRODUCT_TESTS = (
     },
     {
         "id": "recharge-basic",
-        "name": "Recharge",
+        "name": "Recharge Basic",
         "description": "Simulates a prepaid recharge locally and verifies the generated mock request plan; no QA4 recharge is sent.",
         "risk_level": "medium",
         "environments": ["QA4"],
@@ -58,7 +58,7 @@ PRODUCT_TESTS = (
     },
     {
         "id": "activate-offer-basic",
-        "name": "Activate Offer",
+        "name": "Add Offer Basic",
         "description": "Offer activation needs a governed operation contract and validated offer input before it can be safely simulated or executed.",
         "risk_level": "medium",
         "environments": ["QA4"],

@@ -2,7 +2,7 @@
 
 This is an initial routing note for the post-Alpha test suite. It does not
 remove tests or change the default test command. The full inventory currently
-contains 42 Python test files under `tests/`.
+contains 43 Python test files under `tests/`.
 
 ## Proposed tiers
 
