@@ -24,9 +24,9 @@ mode allowed by the selected catalog entry.
 
 | Test | Product status | Current permitted behavior | Real readiness |
 |---|---|---|---|
-| Create Customer Basic | LOCAL ONLY | Deterministic synthetic customer/line simulation and local verification | Governed create binding and approved read-only lookup are missing; any real run needs separate Owner authorization. |
-| Recharge Basic | LOCAL ONLY | Existing deterministic recharge template through the fake adapter and local plan verification | Governed real binding and approved read-only result validation are missing. |
-| Add Offer Basic | UNAVAILABLE | Safely blocked before discovery, planning, or transport | Operation-scoped contract, governed offer input/discovery, and approved read-only validation are missing. |
+| Create Customer Basic | LOCAL READY | Deterministic synthetic customer/line simulation and local verification | No `CREATE_CUSTOMER_BASIC` real operation, adapter, bridge, or read-only customer/line lookup exists. A new scoped contract is required; it cannot reuse the Offers contract. |
+| Recharge Basic | LOCAL READY | Existing deterministic recharge template through the fake adapter and local plan verification | The sanitized catalog is explicitly blocked for real use. A governed operation/scenario binding and approved read-only result validation are missing. |
+| Add Offer Basic | UNAVAILABLE | Safely blocked before discovery, planning, or transport | The exact authoritative requirements are in `ADD_OFFER_EXTERNAL_REQUIREMENTS.md`. |
 
 Synthetic values stay in process memory. Local mock runs have a non-persisted
 summary, not an evidence artifact.
@@ -58,7 +58,9 @@ is the default local product check.
 ## Run 03 status
 
 `READY_FOR_RUN_03=false`. No Run 03 scenario, authorization, or source
-contract exists yet. A future Create Customer Basic run requires a scoped
-real-controlled scenario binding, synthetic-data contract, approved read-only
-customer/line validation lookup, evidence capture, one-shot ledger mapping,
-and a separate explicit Owner authorization.
+contract exists yet. Research confirmed that the adjacent controlled path is
+only `CREATE_OFFERS_CUSTOMER`; it must not be relabeled as Create Customer.
+A future Create Customer Basic run requires a scoped operation and scenario,
+adapter/bridge binding, synthetic-data contract, approved read-only
+customer/line lookup with identity/hash/destination/result shape, evidence
+mapping, one-shot ledger mapping, and a separate explicit Owner authorization.

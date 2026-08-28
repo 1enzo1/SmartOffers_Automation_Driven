@@ -20,6 +20,7 @@ def test_product_catalog_exposes_only_three_curated_tests(app_client_factory):
     assert tests[1]["availability"] == "READY"
     assert tests[1]["execution_available"] is True
     assert tests[1]["execution_mode_notice"] == "Local simulation - no QA4 request"
+    assert "â" not in str(tests)
     assert tests[2]["availability"] == "BLOCKED_EXTERNAL_INFORMATION"
     assert tests[2]["execution_available"] is False
     assert all(item["environments"] == ["QA4"] for item in tests)
@@ -277,7 +278,7 @@ def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app
     assert "Local mock run: no persisted evidence artifact." in html
     assert "Loading evidence availability..." in html
     assert 'list.textContent = "Loading evidence availability..."' in html
-    assert 'test.availability === "BLOCKED_EXTERNAL_INFORMATION" ? "Needs contract info"' in html
+    assert "productHumanStatus(test)" in html
     assert "data.execution_available !== true" in html
     assert 'isContractValidation ? "Validation" : "Status"' in html
     assert "Customer/line local simulation" in html
@@ -298,11 +299,15 @@ def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app
     assert "View sanitized JSON" in html
     assert "Evidence:" in html
     assert 'id="productCatalogSummary"' in html
-    assert "Ready for local simulation" in html
-    assert "Contract review ready" in html
+    assert "Real execution preparation in progress." in html
+    assert "Additional operation contract information required." in html
     assert "timestamp unavailable" in html
     assert "consistency_reason" in html
     assert "details.open = true" in html
+    assert "LOCAL READY" in html
+    assert "UNAVAILABLE" in html
+    assert "Additional operation contract information required." in html
+    assert "productHumanStatus" in html
     assert 'const showEvidence = Boolean(data.evidence_reference) || data.result !== "BLOCKED"' in html
     assert "productReason(data)" in html
     assert "Contract preview" not in html

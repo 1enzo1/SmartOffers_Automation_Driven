@@ -18,12 +18,13 @@ write, Oracle query, or production capability.
 
 ### Truthful limitations
 
-- Create Customer Basic lacks a governed real create binding and an approved
-  read-only verification lookup.
-- Recharge Basic lacks a governed real binding and an approved read-only
-  validation contract.
-- Add Offer Basic lacks an operation-scoped contract, governed offer input or
-  discovery, and read-only validation.
+- Create Customer Basic has no real operation, adapter, bridge, or approved
+  customer/line read-only verification lookup. The existing Offers path is a
+  different operation and cannot be reused implicitly.
+- Recharge Basic has a sanitized catalog mapping but no governed real binding
+  or approved read-only validation contract.
+- Add Offer Basic's exact external requirements are documented in
+  `ADD_OFFER_EXTERNAL_REQUIREMENTS.md`.
 - The immutable Run 02 evidence is represented as `FAIL` because a response
   was not durably captured, regardless of historical runtime reporting.
 - Run 03 is not ready or authorized.

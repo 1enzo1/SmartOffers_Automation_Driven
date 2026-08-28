@@ -27,6 +27,18 @@ A preparacao para execucao real deve permanecer gradual e controlada. Qualquer c
 
 ## Roadmap futuro atual
 
+### Product milestones
+
+| Milestone | State | Scope |
+| --- | --- | --- |
+| `v0.0.0-alpha.1` | DONE | Historical controlled Alpha baseline. |
+| Alpha 1.1 | READY FOR LOCAL PRODUCT VALIDATION | Catalog-driven QA4 local/mock product flow, sanitised evidence UI, and practical test tiers. Real Create Customer, Recharge, and Add Offer contracts remain separate work. |
+| Real Test Pack | NEXT | Define each new operation-scoped contract, approved read-only validation, and separate Owner authorization before any real execution. |
+| Beta Candidate | FUTURE | Expand only after independently evidenced real test packs are available. |
+
+The adjacent Alpha Offers operation is not a Create Customer contract. Do not
+infer Run 03 readiness from a historical Offers execution.
+
 Os MVPs 7.6.x e 7.7.x sao historico concluido/aprovado. O plano futuro parte do
 recorte MVP7.8.3B DB-only:
 

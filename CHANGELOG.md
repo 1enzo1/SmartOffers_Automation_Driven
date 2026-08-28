@@ -13,6 +13,15 @@
 No new QA4 write, Oracle query, or production operation is included in this
 source baseline.
 
+### Readiness clarification
+
+- Normalized the product UI to show `LOCAL READY` and `UNAVAILABLE` rather
+  than internal catalog states.
+- Recorded the exact authoritative inputs required before Add Offer can be
+  implemented.
+- Confirmed that a future Create Customer Run 03 is a new scoped real contract,
+  not a reuse of the existing Offers-controlled path.
+
 ## v0.0.0-alpha.1
 
 Historical controlled Alpha baseline. See `docs/PROJECT_STATE.md` for the

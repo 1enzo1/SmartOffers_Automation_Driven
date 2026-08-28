@@ -43,7 +43,7 @@ PRODUCT_TESTS = (
         "environments": ["QA4"],
         "data_requirement": "Synthetic customer",
         "execution_mode": "mock",
-        "execution_mode_notice": "Local simulation â€” no QA4 request",
+        "execution_mode_notice": "Local simulation - no QA4 request",
         "validation_strategy": "Local deterministic request-plan validation",
         "availability": "READY",
         "execution_available": True,

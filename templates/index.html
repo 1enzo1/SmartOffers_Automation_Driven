@@ -3375,7 +3375,7 @@ async function loadProductCatalog(){
         productCatalog.forEach(test => {
             const option = document.createElement("option")
             option.value = test.id
-            const label = test.availability === "READY" ? "Ready" : test.availability === "CONTRACT_READY" ? "Contract ready" : test.availability === "BLOCKED_EXTERNAL_INFORMATION" ? "Needs contract info" : "Not ready"
+            const label = productHumanStatus(test)
             option.textContent = `${test.name} — ${label}`
             select.appendChild(option)
         })
@@ -3432,6 +3432,11 @@ function selectedProductTest(){
     return document.getElementById("productTest")?.value || ""
 }
 
+function productHumanStatus(test){
+    if(!test) return "Unavailable"
+    return test.availability === "READY" ? "LOCAL READY" : "UNAVAILABLE"
+}
+
 function resetProductValidation(){
     productValidated = false
     document.getElementById("productExecute").disabled = true
@@ -3448,7 +3453,7 @@ function resetProductValidation(){
     const summary = document.getElementById("productCatalogSummary")
     if(summary){
         summary.hidden = !test
-        summary.textContent = test ? `${test.description} Status: ${test.availability === "READY" ? "Ready for local simulation" : test.availability === "CONTRACT_READY" ? "Contract review ready" : "Blocked — contract information required"}. Mode: ${test.execution_mode === "mock" ? "Local mock" : "Blocked"}. Validation: ${test.validation_strategy || "Not available"}.` : ""
+        summary.textContent = test ? `${test.description} Status: ${test.availability === "READY" ? "LOCAL READY" : "UNAVAILABLE"}. ${test.availability === "READY" ? "Real execution preparation in progress." : "Additional operation contract information required."} Mode: ${test.execution_mode === "mock" ? "Local mock" : "Unavailable"}.` : ""
     }
     const notice = document.getElementById("productModeNotice")
     if(notice && test){
@@ -3488,7 +3493,7 @@ function renderProductResult(data){
     const isContractValidation = data.phase === "VALIDATION" && test.availability === "CONTRACT_READY"
     const rows = [
         [isContractValidation ? "Validation" : "Status", isContractValidation ? "Passed" : (data.result || "BLOCKED")],
-        ["Availability", isContractValidation ? "Ready for contract review" : (data.display_status || test.availability || "")],
+        ["Availability", test.availability === "READY" ? "LOCAL READY" : "UNAVAILABLE"],
         ["Environment", data.environment || "QA4"],
         ["Test", test.name || "Selected test"], ["Duration", `${data.duration_ms || 0} ms`],
         ["Attempts", data.attempts || "0/0"], ["Reason", productReason(data)],
