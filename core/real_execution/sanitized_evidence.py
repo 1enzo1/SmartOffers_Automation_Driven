@@ -17,6 +17,30 @@ from uuid import uuid4
 _ALLOWED_RESULTS = {"PASS", "FAIL", "BLOCKED"}
 EVIDENCE_CAPTURE_VERSION = "2"
 _ALLOWED_RUN_IDS = {"ALPHA_REAL_RUN_01", "ALPHA_REAL_RUN_02"}
+_PUBLIC_FIELDS = (
+    "run_id",
+    "timestamp",
+    "environment",
+    "operation",
+    "scenario",
+    "static_preflight",
+    "operational_preflight",
+    "destination_attestation",
+    "authorization_verification",
+    "bda_discovery_executed",
+    "bda_read_only_confirmed",
+    "test_offer_ready",
+    "atomic_in_process_handoff",
+    "request_sent",
+    "response_received",
+    "http_status_class",
+    "attempts_before",
+    "attempts_after",
+    "retry_count",
+    "result",
+    "standard_runner_real_path",
+    "evidence_capture_version",
+)
 
 
 def persist_sanitized_real_run_evidence(report, *, context, evidence_root="evidencias"):
@@ -50,6 +74,13 @@ def _record(report, context, *, run_id, timestamp):
     result = report.get("result") if report.get("result") in _ALLOWED_RESULTS else "BLOCKED"
     status = evidence.get("http_status")
     status_class = _status_class(status)
+    response_received = evidence.get("response_received") is True
+    # A request consumes the one-shot ledger even if the adapter did not return
+    # its own ledger snapshot.  More importantly, a transport report without a
+    # response and a success status can never be recorded as a successful run.
+    if result == "PASS" and not (response_received and status_class == "2xx"):
+        result = "FAIL"
+    attempt_ledger = {"attempts_used": 1, "max_attempts": 1, "retry_count": 0}
     return {
         "schema_version": "1",
         "evidence_capture_version": EVIDENCE_CAPTURE_VERSION,
@@ -67,11 +98,11 @@ def _record(report, context, *, run_id, timestamp):
         "test_offer_ready": context.get("test_offer_ready") is True,
         "atomic_in_process_handoff": context.get("atomic_in_process_handoff") is True,
         "request_sent": report.get("executor_send_attempted") is True,
-        "response_received": evidence.get("response_received") is True,
+        "response_received": response_received,
         "http_status_class": status_class,
         "attempts_before": 0,
-        "attempts_after": _attempt_ledger(adapter, evidence)["attempts_used"],
-        "attempt_ledger": _attempt_ledger(adapter, evidence),
+        "attempts_after": attempt_ledger["attempts_used"],
+        "attempt_ledger": attempt_ledger,
         "retry_count": 0,
         "result": result,
         "standard_runner_real_path": context.get("standard_runner_real_path") is True,
@@ -102,6 +133,62 @@ def _status_class(value):
 def _attempt_ledger(adapter, evidence):
     attempts = adapter.get("attempts_used", evidence.get("attempts_used"))
     return {"attempts_used": int(attempts) if isinstance(attempts, int) else None, "max_attempts": 1, "retry_count": 0}
+
+
+def load_sanitized_real_run_evidence(run_id, *, evidence_root="evidencias"):
+    """Return the public, allowlisted view of one persisted evidence record.
+
+    Run IDs are intentionally an enum rather than a path component supplied by
+    callers.  This keeps the UI endpoint read-only and prevents traversal or
+    accidental presentation of raw runtime output.
+    """
+    if run_id not in _ALLOWED_RUN_IDS:
+        return None
+    path = Path(evidence_root) / "real-controlled" / f"{run_id}.json"
+    try:
+        with path.open(encoding="utf-8") as handle:
+            record = json.load(handle)
+    except (OSError, ValueError, TypeError):
+        return None
+    if not isinstance(record, dict) or record.get("run_id") != run_id:
+        return None
+    public = {field: record.get(field) for field in _PUBLIC_FIELDS}
+    consistency_reason = _public_consistency_reason(public)
+    if consistency_reason:
+        # Keep the original local artifact immutable while refusing to surface a
+        # contradictory success result as a successful run in the product UI.
+        public["result"] = "FAIL"
+        public["consistency_reason"] = consistency_reason
+    return public
+
+
+def list_sanitized_real_run_evidence(*, evidence_root="evidencias"):
+    """List only existing, recognized public evidence records."""
+    records = []
+    for run_id in sorted(_ALLOWED_RUN_IDS):
+        record = load_sanitized_real_run_evidence(run_id, evidence_root=evidence_root)
+        if record is not None:
+            records.append({
+                "run_id": record["run_id"],
+                "timestamp": record["timestamp"],
+                "environment": record["environment"],
+                "scenario": record["scenario"],
+                "result": record["result"],
+                "consistency_reason": record.get("consistency_reason", ""),
+            })
+    return records
+
+
+def _public_consistency_reason(record):
+    if record.get("request_sent") is not True:
+        return "REQUEST_NOT_CONFIRMED"
+    if record.get("response_received") is not True:
+        return "RESPONSE_NOT_CONFIRMED"
+    if record.get("http_status_class") != "2xx":
+        return "SUCCESS_STATUS_NOT_CONFIRMED"
+    if record.get("attempts_after") != 1:
+        return "ONE_SHOT_CONSUMPTION_NOT_CONFIRMED"
+    return ""
 
 
 def _source_revision():

@@ -1774,7 +1774,8 @@ pre {
             <div id="productChecks" class="check-grid" hidden></div>
             <button class="success" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute test</button>
         </div>
-        <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="summary"></div><div id="productEvidence" class="suite-note" hidden></div></div>
+        <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="summary"></div><div id="productEvidence" class="suite-note" hidden></div><button class="secondary" id="productViewEvidence" type="button" hidden onclick="viewProductEvidence()">View evidence</button><pre id="productEvidenceDetails" class="suite-note" hidden></pre></div>
+        <div class="card" id="controlledEvidence"><h2>Recent controlled evidence</h2><p class="subtitle">Separate from local mock results. Only persisted, sanitized controlled records appear here.</p><div id="controlledEvidenceList" class="suite-note">Loading evidence availability…</div><pre id="controlledEvidenceDetails" class="suite-note" hidden></pre></div>
         <details class="card"><summary class="field-label">Advanced / Technical details</summary><p class="subtitle">Legacy generation and runner controls remain available in their own workspace.</p></details>
     </div>
 </section>
@@ -3353,6 +3354,11 @@ let productCatalog = []
 let productValidated = false
 let productEvidenceReference = ""
 
+function evidenceRunId(reference){
+    const match = String(reference || "").match(/^evidencias\/real-controlled\/(ALPHA_REAL_RUN_(?:01|02))\.json$/)
+    return match ? match[1] : ""
+}
+
 async function loadProductCatalog(){
     const select = document.getElementById("productTest")
     if(!select) return
@@ -3369,6 +3375,45 @@ async function loadProductCatalog(){
     } catch (_) {
         select.innerHTML = '<option value="">Catalog unavailable</option>'
     }
+}
+
+async function loadControlledEvidence(){
+    const list = document.getElementById("controlledEvidenceList")
+    if(!list) return
+    try {
+        const response = await fetch("/api/evidence")
+        const data = await response.json()
+        const records = Array.isArray(data.evidence) ? data.evidence : []
+        if(!records.length){
+            list.textContent = "No persisted controlled evidence is available."
+            return
+        }
+        list.innerHTML = ""
+        records.forEach(record => {
+            const button = document.createElement("button")
+            button.type = "button"
+            button.className = "secondary"
+            button.textContent = `View evidence: ${record.run_id} (${record.result})`
+            button.onclick = () => viewControlledEvidence(record.run_id)
+            list.appendChild(button)
+        })
+    } catch (_) {
+        list.textContent = "Controlled evidence is unavailable."
+    }
+}
+
+async function viewControlledEvidence(runId){
+    const details = document.getElementById("controlledEvidenceDetails")
+    if(!details) return
+    try {
+        const response = await fetch(`/api/evidence/${encodeURIComponent(runId)}`)
+        const data = await response.json()
+        if(!response.ok || !data.evidence) throw new Error("Evidence unavailable")
+        details.textContent = JSON.stringify(data.evidence, null, 2)
+    } catch (_) {
+        details.textContent = "Sanitized evidence is unavailable."
+    }
+    details.hidden = false
 }
 
 function selectedProductTest(){
@@ -3398,7 +3443,30 @@ function renderProductResult(data){
     const evidence = document.getElementById("productEvidence")
     evidence.textContent = `Evidence availability: ${productEvidenceReference}`
     evidence.hidden = false
+    const evidenceButton = document.getElementById("productViewEvidence")
+    const evidenceDetails = document.getElementById("productEvidenceDetails")
+    const runId = evidenceRunId(productEvidenceReference)
+    evidenceButton.hidden = !runId
+    evidenceButton.dataset.runId = runId
+    evidenceDetails.hidden = true
+    evidenceDetails.textContent = ""
     result.hidden = false
+}
+
+async function viewProductEvidence(){
+    const button = document.getElementById("productViewEvidence")
+    const details = document.getElementById("productEvidenceDetails")
+    const runId = button?.dataset.runId || ""
+    if(!runId || !details) return
+    try {
+        const response = await fetch(`/api/evidence/${encodeURIComponent(runId)}`)
+        const data = await response.json()
+        if(!response.ok || !data.evidence) throw new Error("Evidence unavailable")
+        details.textContent = JSON.stringify(data.evidence, null, 2)
+    } catch (_) {
+        details.textContent = "Sanitized evidence is unavailable."
+    }
+    details.hidden = false
 }
 
 async function validateProductTest(){
@@ -3914,6 +3982,7 @@ updateExecutionModeControls()
 updateAdapterPanelForScenario()
 loadQuestions()
 loadProductCatalog()
+loadControlledEvidence()
 loadTemplates()
 loadSavedScenarios()
 refreshAdapters()

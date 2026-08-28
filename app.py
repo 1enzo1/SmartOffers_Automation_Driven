@@ -43,7 +43,11 @@ from core.real_execution.qa4_real_controlled_bridge import (
     run_atomic_qa4_bda_offer_discovery_and_offers_create,
 )
 from core.real_execution.qa4_bda_offer_discovery import BdaDiscoveryAttemptLedger
-from core.real_execution.sanitized_evidence import persist_sanitized_real_run_evidence
+from core.real_execution.sanitized_evidence import (
+    load_sanitized_real_run_evidence,
+    list_sanitized_real_run_evidence,
+    persist_sanitized_real_run_evidence,
+)
 from core.product_test_catalog import get_product_test, list_product_tests
 from core.simulation import run_dry_run, save_dry_run_report
 from core.templates import get_template, list_template_categories, list_templates
@@ -464,6 +468,20 @@ def api_product_test_execute(test_id):
         "evidence_reference": "MOCK_RUN_NOT_PERSISTED",
         "report": report,
     })
+
+
+@app.route("/api/evidence/<run_id>")
+def api_sanitized_real_run_evidence(run_id):
+    """Serve only the fixed public projection of a known sanitized run."""
+    record = load_sanitized_real_run_evidence(run_id)
+    if record is None:
+        return jsonify({"result": "BLOCKED", "reason": "EVIDENCE_NOT_FOUND"}), 404
+    return jsonify({"result": record["result"], "evidence": record})
+
+
+@app.route("/api/evidence")
+def api_sanitized_real_run_evidence_list():
+    return jsonify({"evidence": list_sanitized_real_run_evidence()})
 
 
 @app.route("/api/qa4/standard/real-controlled-run", methods=["POST"])
