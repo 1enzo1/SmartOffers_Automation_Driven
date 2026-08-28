@@ -449,6 +449,13 @@ def _prepare_local_product_test_data(test):
             "synthetic": True,
             "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
         }
+    if test["id"] == "recharge-basic":
+        return {
+            "entity": "recharge",
+            "environment": "QA4",
+            "synthetic": True,
+            "reference": "LOCAL_SIMULATION_RECHARGE_V1",
+        }
     return None
 
 
@@ -464,11 +471,50 @@ def _validate_local_customer_line_simulation(record, mock_result):
     return "PASS" if record == expected_record and mock_result == "PASS" else "FAIL"
 
 
+def _run_local_recharge_simulation(record):
+    """Use the existing deterministic recharge template and fake-only adapter.
+
+    The generated scenario and request plan never leave this function.  The
+    public product response contains only an opaque local reference.
+    """
+    scenario = generate_scenario({
+        "template_id": "recarga-pre-bonus-d0",
+        "campaign_name": "Local Recharge Basic",
+        "campaign_id": "LOCAL_RECHARGE_BASIC",
+    })
+    report = run_adapter_scenario(scenario, mode="mock")
+    http_results = [
+        result for result in report["adapter_results"]
+        if result.get("step_type") == "smartoffers.http_plan"
+    ]
+    fake_plan_ready = bool(http_results) and all(
+        result.get("adapter_id") == "fake-smartoffers"
+        and (result.get("metadata") or {}).get("external_calls") is False
+        and (result.get("metadata") or {}).get("network_calls") is False
+        for result in http_results
+    )
+    expected_record = {
+        "entity": "recharge",
+        "environment": "QA4",
+        "synthetic": True,
+        "reference": "LOCAL_SIMULATION_RECHARGE_V1",
+    }
+    return "PASS" if record == expected_record and report["status"] == "passed" and fake_plan_ready else "FAIL"
+
+
 @app.route("/api/product-tests/<test_id>/validate", methods=["POST"])
 def api_product_test_validate(test_id):
     test = get_product_test(test_id)
     if not test:
         return jsonify({"result": "BLOCKED", "reason": "TEST_NOT_FOUND"}), 404
+    if test["availability"] == "BLOCKED_EXTERNAL_INFORMATION":
+        return jsonify({
+            "result": "BLOCKED",
+            "reason": "ADD_OFFER_EXTERNAL_INFORMATION_REQUIRED",
+            "test": test,
+            "phase": "VALIDATION",
+            "execution_available": False,
+        })
     if test["availability"] not in {"READY", "CONTRACT_READY"}:
         return jsonify({"result": "BLOCKED", "reason": "CAPABILITY_NOT_READY", "test": test})
     contract_plan = validate_contract_plan(test)
@@ -515,6 +561,13 @@ def api_product_test_execute(test_id):
     test = get_product_test(test_id)
     if not test:
         return jsonify({"result": "BLOCKED", "reason": "TEST_NOT_FOUND"}), 404
+    if test["availability"] == "BLOCKED_EXTERNAL_INFORMATION":
+        return jsonify({
+            "result": "BLOCKED",
+            "reason": "ADD_OFFER_EXTERNAL_INFORMATION_REQUIRED",
+            "test": test,
+            "attempts": "0/0",
+        })
     if not test.get("execution_available"):
         return jsonify({
             "result": "BLOCKED",
@@ -527,28 +580,37 @@ def api_product_test_execute(test_id):
     context = {"environment": "qa4", "workflow_profile": _STANDARD_QA4_PROFILE}
     if synthetic_data:
         context["test_data"] = synthetic_data
-    report = run_standard_qa4_application_mock(
-        context,
-        mode="mock",
-        evaluated_at=datetime.now().astimezone().isoformat(),
-    )
-    mock_result = report["result"]
-    local_result = (
-        _validate_local_customer_line_simulation(synthetic_data, mock_result)
-        if synthetic_data and mock_result == "PASS"
-        else mock_result
-    )
+    if test_id == "recharge-basic":
+        local_result = _run_local_recharge_simulation(synthetic_data)
+        mock_result = local_result
+        report = None
+        validation_strategy = "LOCAL_RECHARGE_REQUEST_PLAN_SIMULATION"
+        completion_reason = "LOCAL_RECHARGE_SIMULATION_COMPLETED"
+    else:
+        report = run_standard_qa4_application_mock(
+            context,
+            mode="mock",
+            evaluated_at=datetime.now().astimezone().isoformat(),
+        )
+        mock_result = report["result"]
+        local_result = (
+            _validate_local_customer_line_simulation(synthetic_data, mock_result)
+            if synthetic_data and mock_result == "PASS"
+            else mock_result
+        )
+        validation_strategy = "LOCAL_CUSTOMER_LINE_SIMULATION"
+        completion_reason = "LOCAL_CUSTOMER_LINE_SIMULATION_COMPLETED"
     return jsonify({
         "result": local_result,
         "test": test,
         "environment": "QA4",
         "duration_ms": 0,
         "attempts": "0/0",
-        "reason": "LOCAL_CUSTOMER_LINE_SIMULATION_COMPLETED",
+        "reason": completion_reason,
         "evidence_reference": "MOCK_RUN_NOT_PERSISTED",
         "validation": {
             "result": local_result,
-            "strategy": "LOCAL_CUSTOMER_LINE_SIMULATION",
+            "strategy": validation_strategy,
             "external_read_only_lookup_used": False,
         },
         "evidence_summary": {
@@ -561,7 +623,7 @@ def api_product_test_execute(test_id):
             "prepared": bool(synthetic_data),
             "reference": synthetic_data["reference"] if synthetic_data else None,
         },
-        "report": report,
+        **({"report": report} if report is not None else {}),
     })
 
 

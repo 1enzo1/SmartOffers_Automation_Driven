@@ -3370,7 +3370,7 @@ async function loadProductCatalog(){
         productCatalog.forEach(test => {
             const option = document.createElement("option")
             option.value = test.id
-            const label = test.availability === "READY" ? "Ready" : test.availability === "CONTRACT_READY" ? "Contract ready" : "Not ready"
+            const label = test.availability === "READY" ? "Ready" : test.availability === "CONTRACT_READY" ? "Contract ready" : test.availability === "BLOCKED_EXTERNAL_INFORMATION" ? "Needs contract info" : "Not ready"
             option.textContent = `${test.name} — ${label}`
             select.appendChild(option)
         })
@@ -3382,6 +3382,7 @@ async function loadProductCatalog(){
 async function loadControlledEvidence(){
     const list = document.getElementById("controlledEvidenceList")
     if(!list) return
+    list.textContent = "Loading evidence availability..."
     try {
         const response = await fetch("/api/evidence")
         const data = await response.json()
@@ -3439,9 +3440,19 @@ function productCapabilityNote(test){
     if(test.id === "create-customer-basic"){
         return "Customer/line local simulation is ready. Real QA4 execution requires Owner authorization. A governed create binding and approved read-only customer or line lookup contract are still required for real validation."
     }
+    if(test.availability === "BLOCKED_EXTERNAL_INFORMATION"){
+        return "Add Offer needs approved integration details before it can be prepared. No request was sent."
+    }
     if(test.availability !== "CONTRACT_READY") return ""
     const missing = Array.isArray(test.missing_capabilities) ? test.missing_capabilities.join(", ") : "real binding is required"
     return `Contract ready: local validation and planning are available. Execution remains disabled until ${missing}.`
+}
+
+function productReason(data){
+    if(data.reason === "ADD_OFFER_EXTERNAL_INFORMATION_REQUIRED"){
+        return "Integration details need approval. No request was sent."
+    }
+    return data.reason || "Validation completed"
 }
 
 function renderProductResult(data){
@@ -3455,7 +3466,7 @@ function renderProductResult(data){
         ["Availability", isContractValidation ? "Ready for contract review" : (data.display_status || test.availability || "")],
         ["Environment", data.environment || "QA4"],
         ["Test", test.name || "Selected test"], ["Duration", `${data.duration_ms || 0} ms`],
-        ["Attempts", data.attempts || "0/0"], ["Reason", data.reason || "Validation completed"],
+        ["Attempts", data.attempts || "0/0"], ["Reason", productReason(data)],
     ]
     const capabilityNote = productCapabilityNote(test)
     if(capabilityNote) rows.push(["Execution", capabilityNote])
@@ -3470,10 +3481,11 @@ function renderProductResult(data){
     }
     if(data.contract_preview) rows.push(["Validation scope", "Existing QA4 contract checked. No request was sent."])
     body.innerHTML = rows.map(([key, value]) => `<div class="metric"><div class="k">${escapeHtml(key)}</div><div class="v">${escapeHtml(value)}</div></div>`).join("")
-    productEvidenceReference = data.evidence_reference || "Local mock run: no persisted evidence artifact."
+    const showEvidence = Boolean(data.evidence_reference) || data.result !== "BLOCKED"
+    productEvidenceReference = data.evidence_reference || (showEvidence ? "Local mock run: no persisted evidence artifact." : "")
     const evidence = document.getElementById("productEvidence")
-    evidence.textContent = `Evidence availability: ${productEvidenceReference}`
-    evidence.hidden = false
+    evidence.textContent = showEvidence ? `Evidence availability: ${productEvidenceReference}` : ""
+    evidence.hidden = !showEvidence
     const evidenceButton = document.getElementById("productViewEvidence")
     const evidenceDetails = document.getElementById("productEvidenceDetails")
     const runId = evidenceRunId(productEvidenceReference)

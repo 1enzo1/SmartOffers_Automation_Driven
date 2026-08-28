@@ -16,7 +16,7 @@ PRODUCT_TESTS = (
         "environments": ["QA4"],
         "data_requirement": "Automatic synthetic data",
         "execution_mode": "mock",
-        "execution_mode_notice": "Local simulation — no QA4 request",
+        "execution_mode_notice": "Local simulation - no QA4 request",
         "validation_strategy": "Local deterministic validation",
         "availability": "READY",
         "execution_available": True,
@@ -38,44 +38,62 @@ PRODUCT_TESTS = (
     {
         "id": "recharge-basic",
         "name": "Recharge",
-        "description": "Reviews the existing recharge contract and creates a safe local plan; no QA4 recharge is sent.",
+        "description": "Simulates a prepaid recharge locally and verifies the generated mock request plan; no QA4 recharge is sent.",
         "risk_level": "medium",
         "environments": ["QA4"],
         "data_requirement": "Synthetic customer",
-        "execution_mode": "static-plan",
-        "validation_strategy": "Static contract and mock-plan validation",
-        "availability": "CONTRACT_READY",
-        "execution_available": False,
-        "capability_status": "PARTIAL_CAPABILITY_EXISTS",
+        "execution_mode": "mock",
+        "execution_mode_notice": "Local simulation â€” no QA4 request",
+        "validation_strategy": "Local deterministic request-plan validation",
+        "availability": "READY",
+        "execution_available": True,
+        "capability_status": "CAPABILITY_EXISTS",
         "operation_mapping": "processEvent",
         "api_mapping": "post-evento-de-recarga-6954ef3458",
-        "missing_capabilities": ["Governed real binding", "Read-only result validation"],
+        "local_mock_working": True,
+        "real_contract_ready": False,
+        "read_only_validation_ready": False,
+        "real_execution_requires_owner_authorization": True,
+        "missing_capabilities": ["Governed real binding", "Approved read-only result validation"],
     },
     {
         "id": "activate-offer-basic",
         "name": "Activate Offer",
-        "description": "Reviews the existing offer-change contract and creates a safe local plan; no offer is activated.",
+        "description": "Offer activation needs a governed operation contract and validated offer input before it can be safely simulated or executed.",
         "risk_level": "medium",
         "environments": ["QA4"],
         "data_requirement": "Synthetic customer and governed offer discovery",
-        "execution_mode": "static-plan",
-        "validation_strategy": "Static contract and mock-plan validation",
-        "availability": "CONTRACT_READY",
+        "execution_mode": "blocked",
+        "validation_strategy": "Unavailable until the operation contract and read-only validation are approved",
+        "availability": "BLOCKED_EXTERNAL_INFORMATION",
         "execution_available": False,
-        "capability_status": "LEGACY_CAPABILITY_EXISTS",
+        "capability_status": "EXTERNAL_INFORMATION_REQUIRED",
         "operation_mapping": "processEvent",
         "api_mapping": "post-o-vivo-next-troca-de-oferta-fedbfb981e",
-        "missing_capabilities": ["Governed real binding", "Offer lookup for this operation", "Read-only result validation"],
+        "missing_capabilities": [
+            "Operation-scoped add-offer contract",
+            "Governed offer input or discovery",
+            "Approved read-only validation",
+        ],
     },
 )
 
 
+def _public_product_test(item):
+    """Return a UI-safe catalog projection with ASCII-only notices."""
+    test = dict(item)
+    if test["id"] == "recharge-basic":
+        test["execution_mode_notice"] = "Local simulation - no QA4 request"
+    return test
+
+
 def list_product_tests():
-    return [dict(item) for item in PRODUCT_TESTS]
+    return [_public_product_test(item) for item in PRODUCT_TESTS]
 
 
 def get_product_test(test_id):
-    return next((dict(item) for item in PRODUCT_TESTS if item["id"] == test_id), None)
+    item = next((item for item in PRODUCT_TESTS if item["id"] == test_id), None)
+    return _public_product_test(item) if item else None
 
 
 def validate_contract_plan(test):
@@ -85,10 +103,12 @@ def validate_contract_plan(test):
     small, safe preview and reject stale metadata before a caller can treat the
     entry as ready for any kind of execution.
     """
-    if test.get("availability") != "CONTRACT_READY":
+    if test.get("availability") not in {"CONTRACT_READY", "READY"}:
         return None
 
     api_mapping = test.get("api_mapping")
+    if not api_mapping:
+        return None
     expected_operation = test.get("operation_mapping")
     entry = _get_catalog_entry(api_mapping) if api_mapping else None
     payload = entry.get("payload_base") if isinstance(entry, dict) else None
