@@ -48,7 +48,11 @@ from core.real_execution.sanitized_evidence import (
     list_sanitized_real_run_evidence,
     persist_sanitized_real_run_evidence,
 )
-from core.product_test_catalog import get_product_test, list_product_tests
+from core.product_test_catalog import (
+    get_product_test,
+    list_product_tests,
+    validate_contract_plan,
+)
 from core.simulation import run_dry_run, save_dry_run_report
 from core.templates import get_template, list_template_categories, list_templates
 
@@ -435,13 +439,44 @@ def api_product_test_validate(test_id):
     test = get_product_test(test_id)
     if not test:
         return jsonify({"result": "BLOCKED", "reason": "TEST_NOT_FOUND"}), 404
-    if test["availability"] != "READY":
+    if test["availability"] not in {"READY", "CONTRACT_READY"}:
         return jsonify({"result": "BLOCKED", "reason": "CAPABILITY_NOT_READY", "test": test})
+    contract_plan = validate_contract_plan(test)
+    if contract_plan and not contract_plan["valid"]:
+        return jsonify({
+            "result": "BLOCKED",
+            "reason": contract_plan["reason"],
+            "test": test,
+            "phase": "VALIDATION",
+            "display_status": "CONTRACT_MAPPING_BLOCKED",
+            "execution_available": False,
+        })
+    checks = ["Environment", "Test data", "Required configuration", "Preflight"]
+    if test["availability"] == "CONTRACT_READY":
+        checks = [
+            "Environment",
+            "Existing operation contract",
+            "Sanitized API mapping",
+            "Local mock-plan preflight",
+        ]
     return jsonify({
         "result": "PASS",
         "test": test,
-        "checks": ["Environment", "Test data", "Required configuration", "Preflight"],
-        "mode": "mock",
+        "checks": checks,
+        "mode": test["execution_mode"],
+        "execution_available": test["execution_available"],
+        "phase": "EXECUTION_PREFLIGHT" if test["execution_available"] else "VALIDATION",
+        "display_status": (
+            "READY_FOR_LOCAL_MOCK"
+            if test["execution_available"]
+            else "READY_FOR_CONTRACT_REVIEW"
+        ),
+        "reason": (
+            "LOCAL_MOCK_READY"
+            if test["execution_available"]
+            else "CONTRACT_READY_REAL_BINDING_AND_VALIDATION_REQUIRED"
+        ),
+        "contract_preview": contract_plan["preview"] if contract_plan else None,
     })
 
 
@@ -450,8 +485,13 @@ def api_product_test_execute(test_id):
     test = get_product_test(test_id)
     if not test:
         return jsonify({"result": "BLOCKED", "reason": "TEST_NOT_FOUND"}), 404
-    if test["availability"] != "READY":
-        return jsonify({"result": "BLOCKED", "reason": "CAPABILITY_NOT_READY", "test": test})
+    if not test.get("execution_available"):
+        return jsonify({
+            "result": "BLOCKED",
+            "reason": "REAL_BINDING_AND_VALIDATION_NOT_READY",
+            "test": test,
+            "attempts": "0/0",
+        })
     # No real-controlled bridge is reachable from this product-facing endpoint.
     report = run_standard_qa4_application_mock(
         {"environment": "qa4", "workflow_profile": _STANDARD_QA4_PROFILE},

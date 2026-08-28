@@ -1774,7 +1774,7 @@ pre {
             <div id="productChecks" class="check-grid" hidden></div>
             <button class="success" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute test</button>
         </div>
-        <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="summary"></div><div id="productEvidence" class="suite-note" hidden></div><button class="secondary" id="productViewEvidence" type="button" hidden onclick="viewProductEvidence()">View evidence</button><pre id="productEvidenceDetails" class="suite-note" hidden></pre></div>
+        <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="summary"></div><div id="productEvidence" class="suite-note" hidden></div><button class="secondary" id="productViewEvidence" type="button" hidden onclick="viewProductEvidence()">View evidence</button><pre id="productEvidenceDetails" class="suite-note" hidden></pre><details id="productTechnicalDetails" class="suite-note" hidden><summary>Advanced / Technical details</summary><pre id="productContractPreview"></pre></details></div>
         <div class="card" id="controlledEvidence"><h2>Recent controlled evidence</h2><p class="subtitle">Separate from local mock results. Only persisted, sanitized controlled records appear here.</p><div id="controlledEvidenceList" class="suite-note">Loading evidence availability…</div><pre id="controlledEvidenceDetails" class="suite-note" hidden></pre></div>
         <details class="card"><summary class="field-label">Advanced / Technical details</summary><p class="subtitle">Legacy generation and runner controls remain available in their own workspace.</p></details>
     </div>
@@ -3369,7 +3369,8 @@ async function loadProductCatalog(){
         productCatalog.forEach(test => {
             const option = document.createElement("option")
             option.value = test.id
-            option.textContent = `${test.name} — ${test.availability === "READY" ? "Basic" : "Not ready"}`
+            const label = test.availability === "READY" ? "Ready" : test.availability === "CONTRACT_READY" ? "Contract ready" : "Not ready"
+            option.textContent = `${test.name} — ${label}`
             select.appendChild(option)
         })
     } catch (_) {
@@ -3428,16 +3429,28 @@ function resetProductValidation(){
     checks.innerHTML = ""
 }
 
+function productCapabilityNote(test){
+    if(test.availability !== "CONTRACT_READY") return ""
+    const missing = Array.isArray(test.missing_capabilities) ? test.missing_capabilities.join(", ") : "real binding is required"
+    return `Contract ready: local validation and planning are available. Execution remains disabled until ${missing}.`
+}
+
 function renderProductResult(data){
     const result = document.getElementById("productResult")
     const body = document.getElementById("productResultBody")
     if(!result || !body) return
     const test = data.test || productCatalog.find(item => item.id === selectedProductTest()) || {}
+    const isContractValidation = data.phase === "VALIDATION" && test.availability === "CONTRACT_READY"
     const rows = [
-        ["Status", data.result || "BLOCKED"], ["Environment", data.environment || "QA4"],
+        [isContractValidation ? "Validation" : "Status", isContractValidation ? "Passed" : (data.result || "BLOCKED")],
+        ["Availability", isContractValidation ? "Ready for contract review" : (data.display_status || test.availability || "")],
+        ["Environment", data.environment || "QA4"],
         ["Test", test.name || "Selected test"], ["Duration", `${data.duration_ms || 0} ms`],
         ["Attempts", data.attempts || "0/0"], ["Reason", data.reason || "Validation completed"],
     ]
+    const capabilityNote = productCapabilityNote(test)
+    if(capabilityNote) rows.push(["Execution", capabilityNote])
+    if(data.contract_preview) rows.push(["Validation scope", "Existing QA4 contract checked. No request was sent."])
     body.innerHTML = rows.map(([key, value]) => `<div class="metric"><div class="k">${escapeHtml(key)}</div><div class="v">${escapeHtml(value)}</div></div>`).join("")
     productEvidenceReference = data.evidence_reference || "Local mock run: no persisted evidence artifact."
     const evidence = document.getElementById("productEvidence")
@@ -3450,6 +3463,10 @@ function renderProductResult(data){
     evidenceButton.dataset.runId = runId
     evidenceDetails.hidden = true
     evidenceDetails.textContent = ""
+    const technicalDetails = document.getElementById("productTechnicalDetails")
+    const contractPreview = document.getElementById("productContractPreview")
+    technicalDetails.hidden = !data.contract_preview
+    contractPreview.textContent = data.contract_preview ? JSON.stringify(data.contract_preview, null, 2) : ""
     result.hidden = false
 }
 
@@ -3475,11 +3492,11 @@ async function validateProductTest(){
     const response = await fetch(`/api/product-tests/${encodeURIComponent(testId)}/validate`, {method:"POST"})
     const data = await response.json()
     productValidated = data.result === "PASS"
-    document.getElementById("productExecute").disabled = !productValidated
+    document.getElementById("productExecute").disabled = !productValidated || data.execution_available !== true
     const checks = document.getElementById("productChecks")
     checks.hidden = false
     checks.innerHTML = (data.checks || [data.reason || "Validation blocked"]).map(check => `<div class="check-option">${productValidated ? "✓" : "•"} ${escapeHtml(check)}</div>`).join("")
-    if(!productValidated) renderProductResult(data)
+    if(!productValidated || data.execution_available !== true) renderProductResult(data)
 }
 
 async function executeProductTest(){
