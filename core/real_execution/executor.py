@@ -68,7 +68,9 @@ def prepare_first_qa4_call(request, runtime, policy, client):
     )
 
 
-def execute_first_qa4_call_manual(request, runtime_refs, runtime_secrets, policy, client, approval):
+def execute_first_qa4_call_manual(
+    request, runtime_refs, runtime_secrets, policy, client, approval, *, attempt_ledger=None, attempt_scope=None, client_factory=None
+):
     """Gate a manual QA4 call. Runtime values are only passed to the client."""
     request_data = request if isinstance(request, dict) else {}
     runtime_refs_data = runtime_refs if isinstance(runtime_refs, dict) else {}
@@ -82,7 +84,7 @@ def execute_first_qa4_call_manual(request, runtime_refs, runtime_secrets, policy
     allowlist_result = validate_first_qa4_allowlist(request_data, allowlist)
     allowlist_item = allowlist_result.get("allowlist_item") or {}
     auth_required = not _is_exact_no_auth_scope(
-        request_data, allowlist_result, allowlist_item
+        request_data, allowlist_result, allowlist_item, policy_data
     )
     runtime_refs_result = validate_runtime_contract(
         runtime_refs_data, auth_required=auth_required
@@ -95,7 +97,7 @@ def execute_first_qa4_call_manual(request, runtime_refs, runtime_secrets, policy
     readiness_request = _readiness_request(request_data, risk_result)
     readiness_result = evaluate_real_execution_readiness(readiness_request, readiness_policy)
 
-    if not _is_real_manual_client(client):
+    if not _is_real_manual_client(client) and not callable(client_factory):
         blocked_reasons.append("real_manual_client_required")
     if not approval_result["valid"]:
         blocked_reasons.extend(approval_result["blocked_reasons"])
@@ -137,8 +139,25 @@ def execute_first_qa4_call_manual(request, runtime_refs, runtime_secrets, policy
         )
 
     sanitized_request = _sanitized_request(request_data, runtime_refs_result, allowlist_result)
+    active_client = client
+    if active_client is None and callable(client_factory):
+        active_client = client_factory()
+    if not _is_real_manual_client(active_client):
+        return _manual_result(
+            "blocked", ["real_manual_client_required"], request_data,
+            approval_result, runtime_refs_result, runtime_secrets_result,
+            allowlist_result, risk_result, readiness_result, client_response=None,
+            send_attempted=False, error=None,
+        )
+    if attempt_scope and not _consume_attempt_budget(attempt_ledger, attempt_scope):
+        return _manual_result(
+            "blocked", [f"{attempt_scope}_BUDGET_EXHAUSTED"], request_data,
+            approval_result, runtime_refs_result, runtime_secrets_result,
+            allowlist_result, risk_result, readiness_result, client_response=None,
+            send_attempted=False, error=None,
+        )
     try:
-        client_response = client.send(
+        client_response = active_client.send(
             sanitized_request,
             _copy_value(runtime_secrets_data),
             item.get("timeout_seconds"),
@@ -175,7 +194,11 @@ def execute_first_qa4_call_manual(request, runtime_refs, runtime_secrets, policy
     )
 
 
-def _is_exact_no_auth_scope(request_data, allowlist_result, allowlist_item):
+def _consume_attempt_budget(ledger, scope):
+    return hasattr(ledger, "consume") and ledger.consume(scope) is True
+
+
+def _is_exact_no_auth_scope(request_data, allowlist_result, allowlist_item, policy_data):
     return (
         allowlist_result.get("valid") is True
         and allowlist_item.get("auth_required") is False
@@ -184,6 +207,15 @@ def _is_exact_no_auth_scope(request_data, allowlist_result, allowlist_item):
         and allowlist_item.get("environment") == "QA4"
         and allowlist_item.get("operation") == _NO_AUTH_OPERATION
         and allowlist_item.get("scenario_id") == _NO_AUTH_SCENARIO
+        and policy_data.get("operation_scoped_no_auth")
+        == {
+            "authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+            "operation": _NO_AUTH_OPERATION,
+            "scenario_id": _NO_AUTH_SCENARIO,
+            "environment": "QA4",
+            "auth_required": False,
+        }
+        and (policy_data.get("runtime_flags") or {}).get("GLOBAL_NO_AUTH_ENABLED") is False
         and request_data.get("api_id") == _NO_AUTH_API_ID
         and request_data.get("method") == "POST"
         and request_data.get("environment") == "QA4"

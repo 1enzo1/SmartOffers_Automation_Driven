@@ -165,6 +165,10 @@ header {
     grid-template-columns: 76px minmax(0, 1fr);
 }
 
+.app.product-active .legacy-sidebar-control {
+    display: none;
+}
+
 .app-sidebar {
     background:
         linear-gradient(180deg, rgba(16,23,36,.98), rgba(9,13,21,.98)),
@@ -1566,7 +1570,7 @@ pre {
     </div>
 </header>
 
-<div class="app" id="appShell">
+<div class="app product-active" id="appShell">
     <aside class="app-sidebar">
         <div class="sidebar-top">
             <div class="section-label sidebar-text">SmartOffers</div>
@@ -1578,7 +1582,10 @@ pre {
         <section class="sidebar-section workspace-section">
             <div class="section-label sidebar-text">Workspace</div>
             <nav class="workspace-tabs" aria-label="Areas do dashboard">
-                <button class="tab-button active" id="tab-generator" type="button" onclick="showWorkspace('generator')">
+                <button class="tab-button active" id="tab-product" type="button" onclick="showWorkspace('product')">
+                    <span class="nav-icon">01</span><span class="sidebar-text">Run a test</span><span class="tab-index">QA4</span>
+                </button>
+                <button class="tab-button" id="tab-generator" type="button" onclick="showWorkspace('generator')">
                     <span class="nav-icon">G</span>
                     <span class="sidebar-text">Gerador</span>
                     <span class="tab-index">01</span>
@@ -1591,7 +1598,7 @@ pre {
             </nav>
         </section>
 
-        <section class="sidebar-section runner-suite sidebar-collapsible">
+        <section class="sidebar-section runner-suite sidebar-collapsible legacy-sidebar-control">
             <div class="section-label">Suite de Testes</div>
             <div class="suite-field">
                 <label for="filtro">Filtro</label>
@@ -1690,7 +1697,7 @@ pre {
             </div>
         </section>
 
-        <section class="sidebar-section sidebar-collapsible">
+        <section class="sidebar-section sidebar-collapsible legacy-sidebar-control">
             <div class="section-label">Filtro de cenarios</div>
             <div class="scenario-filter-group" aria-label="Filtrar cenarios executados">
                 <button class="scenario-filter active" type="button" data-filter="all" onclick="filterRunnerScenarios('all')">Todos</button>
@@ -1702,7 +1709,7 @@ pre {
             </div>
         </section>
 
-        <section class="sidebar-section sidebar-collapsible">
+        <section class="sidebar-section sidebar-collapsible legacy-sidebar-control">
             <div class="section-label">Estado</div>
             <div class="status-list">
                 <div class="status-line">
@@ -1724,7 +1731,7 @@ pre {
             </div>
         </section>
 
-        <section class="sidebar-section sidebar-collapsible">
+        <section class="sidebar-section sidebar-collapsible legacy-sidebar-control">
             <div class="section-label">Rotas</div>
             <div class="status-list">
                 <div class="status-line"><strong>/api/questions</strong><span>ok</span></div>
@@ -1756,7 +1763,23 @@ pre {
             </div>
         </div>
 
-<section id="panel-generator" class="tab-panel active">
+<section id="panel-product" class="tab-panel active">
+    <div class="main" style="max-width:860px;margin:0 auto;width:100%;padding-top:32px">
+        <div class="card"><h2>SmartOffers Automation</h2><p class="subtitle">Prepare, validate and run a safe QA4 test. Technical guardrails stay in Advanced details.</p></div>
+        <div class="card">
+            <div class="field"><label for="productEnvironment">Environment</label><select id="productEnvironment"><option value="QA4">QA4</option></select></div>
+            <div class="field"><label for="productTest">Test</label><select id="productTest" onchange="resetProductValidation()"><option value="">Select test</option></select></div>
+            <div class="field"><span class="field-label">Test data</span><div class="suite-note">Automatic synthetic data</div></div>
+            <button class="primary" id="productValidate" type="button" onclick="validateProductTest()">Validate</button>
+            <div id="productChecks" class="check-grid" hidden></div>
+            <button class="success" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute test</button>
+        </div>
+        <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="summary"></div><div id="productEvidence" class="suite-note" hidden></div></div>
+        <details class="card"><summary class="field-label">Advanced / Technical details</summary><p class="subtitle">Legacy generation and runner controls remain available in their own workspace.</p></details>
+    </div>
+</section>
+
+<section id="panel-generator" class="tab-panel">
     <div class="generator-shell">
         <aside class="panel sidebar">
             <div class="section-label">Gerador de cenarios</div>
@@ -2145,6 +2168,7 @@ function showWorkspace(name){
     document.querySelectorAll(".tab-button").forEach(tab => tab.classList.remove("active"))
     document.getElementById(`panel-${name}`).classList.add("active")
     document.getElementById(`tab-${name}`).classList.add("active")
+    document.getElementById("appShell").classList.toggle("product-active", name !== "runner")
 }
 
 async function loadQuestions(){
@@ -3325,6 +3349,78 @@ function setGeneratorMessage(text, kind){
     message.className = `message ${kind || ""}`.trim()
 }
 
+let productCatalog = []
+let productValidated = false
+let productEvidenceReference = ""
+
+async function loadProductCatalog(){
+    const select = document.getElementById("productTest")
+    if(!select) return
+    try {
+        const response = await fetch("/api/product-tests")
+        const data = await response.json()
+        productCatalog = Array.isArray(data.tests) ? data.tests : []
+        productCatalog.forEach(test => {
+            const option = document.createElement("option")
+            option.value = test.id
+            option.textContent = `${test.name} — ${test.availability === "READY" ? "Basic" : "Not ready"}`
+            select.appendChild(option)
+        })
+    } catch (_) {
+        select.innerHTML = '<option value="">Catalog unavailable</option>'
+    }
+}
+
+function selectedProductTest(){
+    return document.getElementById("productTest")?.value || ""
+}
+
+function resetProductValidation(){
+    productValidated = false
+    document.getElementById("productExecute").disabled = true
+    const checks = document.getElementById("productChecks")
+    checks.hidden = true
+    checks.innerHTML = ""
+}
+
+function renderProductResult(data){
+    const result = document.getElementById("productResult")
+    const body = document.getElementById("productResultBody")
+    if(!result || !body) return
+    const test = data.test || productCatalog.find(item => item.id === selectedProductTest()) || {}
+    const rows = [
+        ["Status", data.result || "BLOCKED"], ["Environment", data.environment || "QA4"],
+        ["Test", test.name || "Selected test"], ["Duration", `${data.duration_ms || 0} ms`],
+        ["Attempts", data.attempts || "0/0"], ["Reason", data.reason || "Validation completed"],
+    ]
+    body.innerHTML = rows.map(([key, value]) => `<div class="metric"><div class="k">${escapeHtml(key)}</div><div class="v">${escapeHtml(value)}</div></div>`).join("")
+    productEvidenceReference = data.evidence_reference || "Local mock run: no persisted evidence artifact."
+    const evidence = document.getElementById("productEvidence")
+    evidence.textContent = `Evidence availability: ${productEvidenceReference}`
+    evidence.hidden = false
+    result.hidden = false
+}
+
+async function validateProductTest(){
+    const testId = selectedProductTest()
+    if(!testId){ renderProductResult({result:"BLOCKED", reason:"Select a test first"}); return }
+    const response = await fetch(`/api/product-tests/${encodeURIComponent(testId)}/validate`, {method:"POST"})
+    const data = await response.json()
+    productValidated = data.result === "PASS"
+    document.getElementById("productExecute").disabled = !productValidated
+    const checks = document.getElementById("productChecks")
+    checks.hidden = false
+    checks.innerHTML = (data.checks || [data.reason || "Validation blocked"]).map(check => `<div class="check-option">${productValidated ? "✓" : "•"} ${escapeHtml(check)}</div>`).join("")
+    if(!productValidated) renderProductResult(data)
+}
+
+async function executeProductTest(){
+    const testId = selectedProductTest()
+    if(!productValidated || !testId) return
+    const response = await fetch(`/api/product-tests/${encodeURIComponent(testId)}/execute`, {method:"POST"})
+    renderProductResult(await response.json())
+}
+
 function escapeHtml(value){
     return String(value || "")
         .replace(/&/g, "&amp;")
@@ -3817,6 +3913,7 @@ updateRunnerEmptyState()
 updateExecutionModeControls()
 updateAdapterPanelForScenario()
 loadQuestions()
+loadProductCatalog()
 loadTemplates()
 loadSavedScenarios()
 refreshAdapters()

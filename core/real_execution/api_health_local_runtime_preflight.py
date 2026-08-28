@@ -13,6 +13,19 @@ API_RESOURCE_ID = "smartoffers_api"
 API_RUNTIME_READY = "API_RUNTIME_READY"
 API_RUNTIME_BLOCKED = "API_RUNTIME_BLOCKED"
 
+SCOPED_OFFERS_DESTINATION_ATTESTATION_READY = (
+    "QA4_SCOPED_DESTINATION_ATTESTATION_READY"
+)
+SCOPED_OFFERS_DESTINATION_ATTESTATION_BLOCKED = (
+    "QA4_SCOPED_DESTINATION_ATTESTATION_BLOCKED"
+)
+_SCOPED_OFFERS_REQUEST = {
+    "operation": "CREATE_OFFERS_CUSTOMER",
+    "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+    "environment": "QA4",
+    "api_id": "post-vivo-next-habilitacao-de-cliente-ade0841563",
+}
+
 API_REQUIRED_REFS = (
     "SMARTOFFERS_QA4_API_URL",
     "SMARTOFFERS_QA4_API_HEALTH_PATH",
@@ -53,6 +66,33 @@ def preflight_api_health_local_runtime(request, environ=None):
         "fingerprint_validation": fingerprint_validation,
         "checked_refs": checked_refs,
         "missing_refs": missing_refs,
+    }
+
+
+def preflight_scoped_qa4_offers_destination_attestation(request, environ=None):
+    """Attest only the approved Offers destination, never the generic health route."""
+    environment = environ if environ is not None else process_environment
+    request_data = request if isinstance(request, dict) else {}
+    is_scoped_request = all(
+        request_data.get(key) == value for key, value in _SCOPED_OFFERS_REQUEST.items()
+    )
+    # Reuse the established independent approved-destination binding.  Unlike
+    # generic API health, this scoped path deliberately does not require a
+    # health path or its hash.
+    fingerprint_matches = _fingerprint_validation(environment) == "MATCH"
+    if not is_scoped_request or not fingerprint_matches:
+        return {
+            "status": SCOPED_OFFERS_DESTINATION_ATTESTATION_BLOCKED,
+            "attestation": {},
+        }
+    return {
+        "status": SCOPED_OFFERS_DESTINATION_ATTESTATION_READY,
+        "attestation": {
+            "source": "derived_qa4_api_url",
+            **_SCOPED_OFFERS_REQUEST,
+            "allowlist_match": True,
+            "status": "MATCH",
+        },
     }
 
 

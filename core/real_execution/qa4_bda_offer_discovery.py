@@ -1,8 +1,9 @@
 """Bounded, read-only QA4 BDA discovery of a historical Offers product code."""
 
-import importlib
+import hashlib
 import time
 from datetime import datetime, timezone
+from threading import Lock
 from uuid import uuid4
 
 from core.real_execution.bda_local_runtime_preflight import (
@@ -27,6 +28,21 @@ _TIMEOUT_SECONDS = 5
 _TOTAL_TIMEOUT_SECONDS = 15
 
 
+class BdaDiscoveryAttemptLedger:
+    """Single-use, process-local budget isolated from the Offers request ledger."""
+
+    def __init__(self):
+        self._lock = Lock()
+        self._consumed = False
+
+    def consume(self, scope):
+        with self._lock:
+            if scope != OPERATION or self._consumed:
+                return False
+            self._consumed = True
+            return True
+
+
 class _Blocked(Exception):
     def __init__(self, category, status="QA4_BDA_OFFER_DISCOVERY_BLOCKED"):
         super().__init__(category)
@@ -35,7 +51,7 @@ class _Blocked(Exception):
 
 
 def run_qa4_bda_offer_discovery(
-    *, environ, driver=None, offer_sink=None, authorization=None, clock=None
+    *, environ, driver=None, driver_factory=None, offer_sink=None, authorization=None, clock=None, attempt_ledger=None
 ):
     """Run the single static BDA SELECT and expose the code only to a local sink."""
 
@@ -49,7 +65,13 @@ def run_qa4_bda_offer_discovery(
         _validate_runtime(environment, authorization)
         _ensure_total_timeout(started, monotonic)
         runtime = _load_runtime(environment)
-        oracle_driver = driver or importlib.import_module("oracledb")
+        if driver is None and not callable(driver_factory):
+            raise _Blocked("EXPLICIT_ORACLE_DRIVER_REQUIRED")
+        if attempt_ledger is not None and not _consume_discovery_budget(attempt_ledger):
+            raise _Blocked("BDA_DISCOVERY_BUDGET_EXHAUSTED")
+        oracle_driver = driver if driver is not None else driver_factory()
+        if oracle_driver is None:
+            raise _Blocked("EXPLICIT_ORACLE_DRIVER_REQUIRED")
         oracle_driver.init_oracle_client(lib_dir=runtime["oracle_client_lib_dir"])
         connection = oracle_driver.connect(
             user=runtime["db_user"],
@@ -105,11 +127,23 @@ def _validate_runtime(environment, authorization):
         "profile": BDA_PROFILE,
         "resource_id": BDA_RESOURCE_ID,
         "operation": authorization_data.get("operation"),
+        "bda_operation": authorization_data.get("bda_operation"),
         "read_only_discovery_authorized": authorization_data.get(
             "read_only_discovery_authorized"
         ),
+        "authorization_verified": authorization_data.get("authorization_verified"),
+        "destination_attestation_ready": authorization_data.get(
+            "destination_attestation_ready"
+        ),
+        "offers_operation": authorization_data.get("offers_operation"),
+        "scenario_id": authorization_data.get("scenario_id"),
+        "access_mode": authorization_data.get("access_mode"),
+        "attempts_used": authorization_data.get("attempts_used"),
+        "query_hash": hashlib.sha256(_QUERY.encode("utf-8")).hexdigest(),
     }
     preflight = preflight_bda_local_runtime(request, environment)
+    if preflight["offer_discovery_query_hash_validation"] != "MATCH":
+        raise _Blocked("QUERY_HASH_MISMATCH")
     if preflight["status"] != BDA_RUNTIME_READY:
         if preflight["missing_refs"]:
             raise _Blocked("CONFIG_MISSING")
@@ -140,6 +174,10 @@ def _load_runtime(environment):
         "db_password": str(environment["SMARTOFFERS_QA4_BDA_DB_PASSWORD"]),
         "oracle_client_lib_dir": str(environment["SMARTOFFERS_ORACLE_CLIENT_LIB_DIR"]),
     }
+
+
+def _consume_discovery_budget(ledger):
+    return hasattr(ledger, "consume") and ledger.consume(OPERATION) is True
 
 
 def _read_single_product_code(cursor):
@@ -200,6 +238,8 @@ def _result(status, *, found_valid_offer, error_category, elapsed_ms):
         "select_only": True,
         "row_limited": True,
         "attempts_used": 1,
+        "offers_attempts_used": 0,
+        "offers_attempts_available": 1,
         "retry_count": 0,
         "fallback": False,
         "connect_timeout_seconds": _TIMEOUT_SECONDS,

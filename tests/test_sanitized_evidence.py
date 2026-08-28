@@ -1,0 +1,60 @@
+import json
+from pathlib import Path
+from uuid import uuid4
+
+from core.real_execution.sanitized_evidence import persist_sanitized_real_run_evidence
+
+
+def test_real_run_evidence_is_immutable_allowlisted_and_redacted(monkeypatch):
+    monkeypatch.setenv("SMARTOFFERS_SOURCE_REVISION", "abc123")
+    report = {
+        "result": "PASS",
+        "executor_send_attempted": True,
+        "offers_adapter": {"attempts_used": 1, "password": "never-store"},
+        "evidence": {
+            "http_status": 201,
+            "response_received": True,
+            "endpoint": "https://must-not-appear",
+            "offer": "must-not-appear",
+        },
+    }
+    context = {
+        "environment": "qa4",
+        "operation": "CREATE_OFFERS_CUSTOMER",
+        "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        "static_preflight": "READY",
+        "operational_preflight": "READY",
+        "destination_attestation": "READY",
+        "authorization_verification": "READY",
+        "msisdn": "must-not-appear",
+    }
+
+    evidence_root = Path("evidencias") / f"test-sanitized-{uuid4().hex}"
+    saved = persist_sanitized_real_run_evidence(report, context=context, evidence_root=evidence_root)
+    path = evidence_root / "real-controlled" / f"{saved['run_id']}.json"
+    content = path.read_text(encoding="utf-8")
+    record = json.loads(content)
+
+    assert saved["recorded"] is True
+    assert record["environment"] == "QA4"
+    assert record["http_status_class"] == "2xx"
+    assert record["attempt_ledger"] == {"attempts_used": 1, "max_attempts": 1, "retry_count": 0}
+    assert record["source_revision"] == "abc123"
+    assert "must-not-appear" not in content
+    assert "password" not in content
+    path.unlink()
+    path.parent.rmdir()
+    evidence_root.rmdir()
+
+
+def test_evidence_writer_does_not_create_an_artifact_without_a_send_attempt():
+    evidence_root = Path("evidencias") / f"test-no-send-{uuid4().hex}"
+
+    result = persist_sanitized_real_run_evidence(
+        {"result": "BLOCKED", "executor_send_attempted": False},
+        context={"environment": "qa4"},
+        evidence_root=evidence_root,
+    )
+
+    assert result == {"recorded": False, "reason": "REQUEST_NOT_SENT"}
+    assert not evidence_root.exists()

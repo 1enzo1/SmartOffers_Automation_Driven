@@ -159,6 +159,28 @@ def test_current_alpha_governance_is_documented():
         assert fragment in docs
 
 
+def test_alpha_operation_scoped_transport_contract_stays_default_deny_and_sanitized():
+    docs = "\n".join(
+        [
+            _read("docs/ALPHA_DELIVERY_POLICY.md"),
+            _read("docs/ALPHA_GOVERNANCE.md"),
+            _read("docs/ALPHA_OWNER_EXECUTION_HANDOFF.md"),
+        ]
+    )
+
+    for fragment in [
+        "REAL_TRANSPORT_ALLOWED=false",
+        "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+        "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        "CREATE_OFFERS_CUSTOMER",
+        "retry zero",
+        "fallback false",
+        "never a destination value",
+        "production is unconditionally denied",
+    ]:
+        assert fragment in docs
+
+
 def test_alpha_role_boundaries_are_consistent_per_source():
     agents = _read("AGENTS.md")
     architect = _read(".agents/skills/smartoffers-automation-architect/SKILL.md")

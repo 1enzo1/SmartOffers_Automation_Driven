@@ -51,3 +51,17 @@ platform auto-review policy rejected the application binding.  Once that policy
 is available in the target environment, the Owner can use the existing
 application and scenario without changing business logic or supplying source
 edits.
+## Operation-scoped authorization
+
+The application confirmation is necessary but not sufficient. The persistent
+operation-scoped authorization must be exactly
+`ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN`, restricted to QA4,
+`real-controlled`, `smartoffers_qa4_full_smoke`,
+`CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4`, and `CREATE_OFFERS_CUSTOMER`, with one
+attempt, zero retries, and no fallback. The scoped derived destination
+attestation may report only `source=derived_qa4_api_url`, `environment=QA4`,
+the exact operation/scenario/API identity, and allowlist match; its internally
+derived URL fingerprint must match the independent approved fingerprint, while
+missing or non-matching attestation denies execution without exposing either
+value. This exception does not relax the legacy generic API-health
+path/hash preflight, which remains fail-closed for its own checkpoint.

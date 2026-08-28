@@ -12,6 +12,7 @@ from core.real_execution.bda_local_runtime_preflight import (
     BDA_RESOURCE_ID,
     BDA_RUNTIME_BLOCKED,
     BDA_RUNTIME_READY,
+    QA4_BDA_OFFER_DISCOVERY_QUERY_SHA256,
     preflight_bda_local_runtime,
 )
 
@@ -57,6 +58,7 @@ def test_bda_preflight_returns_ready_only_for_complete_matching_runtime():
         "allowlist_validation": "MATCH",
         "refs_validation": "READY",
         "sql_hash_validation": "MATCH",
+        "offer_discovery_query_hash_validation": "DENIED",
         "fingerprint_validation": "MATCH",
         "checked_refs": list(BDA_REQUIRED_REFS),
         "missing_refs": [],
@@ -65,11 +67,19 @@ def test_bda_preflight_returns_ready_only_for_complete_matching_runtime():
     }
 
 
-def test_bda_preflight_enables_only_the_explicit_offer_discovery_operation():
+def test_bda_preflight_enables_only_the_approved_scoped_offer_discovery():
     result = preflight_bda_local_runtime(
         _request(
             operation="QA4_BDA_OFFER_DISCOVERY",
+            bda_operation="OFFER_DISCOVERY",
             read_only_discovery_authorized=True,
+            authorization_verified=True,
+            destination_attestation_ready=True,
+            offers_operation="CREATE_OFFERS_CUSTOMER",
+            scenario_id="CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+            access_mode="READ_ONLY",
+            attempts_used=0,
+            query_hash=QA4_BDA_OFFER_DISCOVERY_QUERY_SHA256,
         ),
         _fake_runtime(),
     )
@@ -77,6 +87,63 @@ def test_bda_preflight_enables_only_the_explicit_offer_discovery_operation():
     assert result["status"] == BDA_RUNTIME_READY
     assert result["connection_allowed"] is True
     assert result["sql_execution_allowed"] is True
+
+
+def test_bda_preflight_blocks_scoped_offer_discovery_without_its_canonical_query_hash():
+    result = preflight_bda_local_runtime(
+        _request(
+            operation="QA4_BDA_OFFER_DISCOVERY",
+            bda_operation="OFFER_DISCOVERY",
+            read_only_discovery_authorized=True,
+            authorization_verified=True,
+            destination_attestation_ready=True,
+            offers_operation="CREATE_OFFERS_CUSTOMER",
+            scenario_id="CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+            access_mode="READ_ONLY",
+            attempts_used=0,
+        ),
+        _fake_runtime(),
+    )
+
+    assert result["connection_allowed"] is False
+    assert result["sql_execution_allowed"] is False
+
+
+@pytest.mark.parametrize(
+    "overrides",
+    [
+        {"environment": "qa3"},
+        {"offers_operation": "UPDATE_OFFERS_CUSTOMER"},
+        {"bda_operation": "OTHER_READ"},
+        {"scenario_id": "OTHER_SCENARIO"},
+        {"authorization_verified": False},
+        {"destination_attestation_ready": False},
+        {"access_mode": "WRITE"},
+        {"attempts_used": 1},
+    ],
+)
+def test_bda_preflight_blocks_discovery_outside_approved_scoped_tuple(overrides):
+    request = _request(
+        operation="QA4_BDA_OFFER_DISCOVERY",
+        bda_operation="OFFER_DISCOVERY",
+        read_only_discovery_authorized=True,
+        authorization_verified=True,
+        destination_attestation_ready=True,
+        offers_operation="CREATE_OFFERS_CUSTOMER",
+        scenario_id="CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        access_mode="READ_ONLY",
+        attempts_used=0,
+        query_hash=QA4_BDA_OFFER_DISCOVERY_QUERY_SHA256,
+    )
+    request.update(overrides)
+
+    result = preflight_bda_local_runtime(request, _fake_runtime())
+
+    assert result["status"] == (
+        BDA_RUNTIME_BLOCKED if "environment" in overrides else BDA_RUNTIME_READY
+    )
+    assert result["connection_allowed"] is False
+    assert result["sql_execution_allowed"] is False
 
 
 @pytest.mark.parametrize("missing_ref", BDA_REQUIRED_REFS)

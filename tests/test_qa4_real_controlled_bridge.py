@@ -1,7 +1,12 @@
+import json
+from datetime import datetime
 from pathlib import Path
+
+import pytest
 
 import app as app_module
 from core.real_execution import qa4_real_controlled_bridge
+from core.real_execution.qa4_offers_customer_adapter import OneRunAttemptLedger
 
 
 EVALUATED_AT = "2026-08-25T12:00:00+00:00"
@@ -77,11 +82,13 @@ def _executor_inputs():
             "timeout_seconds": 5,
         },
         "policy": {
-            "runtime_flags": {"REAL_EXECUTION_ENABLED": True, "REAL_EXECUTION_KILL_SWITCH": False},
+            "runtime_flags": {"REAL_EXECUTION_ENABLED": True, "REAL_EXECUTION_KILL_SWITCH": False, "REAL_TRANSPORT_ALLOWED": True, "PRODUCTION": False, "GLOBAL_NO_AUTH_ENABLED": False},
             "first_qa4_allowlist": {
                 "allowed_api_ids": [api_id],
-                "items": {api_id: {"api_id": api_id, "method": "POST", "environment": "QA4", "timeout_seconds": 5, "retry_count": 0, "status": "manual_offers_customer"}},
+                "items": {api_id: {"api_id": api_id, "method": "POST", "environment": "QA4", "timeout_seconds": 5, "retry_count": 0, "status": "manual_offers_customer", "operation": "CREATE_OFFERS_CUSTOMER", "scenario_id": SYNTHETIC_OFFERS_SCENARIO, "auth_required": False}},
             },
+            "operation_scoped_no_auth": {"authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN", "operation": "CREATE_OFFERS_CUSTOMER", "scenario_id": SYNTHETIC_OFFERS_SCENARIO, "environment": "QA4", "auth_required": False},
+            "destination_attestation": {"source": "local_runtime_config", "environment": "QA4", "allowlist_match": True, "status": "MATCH"},
         },
         "approval": {"approved": True, "risk_acceptance": True, "approver_ref": "apr-safe-001", "ticket_ref": "chg-safe-001", "approved_api_id": api_id, "approved_environment": "QA4", "approved_at_ref": "time-safe-001"},
     }
@@ -90,16 +97,59 @@ def _executor_inputs():
 def _one_run_opt_in():
     return {
         "approved": True,
-        "operation": "ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN",
+        "operation": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+        "authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
         "environment": "QA4",
+        "mode": "real-controlled",
+        "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+        "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
         "max_attempts": 1,
         "retry_count": 0,
         "fallback": False,
+        "production": False,
+    }
+
+
+def _exact_provider_context():
+    return _context() | {
+        "mode": "real-controlled",
+        "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+        "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+    }
+
+
+def _exact_control_document():
+    api_id = "post-vivo-next-habilitacao-de-cliente-ade0841563"
+    return {
+        "owner_opt_in": _one_run_opt_in(),
+        "approval": {"approved": True, "risk_acceptance": True, "approver_ref": "local-controlled-ref", "ticket_ref": "local-controlled-ref", "approved_api_id": api_id, "approved_environment": "QA4", "approved_at_ref": "local-controlled-ref"},
+        "runtime_refs": {"QA4_HOST_REF": "runtime-ref:qa4-host", "SENSITIVE_HEADERS_REF": "runtime-ref:qa4-headers", "TEST_PAYLOAD_REF": "runtime-ref:qa4-body", "CORRELATION_ID": "runtime-ref:qa4-correlation"},
+        "policy": {
+            "runtime_flags": {"REAL_EXECUTION_ENABLED": True, "REAL_EXECUTION_KILL_SWITCH": False, "REAL_TRANSPORT_ALLOWED": True, "PRODUCTION": False, "GLOBAL_NO_AUTH_ENABLED": False},
+            "operation_scoped_no_auth": {"authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN", "operation": "CREATE_OFFERS_CUSTOMER", "scenario_id": SYNTHETIC_OFFERS_SCENARIO, "environment": "QA4", "auth_required": False},
+            "destination_attestation": {"source": "local_runtime_config", "environment": "QA4", "allowlist_match": True, "status": "MATCH"},
+            "first_qa4_allowlist": {"allowed_api_ids": [api_id], "items": {api_id: {"api_id": api_id, "method": "POST", "environment": "QA4", "timeout_seconds": 5, "retry_count": 0, "status": "manual_offers_customer", "operation": "CREATE_OFFERS_CUSTOMER", "scenario_id": SYNTHETIC_OFFERS_SCENARIO, "auth_required": False}}},
+        },
     }
 
 
 def test_real_controlled_bridge_runs_standard_facade_then_blocks_before_fake_send(monkeypatch):
     facade_calls = []
+    for name in (
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD",
+        "SMARTOFFERS_QA4_ACM_DB_DSN",
+        "SMARTOFFERS_QA4_ACM_DB_USER",
+        "SMARTOFFERS_QA4_ACM_DB_PASSWORD",
+        "SMARTOFFERS_QA4_BDA_DB_DSN",
+        "SMARTOFFERS_QA4_BDA_DB_USER",
+        "SMARTOFFERS_QA4_BDA_DB_PASSWORD",
+        "SMARTOFFERS_ORACLE_CLIENT_LIB_DIR",
+        "SMARTOFFERS_QA4_TEST_MSISDN",
+        "SMARTOFFERS_QA4_TEST_OFFER",
+    ):
+        monkeypatch.delenv(name, raising=False)
 
     def facade(context, *, mode, evaluated_at):
         facade_calls.append((context, mode, evaluated_at))
@@ -259,6 +309,7 @@ def test_real_controlled_bridge_routes_exact_offers_request_to_injected_executor
         _context(),
         mode="real-controlled",
         evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
         environ=_offers_runtime_environment(),
         client=client,
         **_executor_inputs(),
@@ -285,6 +336,7 @@ def test_real_controlled_bridge_surfaces_exact_offers_failure_without_retry(monk
         _context(),
         mode="real-controlled",
         evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
         environ=_offers_runtime_environment(),
         client=client,
         **_executor_inputs(),
@@ -309,9 +361,11 @@ def test_real_controlled_bridge_forwards_bounded_one_run_opt_in_to_transport_gat
         _context(),
         mode="real-controlled",
         evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
         environ=_offers_runtime_environment(),
         client=client,
         owner_opt_in=_one_run_opt_in(),
+        ledger=OneRunAttemptLedger(),
         **_executor_inputs(),
     )
 
@@ -332,18 +386,17 @@ def test_real_controlled_bridge_has_no_transport_imports():
         assert forbidden not in source
 
 
-def test_real_controlled_api_entry_returns_sanitized_blocked_bridge(app_client_factory, monkeypatch):
+def test_real_controlled_api_blocks_before_confirmation_without_real_collaborators(
+    app_client_factory, monkeypatch
+):
     client, _ = app_client_factory("qa4-real-controlled")
     monkeypatch.setattr(
         app_module,
         "run_standard_qa4_real_controlled",
-        lambda context, *, mode, evaluated_at, scenario_id: {
-            "result": "BLOCKED",
-            "standard_report": {"result": "PASS"},
-            "blockers": ["REAL_QA4_OPERATION_NOT_CONFIRMED"],
-            "real_call_executed": False,
-            "fake_client_send_calls": 0,
-        },
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("bridge must not run before application confirmation")
+        ),
+        raising=False,
     )
 
     response = client.post(
@@ -358,27 +411,30 @@ def test_real_controlled_api_entry_returns_sanitized_blocked_bridge(app_client_f
         },
     )
 
-    assert response.status_code == 200
-    assert response.get_json()["result"] == "BLOCKED"
+    assert response.status_code == 400
+    assert response.get_json() == {"result": "BLOCKED", "reason": "APPLICATION_CONFIRMATION_REQUIRED"}
     assert "must-not-appear" not in response.get_data(as_text=True)
 
 
-def test_selected_synthetic_scenario_api_routes_only_qa4_to_real_controlled_bridge(
+def test_selected_synthetic_scenario_api_binds_bridge_lazily_after_confirmation(
     app_client_factory, monkeypatch
 ):
     client, _ = app_client_factory("qa4-selected-scenario")
     bridge_calls = []
 
-    def bridge(context, *, mode, evaluated_at, scenario_id):
-        bridge_calls.append((context, mode, evaluated_at, scenario_id))
+    def bridge(context, *, mode, evaluated_at, scenario_id, runtime_provider, **kwargs):
+        bridge_calls.append((context, mode, evaluated_at, scenario_id, runtime_provider, kwargs))
         return {
             "result": "BLOCKED",
-            "blockers": ["AUTH_CONTRACT_UNREADY"],
+            "blockers": ["QA4_CREDENTIAL_OR_CONFIG_REQUIRED"],
             "real_call_executed": False,
             "executor_send_attempted": False,
         }
 
-    monkeypatch.setattr(app_module, "run_standard_qa4_real_controlled", bridge)
+    monkeypatch.setattr(app_module, "run_atomic_qa4_bda_offer_discovery_and_offers_create", bridge)
+    monkeypatch.setattr(app_module, "_atomic_static_preflight_ready", lambda *args: True)
+    monkeypatch.setattr(app_module, "_trusted_local_now", lambda: datetime.fromisoformat("2026-08-25T12:00:00+00:00"))
+    monkeypatch.setattr(app_module, "_governed_bda_driver", lambda: object())
     response = client.post(
         "/api/qa4/standard/real-controlled-run",
         json={
@@ -386,6 +442,7 @@ def test_selected_synthetic_scenario_api_routes_only_qa4_to_real_controlled_brid
             "environment": "QA4",
             "mode": "real-controlled",
             "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
             "evaluated_at": EVALUATED_AT,
             "secret": "must-not-appear",
         },
@@ -393,14 +450,20 @@ def test_selected_synthetic_scenario_api_routes_only_qa4_to_real_controlled_brid
 
     assert response.status_code == 200
     assert response.get_json()["result"] == "BLOCKED"
-    assert bridge_calls == [
-        (
-            _context() | {"environment": "qa4"},
-            "real-controlled",
-            EVALUATED_AT,
-            SYNTHETIC_OFFERS_SCENARIO,
-        )
-    ]
+    assert bridge_calls[0][:4] == (
+        _context()
+        | {
+            "environment": "qa4",
+            "mode": "real-controlled",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+        },
+        "real-controlled",
+        EVALUATED_AT,
+        SYNTHETIC_OFFERS_SCENARIO,
+    )
+    assert callable(bridge_calls[0][4])
+    assert callable(bridge_calls[0][5]["bda_driver_factory"])
     assert "must-not-appear" not in response.get_data(as_text=True)
 
 
@@ -411,7 +474,8 @@ def test_selected_synthetic_scenario_api_blocks_wrong_environment_or_scenario_be
     monkeypatch.setattr(
         app_module,
         "run_standard_qa4_real_controlled",
-        lambda **kwargs: (_ for _ in ()).throw(AssertionError("bridge must not run")),
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("bridge must not run")),
+        raising=False,
     )
 
     production = client.post(
@@ -437,3 +501,586 @@ def test_selected_synthetic_scenario_api_blocks_wrong_environment_or_scenario_be
 
     assert production.get_json() == {"result": "BLOCKED", "reason": "ENVIRONMENT_NOT_ALLOWED"}
     assert wrong_scenario.get_json() == {"result": "BLOCKED", "reason": "SCENARIO_NOT_ALLOWED"}
+
+
+def test_real_controlled_bridge_defers_runtime_discovery_and_client_until_standard_passes(
+    monkeypatch,
+):
+    provider_calls = []
+
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "run_standard_qa4_application_mock",
+        lambda context, *, mode, evaluated_at: {"result": "BLOCKED"},
+    )
+
+    result = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(),
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
+        runtime_provider=lambda *_: provider_calls.append("called") or {},
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert provider_calls == []  # BDA_DISCOVERY_NOT_CALLED; REAL_HTTP_CLIENT_NOT_CREATED
+    assert result["executor_send_attempted"] is False  # TRANSPORT_NOT_ATTEMPTED
+
+
+def test_owner_provider_runs_offline_preflight_before_discovery_or_real_client(
+    monkeypatch,
+):
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+    import core.real_execution.qa4_offers_customer_adapter as offers_adapter
+    import core.real_execution.real_http_client as real_http_client
+
+    events = []
+    monkeypatch.setenv(
+        "SMARTOFFERS_ALPHA_QA4_CONTROLLED_CONTRACT", json.dumps(_exact_control_document())
+    )
+    real_preflight = offers_adapter.prepare_one_synthetic_qa4_offers_customer_create
+
+    def tracked_real_preflight(*args, **kwargs):
+        events.append("OFFLINE_PREFLIGHT")
+        return real_preflight(*args, **kwargs)
+
+    monkeypatch.setattr(
+        offers_adapter,
+        "prepare_one_synthetic_qa4_offers_customer_create",
+        tracked_real_preflight,
+    )
+    for name in (
+        "SMARTOFFERS_QA4_API_URL",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_DSN",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_USER",
+        "SMARTOFFERS_QA4_ACM_CUSTOM_DB_PASSWORD",
+        "SMARTOFFERS_QA4_ACM_DB_DSN",
+        "SMARTOFFERS_QA4_ACM_DB_USER",
+        "SMARTOFFERS_QA4_ACM_DB_PASSWORD",
+        "SMARTOFFERS_QA4_BDA_DB_DSN",
+        "SMARTOFFERS_QA4_BDA_DB_USER",
+        "SMARTOFFERS_QA4_BDA_DB_PASSWORD",
+        "SMARTOFFERS_ORACLE_CLIENT_LIB_DIR",
+        "SMARTOFFERS_QA4_DB_DSN",
+        "SMARTOFFERS_QA4_DB_USER",
+        "SMARTOFFERS_QA4_DB_PASSWORD",
+        "SMARTOFFERS_QA4_TEST_MSISDN",
+        "SMARTOFFERS_QA4_TEST_OFFER",
+    ):
+        monkeypatch.delenv(name, raising=False)
+    monkeypatch.setattr(
+        bda_discovery,
+        "run_qa4_bda_offer_discovery",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            AssertionError("BDA_DISCOVERY_NOT_CALLED_WHEN_PREFLIGHT_BLOCKS")
+        ),
+    )
+
+    class NoRealHttpClient:
+        def __init__(self):
+            raise AssertionError("REAL_HTTP_CLIENT_NOT_CREATED_WHEN_PREFLIGHT_BLOCKS")
+
+    monkeypatch.setattr(real_http_client, "RealHttpClient", NoRealHttpClient)
+
+    result = app_module._qa4_owner_execution_inputs(_exact_provider_context())
+
+    assert events == ["OFFLINE_PREFLIGHT"]
+    assert result == {"ledger": offers_adapter._DEFAULT_ATTEMPT_LEDGER}
+
+
+def test_owner_provider_rejects_malformed_or_widened_control_document_before_static_or_lazy_collaborators(monkeypatch):
+    import core.real_execution.api_health_local_runtime_preflight as api_preflight
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+    import core.real_execution.qa4_offers_customer_adapter as offers_adapter
+    import core.real_execution.real_http_client as real_http_client
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("denied control document must not reach collaborator")
+
+    monkeypatch.setattr(offers_adapter, "prepare_one_synthetic_qa4_offers_customer_create", forbidden)
+    monkeypatch.setattr(api_preflight, "preflight_api_health_local_runtime", forbidden)
+    monkeypatch.setattr(bda_discovery, "run_qa4_bda_offer_discovery", forbidden)
+    monkeypatch.setattr(real_http_client, "RealHttpClient", forbidden)
+    document = _exact_control_document()
+    document["policy"]["runtime_flags"]["PRODUCTION"] = True
+    monkeypatch.setenv("SMARTOFFERS_ALPHA_QA4_CONTROLLED_CONTRACT", json.dumps(document))
+
+    result = app_module._qa4_owner_execution_inputs(_exact_provider_context())
+
+    assert result == {}
+
+
+@pytest.mark.parametrize("document", ["{not-json", "[]"])
+def test_owner_provider_rejects_invalid_or_non_object_control_json_before_any_collaborator(
+    monkeypatch, document
+):
+    import core.real_execution.api_health_local_runtime_preflight as api_preflight
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+    import core.real_execution.qa4_offers_customer_adapter as offers_adapter
+    import core.real_execution.real_http_client as real_http_client
+
+    def forbidden(*args, **kwargs):
+        raise AssertionError("invalid control JSON must not reach collaborator")
+
+    monkeypatch.setattr(offers_adapter, "prepare_one_synthetic_qa4_offers_customer_create", forbidden)
+    monkeypatch.setattr(api_preflight, "preflight_api_health_local_runtime", forbidden)
+    monkeypatch.setattr(bda_discovery, "run_qa4_bda_offer_discovery", forbidden)
+    monkeypatch.setattr(real_http_client, "RealHttpClient", forbidden)
+    monkeypatch.setenv("SMARTOFFERS_ALPHA_QA4_CONTROLLED_CONTRACT", document)
+
+    assert app_module._qa4_owner_execution_inputs(_exact_provider_context()) == {}
+
+
+def test_owner_provider_returns_discovery_readiness_without_http_or_transport_policy(monkeypatch):
+    import core.real_execution.api_health_local_runtime_preflight as api_preflight
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+    import core.real_execution.qa4_offers_customer_adapter as offers_adapter
+    import core.real_execution.real_http_client as real_http_client
+
+    events = []
+    sentinel_ledger = object()
+
+    monkeypatch.setenv(
+        "SMARTOFFERS_ALPHA_QA4_CONTROLLED_CONTRACT", json.dumps(_exact_control_document())
+    )
+    monkeypatch.setattr(
+        offers_adapter,
+        "prepare_one_synthetic_qa4_offers_customer_create",
+        lambda *args, **kwargs: events.append("static-offers") or {"preflight_status": "READY"},
+    )
+    monkeypatch.setattr(
+        api_preflight,
+        "preflight_scoped_qa4_offers_destination_attestation",
+        lambda *args, **kwargs: events.append("destination")
+        or {
+            "status": api_preflight.SCOPED_OFFERS_DESTINATION_ATTESTATION_READY,
+            "attestation": {
+                "source": "derived_qa4_api_url",
+                "environment": "QA4",
+                "operation": "CREATE_OFFERS_CUSTOMER",
+                "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+                "api_id": "post-vivo-next-habilitacao-de-cliente-ade0841563",
+                "allowlist_match": True,
+                "status": "MATCH",
+            },
+        },
+    )
+    monkeypatch.setattr(offers_adapter, "_DEFAULT_ATTEMPT_LEDGER", sentinel_ledger)
+    monkeypatch.setattr(
+        bda_discovery,
+        "run_qa4_bda_offer_discovery",
+        lambda *args, **kwargs: events.append("bda")
+        or kwargs["offer_sink"]("FAKE_OFFER")
+        or {"status": "QA4_BDA_OFFER_DISCOVERY_OK"},
+    )
+
+    class NoHttpClient:
+        def __init__(self):
+            raise AssertionError("static discovery must not create an HTTP client")
+
+    monkeypatch.setattr(real_http_client, "RealHttpClient", NoHttpClient)
+    result = app_module._qa4_owner_execution_inputs(_exact_provider_context())
+
+    assert events == ["static-offers", "destination"]
+    assert result["ledger"] is sentinel_ledger
+    assert result["static_preflight"] == {
+        "status": "READY",
+        "test_offer_ready": False,
+        "offers_attempts_used": 0,
+    }
+    assert not {"client", "runtime_secrets", "policy", "owner_opt_in", "approval"}.intersection(result)
+    assert isinstance(result["environ"], dict)
+    assert callable(result["runtime_factory"])
+    assert "SMARTOFFERS_QA4_API_URL" not in str(result)
+
+
+def test_real_controlled_bridge_reuses_provider_ledger_across_authorized_runs(monkeypatch):
+    class Ledger:
+        def __init__(self):
+            self.scopes = set()
+
+        def consume(self, scope):
+            if scope in self.scopes:
+                return False
+            self.scopes.add(scope)
+            return True
+
+    ledger = Ledger()
+    adapter_ledgers = []
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "run_standard_qa4_application_mock",
+        lambda context, *, mode, evaluated_at: {"result": "PASS"},
+    )
+
+    def adapter(context, **kwargs):
+        adapter_ledgers.append(kwargs["ledger"])
+        consumed = kwargs["ledger"].consume("ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN")
+        return {
+            "result": "BLOCKED",
+            "blockers": [] if consumed else ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_BUDGET_EXHAUSTED"],
+            "send_attempted": False,
+            "real_call_executed": False,
+            "evidence": {"ATTEMPTS_USED": "0/1"},
+        }
+
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "execute_one_synthetic_qa4_offers_customer_create",
+        adapter,
+    )
+    provider = lambda *_: {"ledger": ledger}
+
+    first = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(), mode="real-controlled", evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO, runtime_provider=provider,
+    )
+    second = qa4_real_controlled_bridge.run_standard_qa4_real_controlled(
+        _context(), mode="real-controlled", evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO, runtime_provider=provider,
+    )
+
+    assert adapter_ledgers == [ledger, ledger]
+    assert first["executor_send_attempted"] is False
+    assert second["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_BUDGET_EXHAUSTED"]
+    assert second["evidence"]["ATTEMPTS_USED"] == "0/1"
+
+
+def test_owner_provider_uses_scoped_attestation_then_lazy_bda_without_transport_composition(
+    monkeypatch,
+):
+    import hashlib
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+    import core.real_execution.qa4_offers_customer_adapter as offers_adapter
+    import core.real_execution.real_http_client as real_http_client
+
+    events = []
+    environment = _offers_runtime_environment()
+    environment.pop("SMARTOFFERS_QA4_TEST_OFFER")
+    environment["SMARTOFFERS_QA4_API_DESTINATION_FINGERPRINT"] = hashlib.sha256(
+        environment["SMARTOFFERS_QA4_API_URL"].encode("utf-8")
+    ).hexdigest()
+    monkeypatch.setenv("SMARTOFFERS_ALPHA_QA4_CONTROLLED_CONTRACT", json.dumps(_exact_control_document()))
+    for key, value in environment.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(
+        offers_adapter,
+        "prepare_one_synthetic_qa4_offers_customer_create",
+        lambda *args, **kwargs: events.append("static")
+        or {"preflight_status": "READY"},
+    )
+    monkeypatch.setattr(
+        bda_discovery,
+        "run_qa4_bda_offer_discovery",
+        lambda *args, **kwargs: events.append("bda")
+        or kwargs["offer_sink"]("DISCOVERED_OFFER")
+        or {"status": "QA4_BDA_OFFER_DISCOVERY_OK"},
+    )
+
+    class NoHttpClient:
+        def __init__(self):
+            raise AssertionError("static discovery must not create an HTTP client")
+
+    monkeypatch.setattr(real_http_client, "RealHttpClient", NoHttpClient)
+    result = app_module._qa4_owner_execution_inputs(_exact_provider_context())
+
+    assert events == ["static"]
+    assert result["static_preflight"] == {
+        "status": "READY", "test_offer_ready": False, "offers_attempts_used": 0,
+    }
+    assert "client" not in result
+    assert "policy" not in result
+    assert "DISCOVERED_OFFER" not in str(result)
+    assert "qa4.example.invalid" not in str(result)
+
+
+def test_owner_provider_blocks_invalid_bda_offer_without_constructing_boundary_client(monkeypatch):
+    import hashlib
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+    import core.real_execution.qa4_offers_customer_adapter as offers_adapter
+    import core.real_execution.real_http_client as real_http_client
+
+    environment = _offers_runtime_environment()
+    environment.pop("SMARTOFFERS_QA4_TEST_OFFER")
+    environment["SMARTOFFERS_QA4_API_DESTINATION_FINGERPRINT"] = hashlib.sha256(
+        environment["SMARTOFFERS_QA4_API_URL"].encode("utf-8")
+    ).hexdigest()
+    monkeypatch.setenv("SMARTOFFERS_ALPHA_QA4_CONTROLLED_CONTRACT", json.dumps(_exact_control_document()))
+    for key, value in environment.items():
+        monkeypatch.setenv(key, value)
+    monkeypatch.setattr(
+        offers_adapter,
+        "prepare_one_synthetic_qa4_offers_customer_create",
+        lambda *args, **kwargs: {"preflight_status": "READY"},
+    )
+    monkeypatch.setattr(
+        bda_discovery,
+        "run_qa4_bda_offer_discovery",
+        lambda *args, **kwargs: {"status": "QA4_BDA_OFFER_DISCOVERY_OK"},
+    )
+    monkeypatch.setattr(
+        real_http_client,
+        "RealHttpClient",
+        lambda: (_ for _ in ()).throw(AssertionError("boundary must not be constructed")),
+    )
+
+    result = app_module._qa4_owner_execution_inputs(_exact_provider_context())
+    assert result["ledger"] is offers_adapter._DEFAULT_ATTEMPT_LEDGER
+    assert isinstance(result["environ"], dict)
+    assert callable(result["runtime_factory"])
+    assert result["static_preflight"] == {
+        "status": "READY", "test_offer_ready": False, "offers_attempts_used": 0,
+    }
+
+
+def test_atomic_discovery_hands_offer_to_real_controlled_run_without_persistence(monkeypatch):
+    """The discovered offer crosses only the same-process call stack."""
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+
+    events = []
+    environment = _offers_runtime_environment()
+    environment.pop("SMARTOFFERS_QA4_TEST_OFFER")
+    client = _TransportMarkedManualClient(201)
+    inputs = _executor_inputs()
+    inputs["client"] = client
+    inputs["owner_opt_in"] = _one_run_opt_in()
+    inputs["ledger"] = OneRunAttemptLedger()
+
+    monkeypatch.setattr(
+        bda_discovery,
+        "run_qa4_bda_offer_discovery",
+        lambda **kwargs: events.append(("discovery", kwargs["driver"]))
+        or kwargs["offer_sink"]("DISCOVERED_OFFER")
+        or {"status": "QA4_BDA_OFFER_DISCOVERY_OK", "found_valid_offer": True},
+    )
+    monkeypatch.setattr(
+        qa4_real_controlled_bridge,
+        "run_standard_qa4_application_mock",
+        lambda *args, **kwargs: events.append(("standard", None)) or {"result": "PASS"},
+    )
+
+    result = qa4_real_controlled_bridge.run_atomic_qa4_bda_offer_discovery_and_offers_create(
+        _context(),
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
+        bda_environ=environment,
+        bda_driver=object(),
+        bda_authorization={
+            "owner_authorization": "ONE_ATOMIC_QA4_BDA_DISCOVERY_AND_OFFERS_CREATE_RUN",
+            "operation": "QA4_BDA_OFFER_DISCOVERY",
+            "bda_operation": "OFFER_DISCOVERY",
+            "read_only_discovery_authorized": True,
+            "authorization_verified": True,
+            "destination_attestation_ready": True,
+            "offers_operation": "CREATE_OFFERS_CUSTOMER",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "access_mode": "READ_ONLY",
+            "attempts_used": 0,
+        },
+        runtime_provider=lambda *_: events.append(("provider", None)) or {
+            "environ": environment,
+            "runtime_factory": lambda: {
+                **inputs,
+                "client_factory": lambda: client,
+            },
+        },
+    )
+
+    assert [event[0] for event in events] == ["discovery", "standard", "provider"]
+    assert len(client.calls) == 1
+    assert result["result"] == "PASS"
+    assert result["bda_discovery"]["status"] == "QA4_BDA_OFFER_DISCOVERY_OK"
+    assert "DISCOVERED_OFFER" not in repr(result)
+    assert "SMARTOFFERS_QA4_TEST_OFFER" not in repr(result)
+
+
+def test_real_controlled_api_uses_atomic_handoff_and_never_constructs_http_on_bda_block(
+    app_client_factory, monkeypatch
+):
+    client, _ = app_client_factory("atomic-app-entry")
+    atomic_calls = []
+    monkeypatch.setattr(
+        app_module,
+        "_governed_bda_driver",
+        lambda: object(),
+        raising=False,
+    )
+    monkeypatch.setattr(
+        app_module,
+        "_qa4_controlled_contract_from_environ",
+        lambda: _exact_control_document(),
+    )
+    monkeypatch.setattr(
+        app_module,
+        "_atomic_static_preflight_ready",
+        lambda context, contract: True,
+        raising=False,
+    )
+    monkeypatch.setattr(
+        app_module,
+        "run_atomic_qa4_bda_offer_discovery_and_offers_create",
+        lambda *args, **kwargs: atomic_calls.append(kwargs)
+        or {"result": "BLOCKED", "real_call_executed": False},
+        raising=False,
+    )
+    monkeypatch.setattr(app_module, "_trusted_local_now", lambda: datetime.fromisoformat("2026-08-25T12:00:00+00:00"))
+
+    response = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={
+            **_context(),
+            "environment": "QA4",
+            "mode": "real-controlled",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+            "evaluated_at": EVALUATED_AT,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.get_json() == {"result": "BLOCKED", "real_call_executed": False}
+    assert len(atomic_calls) == 1
+    assert callable(atomic_calls[0]["bda_driver_factory"])
+    assert callable(atomic_calls[0]["runtime_provider"])
+
+
+def test_atomic_bda_failure_never_reaches_runtime_provider_or_http_client(monkeypatch):
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+
+    provider_calls = []
+    monkeypatch.setattr(
+        bda_discovery,
+        "run_qa4_bda_offer_discovery",
+        lambda **kwargs: {"status": "QA4_BDA_OFFER_DISCOVERY_BLOCKED"},
+    )
+
+    result = qa4_real_controlled_bridge.run_atomic_qa4_bda_offer_discovery_and_offers_create(
+        _context(),
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
+        bda_environ={},
+        bda_driver=object(),
+        bda_authorization={
+            "owner_authorization": "ONE_ATOMIC_QA4_BDA_DISCOVERY_AND_OFFERS_CREATE_RUN",
+            "operation": "QA4_BDA_OFFER_DISCOVERY",
+        },
+        runtime_provider=lambda *_: provider_calls.append("constructed") or {},
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert provider_calls == []
+
+
+def test_owner_provider_defers_real_http_client_to_runtime_factory(monkeypatch):
+    import hashlib
+    import core.real_execution.real_http_client as real_http_client
+
+    environment = _offers_runtime_environment()
+    environment["SMARTOFFERS_QA4_API_DESTINATION_FINGERPRINT"] = hashlib.sha256(
+        environment["SMARTOFFERS_QA4_API_URL"].encode("utf-8")
+    ).hexdigest()
+    monkeypatch.setenv(
+        "SMARTOFFERS_ALPHA_QA4_CONTROLLED_CONTRACT", json.dumps(_exact_control_document())
+    )
+    for key, value in environment.items():
+        monkeypatch.setenv(key, value)
+    constructed = []
+    monkeypatch.setattr(
+        real_http_client,
+        "RealHttpClient",
+        lambda: constructed.append("client") or object(),
+    )
+
+    inputs = app_module._qa4_owner_execution_inputs(_exact_provider_context())
+
+    assert constructed == []
+    assert callable(inputs["runtime_factory"])
+    runtime = inputs["runtime_factory"]()
+    assert constructed == []
+    assert callable(runtime["client_factory"])
+    runtime["client_factory"]()
+    assert constructed == ["client"]
+
+
+def test_atomic_route_reuses_app_bda_ledger_and_blocks_second_before_driver_factory(
+    app_client_factory, monkeypatch
+):
+    from core.real_execution.qa4_bda_offer_discovery import BdaDiscoveryAttemptLedger
+
+    client, _ = app_client_factory("atomic-repeat-ledger")
+    shared_ledger = BdaDiscoveryAttemptLedger()
+    ledgers = []
+    driver_factory_calls = []
+    monkeypatch.setattr(app_module, "_DEFAULT_BDA_DISCOVERY_LEDGER", shared_ledger)
+    monkeypatch.setattr(app_module, "_atomic_static_preflight_ready", lambda *args: True)
+    monkeypatch.setattr(app_module, "_trusted_local_now", lambda: datetime.fromisoformat("2026-08-25T12:00:00+00:00"))
+    monkeypatch.setattr(
+        app_module, "_governed_bda_driver", lambda: driver_factory_calls.append("driver") or object()
+    )
+
+    def atomic(*args, **kwargs):
+        ledger = kwargs["bda_ledger"]
+        ledgers.append(ledger)
+        if not ledger.consume("QA4_BDA_OFFER_DISCOVERY"):
+            return {"result": "BLOCKED", "driver_started": False}
+        kwargs["bda_driver_factory"]()
+        return {"result": "BLOCKED", "driver_started": True}
+
+    monkeypatch.setattr(app_module, "run_atomic_qa4_bda_offer_discovery_and_offers_create", atomic)
+    request_data = {
+        **_context(),
+        "environment": "QA4",
+        "mode": "real-controlled",
+        "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+        "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+        "evaluated_at": EVALUATED_AT,
+    }
+
+    first = client.post("/api/qa4/standard/real-controlled-run", json=request_data)
+    second = client.post("/api/qa4/standard/real-controlled-run", json=request_data)
+
+    assert first.get_json() == {"result": "BLOCKED", "driver_started": True}
+    assert second.get_json() == {"result": "BLOCKED", "driver_started": False}
+    assert ledgers == [shared_ledger, shared_ledger]
+    assert driver_factory_calls == ["driver"]
+
+
+@pytest.mark.parametrize(
+    ("now", "window_started_at", "window_expires_at", "expected_reason"),
+    [
+        ("2026-08-25T12:06:00+00:00", "2026-08-25T11:55:00+00:00", "2026-08-25T12:05:00+00:00", "WINDOW_EXPIRED"),
+        ("2026-08-25T11:54:00+00:00", "2026-08-25T11:55:00+00:00", "2026-08-25T12:05:00+00:00", "WINDOW_NOT_STARTED"),
+        ("2026-08-25T12:00:00+00:00", "2026-08-25T11:55:00", "2026-08-25T12:05:00", "WINDOW_INVALID"),
+    ],
+)
+def test_atomic_route_blocks_inactive_window_before_atomic_bridge(
+    app_client_factory, monkeypatch, now, window_started_at, window_expires_at, expected_reason
+):
+    client, _ = app_client_factory("atomic-window-gate")
+    bridge_calls = []
+    monkeypatch.setattr(app_module, "_atomic_static_preflight_ready", lambda *args: True)
+    monkeypatch.setattr(app_module, "_trusted_local_now", lambda: datetime.fromisoformat(now))
+    monkeypatch.setattr(
+        app_module,
+        "run_atomic_qa4_bda_offer_discovery_and_offers_create",
+        lambda *args, **kwargs: bridge_calls.append(kwargs) or {"result": "PASS"},
+    )
+
+    response = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={
+            **_context(),
+            "environment": "QA4",
+            "mode": "real-controlled",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+            "window_started_at": window_started_at,
+            "window_expires_at": window_expires_at,
+            "evaluated_at": EVALUATED_AT,
+        },
+    )
+
+    assert response.get_json() == {"result": "BLOCKED", "reason": expected_reason}
+    assert bridge_calls == []

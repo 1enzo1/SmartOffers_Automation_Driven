@@ -38,6 +38,22 @@ def _runtime_env():
     }
 
 
+def test_synthetic_static_preflight_can_defer_offer_until_authorized_bda_discovery():
+    environment = _runtime_env()
+    environment.pop("SMARTOFFERS_QA4_TEST_OFFER")
+
+    result = prepare_one_synthetic_qa4_offers_customer_create(
+        _context(),
+        environ=environment,
+        approval=_approval(),
+        defer_offer_validation=True,
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    )
+
+    assert result["preflight_status"] == "READY"
+    assert result["test_data"] == {"available": False, "source": "synthetic"}
+
+
 class LocalManualClient:
     is_real_manual_client = True
 
@@ -134,7 +150,13 @@ def _runtime_secrets():
 def _policy():
     api_id = "post-vivo-next-habilitacao-de-cliente-ade0841563"
     return {
-        "runtime_flags": {"REAL_EXECUTION_ENABLED": True, "REAL_EXECUTION_KILL_SWITCH": False},
+        "runtime_flags": {
+            "REAL_EXECUTION_ENABLED": True,
+            "REAL_EXECUTION_KILL_SWITCH": False,
+            "REAL_TRANSPORT_ALLOWED": True,
+            "PRODUCTION": False,
+            "GLOBAL_NO_AUTH_ENABLED": False,
+        },
         "first_qa4_allowlist": {
             "allowed_api_ids": [api_id],
             "items": {
@@ -161,6 +183,19 @@ def _no_auth_policy():
             "auth_required": False,
         }
     )
+    policy["operation_scoped_no_auth"] = {
+        "authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+        "operation": "CREATE_OFFERS_CUSTOMER",
+        "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        "environment": "QA4",
+        "auth_required": False,
+    }
+    policy["destination_attestation"] = {
+        "source": "local_runtime_config",
+        "environment": "QA4",
+        "allowlist_match": True,
+        "status": "MATCH",
+    }
     return policy
 
 
@@ -179,11 +214,16 @@ def _approval():
 def _one_offers_customer_create_opt_in():
     return {
         "approved": True,
-        "operation": "ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN",
+        "operation": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+        "authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
         "environment": "QA4",
+        "mode": "real-controlled",
+        "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
         "max_attempts": 1,
         "retry_count": 0,
         "fallback": False,
+        "production": False,
     }
 
 
@@ -277,7 +317,7 @@ def test_one_synthetic_execute_uses_one_candidate_with_today_and_sanitized_evide
         environ=runtime_env,
         runtime_refs=_runtime_refs(),
         runtime_secrets=_runtime_secrets(),
-        policy=_policy(),
+        policy=_no_auth_policy(),
         client=client,
         approval=_approval(),
         owner_opt_in=_one_offers_customer_create_opt_in(),
@@ -308,7 +348,7 @@ def test_one_synthetic_execute_blocks_malformed_or_historical_date_without_send(
             environ=runtime_env,
             runtime_refs=_runtime_refs(),
             runtime_secrets=_runtime_secrets(),
-            policy=_policy(),
+            policy=_no_auth_policy(),
             client=client,
             approval=_approval(),
             owner_opt_in=_one_offers_customer_create_opt_in(),
@@ -337,7 +377,7 @@ def test_actual_real_http_client_without_bounded_opt_in_blocks_before_urlopen(mo
         environ=runtime_env,
         runtime_refs=_runtime_refs(),
         runtime_secrets=_runtime_secrets(),
-        policy=_policy(),
+            policy=_no_auth_policy(),
         client=RealHttpClient(),
         approval=_approval(),
         ledger=OneRunAttemptLedger(),
@@ -345,7 +385,7 @@ def test_actual_real_http_client_without_bounded_opt_in_blocks_before_urlopen(mo
     )
 
     assert result["result"] == "BLOCKED"
-    assert result["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_OPT_IN_REQUIRED"]
+    assert result["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN_OPT_IN_REQUIRED"]
     assert urlopen_calls == []
 
 
@@ -368,7 +408,7 @@ def test_actual_real_http_client_with_one_run_opt_in_sends_once_then_exhausts_bu
         "environ": runtime_env,
         "runtime_refs": _runtime_refs(),
         "runtime_secrets": _runtime_secrets(),
-        "policy": _policy(),
+        "policy": _no_auth_policy(),
         "client": RealHttpClient(),
         "approval": _approval(),
         "owner_opt_in": _one_offers_customer_create_opt_in(),
@@ -381,7 +421,7 @@ def test_actual_real_http_client_with_one_run_opt_in_sends_once_then_exhausts_bu
 
     assert first["result"] == "PASS"
     assert second["result"] == "BLOCKED"
-    assert second["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_BUDGET_EXHAUSTED"]
+    assert second["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN_BUDGET_EXHAUSTED"]
     assert len(urlopen_calls) == 1
 
 
@@ -469,8 +509,7 @@ def test_no_auth_flag_without_exact_operation_scope_remains_auth_required():
     )
 
     assert result["result"] == "BLOCKED"
-    assert "missing_auth_ref" in result["blockers"]
-    assert "missing_runtime_auth" in result["blockers"]
+    assert "OPERATION_SCOPED_NO_AUTH_REQUIRED" in result["blockers"]
     assert client.calls == []
 
 
@@ -542,16 +581,17 @@ def test_exact_offers_executor_default_remains_blocked_before_any_client_send():
 def test_transport_marked_client_requires_bounded_owner_opt_in_before_one_local_send():
     client = TransportMarkedLocalClient(201)
 
-    result = execute_qa4_offers_customer_create(
+    result = execute_one_synthetic_qa4_offers_customer_create(
         _context(),
         environ=_runtime_env(),
         runtime_refs=_runtime_refs(),
         runtime_secrets=_runtime_secrets(),
-        policy=_policy(),
+        policy=_no_auth_policy(),
         client=client,
         approval=_approval(),
         owner_opt_in=_one_offers_customer_create_opt_in(),
         ledger=OneRunAttemptLedger(),
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
     )
 
     assert result["result"] == "PASS"
@@ -562,18 +602,19 @@ def test_transport_marked_client_requires_bounded_owner_opt_in_before_one_local_
 def test_transport_marked_client_is_blocked_without_owner_opt_in_before_send():
     client = TransportMarkedLocalClient(201)
 
-    result = execute_qa4_offers_customer_create(
+    result = execute_one_synthetic_qa4_offers_customer_create(
         _context(),
         environ=_runtime_env(),
         runtime_refs=_runtime_refs(),
         runtime_secrets=_runtime_secrets(),
-        policy=_policy(),
+        policy=_no_auth_policy(),
         client=client,
         approval=_approval(),
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
     )
 
     assert result["result"] == "BLOCKED"
-    assert result["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_OPT_IN_REQUIRED"]
+    assert result["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN_OPT_IN_REQUIRED"]
     assert client.calls == []
 
 
@@ -581,19 +622,20 @@ def test_transport_marked_client_is_blocked_when_owner_opt_in_scope_does_not_mat
     client = TransportMarkedLocalClient(201)
     opt_in = _one_offers_customer_create_opt_in() | {"operation": "OTHER_OPERATION"}
 
-    result = execute_qa4_offers_customer_create(
+    result = execute_one_synthetic_qa4_offers_customer_create(
         _context(),
         environ=_runtime_env(),
         runtime_refs=_runtime_refs(),
         runtime_secrets=_runtime_secrets(),
-        policy=_policy(),
+        policy=_no_auth_policy(),
         client=client,
         approval=_approval(),
         owner_opt_in=opt_in,
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
     )
 
     assert result["result"] == "BLOCKED"
-    assert result["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_OPT_IN_REQUIRED"]
+    assert result["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN_OPT_IN_REQUIRED"]
     assert client.calls == []
 
 
@@ -604,18 +646,158 @@ def test_transport_attempt_ledger_blocks_second_send_after_first_failure():
         "environ": _runtime_env(),
         "runtime_refs": _runtime_refs(),
         "runtime_secrets": _runtime_secrets(),
-        "policy": _policy(),
+        "policy": _no_auth_policy(),
         "client": client,
         "approval": _approval(),
         "owner_opt_in": _one_offers_customer_create_opt_in(),
         "ledger": ledger,
     }
 
-    first = execute_qa4_offers_customer_create(_context(), **inputs)
-    second = execute_qa4_offers_customer_create(_context(), **inputs)
+    inputs["current_time"] = lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S")
+    first = execute_one_synthetic_qa4_offers_customer_create(_context(), **inputs)
+    second = execute_one_synthetic_qa4_offers_customer_create(_context(), **inputs)
 
     assert first["result"] == "FAIL"
     assert second["result"] == "BLOCKED"
-    assert second["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_RUN_BUDGET_EXHAUSTED"]
-    assert second["evidence"] == {"attempt_budget": "EXHAUSTED"}
+    assert second["blockers"] == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN_BUDGET_EXHAUSTED"]
+    assert second["evidence"]["decision"] == "blocked"
     assert len(client.calls) == 1
+
+
+def test_real_transport_contract_defaults_to_denied_without_explicit_transport_flag():
+    client = TransportMarkedLocalClient(201)
+    policy = _no_auth_policy()
+    policy["runtime_flags"].pop("REAL_TRANSPORT_ALLOWED")
+    policy["runtime_flags"]["PRODUCTION"] = False
+    policy["runtime_flags"]["GLOBAL_NO_AUTH_ENABLED"] = False
+    policy["destination_attestation"] = {
+        "source": "local_runtime_config",
+        "environment": "QA4",
+        "allowlist_match": True,
+        "status": "MATCH",
+    }
+    opt_in = _one_offers_customer_create_opt_in() | {
+        "authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+        "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+    }
+
+    result = execute_one_synthetic_qa4_offers_customer_create(
+        _context(),
+        environ=_runtime_env(),
+        runtime_refs=_runtime_refs() | {"AUTH_REF": None},
+        runtime_secrets=_runtime_secrets() | {"auth": None},
+        policy=policy,
+        client=client,
+        approval=_approval(),
+        owner_opt_in=opt_in,
+        ledger=OneRunAttemptLedger(),
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert result["blockers"] == ["REAL_TRANSPORT_ALLOWED_REQUIRED"]
+    assert client.calls == []
+
+
+def test_real_transport_contract_requires_exact_scoped_no_auth_destination_and_confirmation():
+    client = TransportMarkedLocalClient(201)
+    policy = _no_auth_policy()
+    policy["runtime_flags"].update(
+        {
+            "REAL_TRANSPORT_ALLOWED": True,
+            "PRODUCTION": False,
+            "GLOBAL_NO_AUTH_ENABLED": False,
+        }
+    )
+    policy["destination_attestation"] = {
+        "source": "local_runtime_config",
+        "environment": "QA4",
+        "allowlist_match": True,
+        "status": "MATCH",
+    }
+    runtime_refs = _runtime_refs()
+    runtime_refs.pop("AUTH_REF")
+    runtime_secrets = _runtime_secrets()
+    runtime_secrets.pop("auth")
+    opt_in = _one_offers_customer_create_opt_in() | {
+        "authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+        "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+    }
+
+    result = execute_one_synthetic_qa4_offers_customer_create(
+        _context(),
+        environ=_runtime_env(),
+        runtime_refs=runtime_refs,
+        runtime_secrets=runtime_secrets,
+        policy=policy,
+        client=client,
+        approval=_approval(),
+        owner_opt_in=opt_in,
+        ledger=OneRunAttemptLedger(),
+        current_time=lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    )
+
+    assert result["result"] == "PASS"
+    assert len(client.calls) == 1
+    assert "local_runtime_config" not in str(result)
+
+
+def test_real_transport_contract_never_consumes_budget_before_all_gates_and_keeps_it_after_send_error():
+    class Ledger:
+        def __init__(self):
+            self.consumed = []
+
+        def consume(self, scope):
+            self.consumed.append(scope)
+            return len(self.consumed) == 1
+
+    class FailingClient(TransportMarkedLocalClient):
+        def send(self, *args, **kwargs):
+            self.calls.append({"boundary": "entered"})
+            raise TimeoutError("local fake timeout")
+
+    ledger = Ledger()
+    policy = _no_auth_policy()
+    policy["runtime_flags"].update(
+        {
+            "REAL_TRANSPORT_ALLOWED": True,
+            "PRODUCTION": False,
+            "GLOBAL_NO_AUTH_ENABLED": False,
+        }
+    )
+    policy["destination_attestation"] = {"status": "MISMATCH"}
+    opt_in = _one_offers_customer_create_opt_in() | {
+        "authorization": "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN",
+        "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+    }
+    client = FailingClient(201)
+    inputs = {
+        "environ": _runtime_env(),
+        "runtime_refs": _runtime_refs() | {"AUTH_REF": None},
+        "runtime_secrets": _runtime_secrets() | {"auth": None},
+        "policy": policy,
+        "client": client,
+        "approval": _approval(),
+        "owner_opt_in": opt_in,
+        "ledger": ledger,
+        "current_time": lambda: datetime.now().strftime("%d-%m-%Y %H:%M:%S"),
+    }
+
+    blocked = execute_one_synthetic_qa4_offers_customer_create(_context(), **inputs)
+    assert blocked["result"] == "BLOCKED"
+    assert ledger.consumed == []
+    assert client.calls == []
+
+    policy["destination_attestation"] = {
+        "source": "local_runtime_config",
+        "environment": "QA4",
+        "allowlist_match": True,
+        "status": "MATCH",
+    }
+    failed = execute_one_synthetic_qa4_offers_customer_create(_context(), **inputs)
+    assert failed["result"] == "FAIL"
+    assert ledger.consumed == ["ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN"]
+    assert client.calls == [{"boundary": "entered"}]

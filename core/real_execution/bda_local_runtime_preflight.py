@@ -12,6 +12,12 @@ BDA_RESOURCE_ID = "bda_db"
 BDA_RUNTIME_READY = "BDA_RUNTIME_READY"
 BDA_RUNTIME_BLOCKED = "BDA_RUNTIME_BLOCKED"
 QA4_BDA_OFFER_DISCOVERY = "QA4_BDA_OFFER_DISCOVERY"
+OFFER_DISCOVERY_OPERATION = "OFFER_DISCOVERY"
+OFFERS_CUSTOMER_OPERATION = "CREATE_OFFERS_CUSTOMER"
+SYNTHETIC_OFFERS_SCENARIO = "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
+QA4_BDA_OFFER_DISCOVERY_QUERY_SHA256 = (
+    "7aa86655f68c0473884169f25fbeb77362a7355273a0cb03ef6493473c9bd7bc"
+)
 
 BDA_REQUIRED_REFS = (
     "SMARTOFFERS_QA4_BDA_SMOKE_SQL",
@@ -34,6 +40,9 @@ def preflight_bda_local_runtime(request, environ=None):
     ]
     allowlist_validation = _allowlist_validation(request_data)
     sql_hash_validation = _sql_hash_validation(environment)
+    offer_discovery_query_hash_validation = _offer_discovery_query_hash_validation(
+        request_data
+    )
     fingerprint_validation = _fingerprint_validation(environment)
 
     is_ready = (
@@ -42,8 +51,10 @@ def preflight_bda_local_runtime(request, environ=None):
         and sql_hash_validation == "MATCH"
         and fingerprint_validation == "MATCH"
     )
-    offer_discovery_allowed = is_ready and _offer_discovery_is_authorized(
-        request_data
+    offer_discovery_allowed = (
+        is_ready
+        and offer_discovery_query_hash_validation == "MATCH"
+        and _offer_discovery_is_authorized(request_data)
     )
 
     return {
@@ -55,6 +66,7 @@ def preflight_bda_local_runtime(request, environ=None):
         "allowlist_validation": allowlist_validation,
         "refs_validation": "READY" if not missing_refs else "BLOCKED",
         "sql_hash_validation": sql_hash_validation,
+        "offer_discovery_query_hash_validation": offer_discovery_query_hash_validation,
         "fingerprint_validation": fingerprint_validation,
         "checked_refs": checked_refs,
         "missing_refs": missing_refs,
@@ -76,7 +88,25 @@ def _allowlist_validation(request):
 def _offer_discovery_is_authorized(request):
     return (
         request.get("operation") == QA4_BDA_OFFER_DISCOVERY
+        and request.get("bda_operation") == OFFER_DISCOVERY_OPERATION
         and request.get("read_only_discovery_authorized") is True
+        and request.get("authorization_verified") is True
+        and request.get("destination_attestation_ready") is True
+        and request.get("offers_operation") == OFFERS_CUSTOMER_OPERATION
+        and request.get("scenario_id") == SYNTHETIC_OFFERS_SCENARIO
+        and request.get("access_mode") == "READ_ONLY"
+        and request.get("attempts_used") == 0
+    )
+
+
+def _offer_discovery_query_hash_validation(request):
+    actual_hash = str(request.get("query_hash") or "").strip()
+    if not actual_hash:
+        return "DENIED"
+    return (
+        "MATCH"
+        if hmac.compare_digest(actual_hash, QA4_BDA_OFFER_DISCOVERY_QUERY_SHA256)
+        else "DENIED"
     )
 
 

@@ -13,6 +13,7 @@ _BLOCKERS = (
     "QA4_CREDENTIAL_OR_CONFIG_REQUIRED",
 )
 SYNTHETIC_OFFERS_SCENARIO = "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
+ATOMIC_BDA_AUTHORIZATION = "ONE_ATOMIC_QA4_BDA_DISCOVERY_AND_OFFERS_CREATE_RUN"
 
 
 def run_standard_qa4_real_controlled(
@@ -29,6 +30,8 @@ def run_standard_qa4_real_controlled(
     owner_opt_in=None,
     ledger=None,
     scenario_id=None,
+    runtime_provider=None,
+    offer=None,
 ):
     """Run Standard first, then delegate the exact Offers contract to legacy gates.
 
@@ -52,31 +55,121 @@ def run_standard_qa4_real_controlled(
     if standard_report.get("result") != "PASS":
         return _terminal_report(standard_report, {})
 
+    if callable(runtime_provider):
+        runtime_inputs = runtime_provider(context)
+        if isinstance(runtime_inputs, dict):
+            environ = runtime_inputs.get("environ", environ)
+            runtime_refs = runtime_inputs.get("runtime_refs", runtime_refs)
+            runtime_secrets = runtime_inputs.get("runtime_secrets", runtime_secrets)
+            policy = runtime_inputs.get("policy", policy)
+            client = runtime_inputs.get("client", client)
+            approval = runtime_inputs.get("approval", approval)
+            owner_opt_in = runtime_inputs.get("owner_opt_in", owner_opt_in)
+            ledger = runtime_inputs.get("ledger", ledger)
+            runtime_factory = runtime_inputs.get("runtime_factory")
+        else:
+            runtime_factory = None
+    else:
+        runtime_factory = None
+
     if scenario_id == SYNTHETIC_OFFERS_SCENARIO:
+        adapter_kwargs = {
+            "environ": environ,
+            "runtime_refs": runtime_refs,
+            "runtime_secrets": runtime_secrets,
+            "policy": policy,
+            "client": client,
+            "approval": approval,
+            "owner_opt_in": owner_opt_in,
+            "ledger": ledger,
+        }
+        if offer is not None:
+            adapter_kwargs["offer"] = offer
+        if callable(runtime_factory):
+            adapter_kwargs["runtime_factory"] = runtime_factory
         offers_adapter = execute_one_synthetic_qa4_offers_customer_create(
             context,
-            environ=environ,
-            runtime_refs=runtime_refs,
-            runtime_secrets=runtime_secrets,
-            policy=policy,
-            client=client,
-            approval=approval,
-            owner_opt_in=owner_opt_in,
-            ledger=ledger,
+            **adapter_kwargs,
         )
     else:
+        adapter_kwargs = {
+            "environ": environ,
+            "runtime_refs": runtime_refs,
+            "runtime_secrets": runtime_secrets,
+            "policy": policy,
+            "client": client,
+            "approval": approval,
+            "owner_opt_in": owner_opt_in,
+            "ledger": ledger,
+        }
+        if offer is not None:
+            adapter_kwargs["offer"] = offer
+        if callable(runtime_factory):
+            adapter_kwargs["runtime_factory"] = runtime_factory
         offers_adapter = execute_qa4_offers_customer_create(
             {**context, "event_time": evaluated_at},
-            environ=environ,
-            runtime_refs=runtime_refs,
-            runtime_secrets=runtime_secrets,
-            policy=policy,
-            client=client,
-            approval=approval,
-            owner_opt_in=owner_opt_in,
-            ledger=ledger,
+            **adapter_kwargs,
         )
     return _terminal_report(standard_report, offers_adapter)
+
+
+def run_atomic_qa4_bda_offer_discovery_and_offers_create(
+    context,
+    *,
+    mode,
+    evaluated_at,
+    scenario_id,
+    bda_environ,
+    bda_driver=None,
+    bda_driver_factory=None,
+    bda_authorization,
+    bda_ledger=None,
+    runtime_provider=None,
+):
+    """Discover one offer and hand it directly to the controlled runner.
+
+    The offer is deliberately confined to this stack frame and is never added to
+    environment, evidence, or a provider result.
+    """
+    if (
+        mode != "real-controlled"
+        or scenario_id != SYNTHETIC_OFFERS_SCENARIO
+        or not _is_standard_context(context)
+        or (bda_driver is None and not callable(bda_driver_factory))
+        or not isinstance(bda_authorization, dict)
+        or bda_authorization.get("owner_authorization") != ATOMIC_BDA_AUTHORIZATION
+    ):
+        return _atomic_report({"status": "QA4_BDA_OFFER_DISCOVERY_BLOCKED"}, None)
+
+    from core.real_execution.qa4_bda_offer_discovery import run_qa4_bda_offer_discovery
+    from core.real_execution.qa4_bda_offer_discovery import BdaDiscoveryAttemptLedger
+
+    discovered_offer = []
+    discovery = run_qa4_bda_offer_discovery(
+        environ=bda_environ,
+        driver=bda_driver,
+        driver_factory=bda_driver_factory,
+        offer_sink=discovered_offer.append,
+        authorization=bda_authorization,
+        attempt_ledger=bda_ledger or BdaDiscoveryAttemptLedger(),
+    )
+    if (
+        discovery.get("status") != "QA4_BDA_OFFER_DISCOVERY_OK"
+        or len(discovered_offer) != 1
+        or not isinstance(discovered_offer[0], str)
+        or not discovered_offer[0].strip()
+    ):
+        return _atomic_report(discovery, None)
+
+    report = run_standard_qa4_real_controlled(
+        context,
+        mode=mode,
+        evaluated_at=evaluated_at,
+        scenario_id=scenario_id,
+        runtime_provider=runtime_provider,
+        offer=discovered_offer[0],
+    )
+    return _atomic_report(discovery, report)
 
 
 def _is_standard_context(context):
@@ -103,6 +196,20 @@ def _terminal_report(standard_report, offers_adapter):
         "executor_send_attempted": adapter_data.get("send_attempted") is True,
         # Compatibility field: the bridge no longer constructs a FakeHttpClient.
         "fake_client_send_calls": 0,
+    }
+
+
+def _atomic_report(discovery, report):
+    report_data = report if isinstance(report, dict) else {}
+    discovery_data = discovery if isinstance(discovery, dict) else {}
+    return {
+        **report_data,
+        "result": report_data.get("result", "BLOCKED"),
+        "bda_discovery": {
+            "status": discovery_data.get("status"),
+            "found_valid_offer": discovery_data.get("found_valid_offer") is True,
+            "select_only": discovery_data.get("select_only") is True,
+        },
     }
 
 

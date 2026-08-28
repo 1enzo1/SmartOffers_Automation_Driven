@@ -143,3 +143,15 @@ avancar para o proximo card `TASK_CLASS=DEVELOPMENT` ja autorizado no board,
 mantendo execucao local/mock-first. Qualquer alteracao de envelope de risco ou
 runtime real retorna ao Architect. Nao usar uma janela QA4 nem solicitar
 secrets para essa continuidade.
+## Operation-scoped Alpha transport contract
+
+The approved contract is not a global release: `REAL_TRANSPORT_ALLOWED=false`
+remains the default and production is unconditionally denied. The one-shot
+ledger is consumed atomically only at the external send boundary and remains
+consumed after any send outcome; preflight, attestation, validation, and BDA
+checks never consume it.
+
+Precedence is explicit: the blanket Alpha operational denial remains current.
+The bounded tuple is implementation authorization only; it is not an
+operational release or permission to invoke real QA4 transport from this
+worktree.
