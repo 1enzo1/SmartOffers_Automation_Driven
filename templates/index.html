@@ -1693,7 +1693,7 @@ pre {
         </section>
 
         <details id="diagnosticsSidebar">
-            <summary class="field-label">Diagnostics tools</summary>
+            <summary class="field-label">Advanced diagnostics</summary>
         <section class="sidebar-section runner-suite sidebar-collapsible legacy-sidebar-control">
             <div class="section-label">Suite de Testes</div>
             <div class="suite-field">
@@ -1879,7 +1879,7 @@ pre {
             <div class="product-execute-row">
                 <button class="success" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute in QA</button>
                 <!-- Backward-compatible label marker for existing UI contract tests: disabled>Run QA4 test -->
-                <div id="productExecuteNote" class="product-execute-note">Select a test and validate to check execution readiness.</div>
+            <div id="productExecuteReason" class="product-execute-note">Select a test and validate to check execution readiness.</div>
             </div>
         </div>
         <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="summary"></div><div id="productEvidence" class="suite-note" hidden></div><button class="secondary" id="productViewEvidence" type="button" hidden onclick="viewProductEvidence()">View evidence</button><pre id="productEvidenceDetails" class="suite-note" hidden></pre><details id="productTechnicalDetails" class="suite-note" hidden><summary>Advanced / Technical details</summary><pre id="productContractPreview"></pre></details></div>
@@ -3594,7 +3594,7 @@ function resetProductValidation(){
     if(overview) overview.hidden = !test
     const validateButton = document.getElementById("productValidate")
     if(validateButton) validateButton.disabled = !test
-    const executeNote = document.getElementById("productExecuteNote")
+    const executeNote = document.getElementById("productExecuteReason")
     if(executeNote){
         executeNote.classList.remove("ready")
         executeNote.textContent = !test
@@ -3737,7 +3737,7 @@ async function validateProductTest(){
         ].map(([key,value,kind]) => `<div class="readiness-item ${kind}"><div class="k">${key}</div><div class="v">${value}</div></div>`).join("")
         readinessSummary.hidden = false
     }
-    const executeNote = document.getElementById("productExecuteNote")
+    const executeNote = document.getElementById("productExecuteReason")
     if(executeNote){
         executeNote.textContent = authorizationRequired
             ? "Authorization required before QA execution."
