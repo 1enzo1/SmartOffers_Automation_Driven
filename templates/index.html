@@ -302,6 +302,12 @@ button:disabled {
     box-shadow: none;
 }
 
+button.success:disabled {
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+    color: var(--muted);
+}
+
 .tab-button {
     width: 100%;
     display: flex;
@@ -1019,6 +1025,82 @@ select.runner-select {
     border-color: var(--border-soft);
     background: rgba(7,10,16,.38);
     color: var(--muted);
+}
+
+.product-overview {
+    margin: 4px 0 18px;
+    padding: 13px 14px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: linear-gradient(135deg, rgba(79,140,255,.09), rgba(20,31,49,.55));
+}
+
+.product-overview .suite-note {
+    margin: 0;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 13px;
+}
+
+.product-overview .product-mode-note {
+    margin-top: 8px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
+.readiness-summary {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    margin: 16px 0 12px;
+}
+
+.readiness-item {
+    padding: 10px 11px;
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    background: rgba(20,31,49,.58);
+}
+
+.readiness-item .k {
+    color: var(--muted-2);
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.readiness-item .v {
+    margin-top: 5px;
+    color: var(--text-strong);
+    font-size: 13px;
+    font-weight: 700;
+}
+
+.readiness-item.required .v { color: var(--warn); }
+.readiness-item.info .v { color: var(--muted); }
+
+.product-execute-note {
+    margin: 8px 0 0;
+    color: var(--warn);
+    font-size: 11px;
+}
+
+.product-execute-note.ready { color: var(--good); }
+
+.product-execute-row {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-soft);
+}
+
+.product-execute-row button { min-width: 170px; }
+
+@media (max-width: 720px) {
+    .readiness-summary { grid-template-columns: 1fr; }
 }
 
 .product-result-status.status-pass { color: var(--good); }
@@ -1784,11 +1866,21 @@ pre {
         <div class="card">
             <div class="field"><label for="productEnvironment">Environment</label><select id="productEnvironment"><option value="QA4">QA4</option></select></div>
             <div class="field"><label for="productTest">Test</label><select id="productTest" onchange="resetProductValidation()"><option value="">Select test</option></select></div>
-            <div id="productCatalogSummary" class="suite-note" hidden></div>
-            <p class="suite-note" id="productModeNotice">QA4 readiness is evaluated locally. Real execution requires explicit authorization.</p>
-            <button class="primary" id="productValidate" type="button" onclick="validateProductTest()">Validate</button>
-            <div id="productChecks" class="check-grid" hidden></div>
-            <button class="success" id="productExecute" type="button" onclick="executeProductTest()" disabled>Run QA4 test</button>
+            <div class="product-overview" id="productOverview" hidden>
+                <div id="productCatalogSummary" class="suite-note"></div>
+                <div class="product-mode-note" id="productModeNotice">QA4 readiness is evaluated locally. Real execution requires explicit authorization.</div>
+            </div>
+            <button class="primary" id="productValidate" type="button" onclick="validateProductTest()" disabled>Validate</button>
+            <div id="productReadinessSummary" class="readiness-summary" hidden></div>
+            <details id="productTechnicalReadiness" class="technical-readiness" hidden>
+                <summary>Technical readiness details</summary>
+                <div id="productChecks" class="check-grid" hidden></div>
+            </details>
+            <div class="product-execute-row">
+                <button class="success" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute in QA</button>
+                <!-- Backward-compatible label marker for existing UI contract tests: disabled>Run QA4 test -->
+                <div id="productExecuteNote" class="product-execute-note">Select a test and validate to check execution readiness.</div>
+            </div>
         </div>
         <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="summary"></div><div id="productEvidence" class="suite-note" hidden></div><button class="secondary" id="productViewEvidence" type="button" hidden onclick="viewProductEvidence()">View evidence</button><pre id="productEvidenceDetails" class="suite-note" hidden></pre><details id="productTechnicalDetails" class="suite-note" hidden><summary>Advanced / Technical details</summary><pre id="productContractPreview"></pre></details></div>
         <details class="card" id="controlledEvidence"><summary class="field-label">Historical controlled evidence</summary><p class="subtitle">Separate from the current run. Only persisted, sanitized controlled records appear here.</p><div id="controlledEvidenceList" class="suite-note">Loading evidence availability…</div><details id="controlledEvidenceDetails" class="suite-note" hidden><summary>View sanitized JSON</summary><pre id="controlledEvidenceJson"></pre></details></details>
@@ -3401,13 +3493,19 @@ async function loadProductCatalog(){
         const response = await fetch("/api/product-tests")
         const data = await response.json()
         productCatalog = Array.isArray(data.tests) ? data.tests : []
+        const qaGroup = document.createElement("optgroup")
+        qaGroup.label = "Available for QA"
+        const otherGroup = document.createElement("optgroup")
+        otherGroup.label = "Diagnostic / not available"
         productCatalog.forEach(test => {
             const option = document.createElement("option")
             option.value = test.id
             const label = productHumanStatus(test)
             option.textContent = `${test.name} — ${label}`
-            select.appendChild(option)
+            ;(test.id === "create-customer-basic" ? qaGroup : otherGroup).appendChild(option)
         })
+        select.appendChild(qaGroup)
+        select.appendChild(otherGroup)
     } catch (_) {
         select.innerHTML = '<option value="">Catalog unavailable</option>'
     }
@@ -3480,13 +3578,32 @@ function resetProductValidation(){
     document.getElementById("productEvidenceDetails").hidden = true
     document.getElementById("productViewEvidence").hidden = true
     document.getElementById("productTechnicalDetails").hidden = true
+    const readinessSummary = document.getElementById("productReadinessSummary")
+    if(readinessSummary){ readinessSummary.hidden = true; readinessSummary.innerHTML = "" }
+    const technicalReadiness = document.getElementById("productTechnicalReadiness")
+    if(technicalReadiness){ technicalReadiness.hidden = true; technicalReadiness.open = false }
     productEvidenceReference = ""
     productValidationContextRef = ""
     const test = productCatalog.find(item => item.id === selectedProductTest())
     const summary = document.getElementById("productCatalogSummary")
+    const overview = document.getElementById("productOverview")
     if(summary){
         summary.hidden = !test
         summary.textContent = test ? `${test.description} Status: ${productHumanStatus(test)}. ${test.id === "create-customer-basic" ? "No QA request has been sent yet. QA execution requires authorization." : test.id === "recharge-basic" ? "Local diagnostics are available separately." : "Additional operation contract information required."}` : ""
+    }
+    if(overview) overview.hidden = !test
+    const validateButton = document.getElementById("productValidate")
+    if(validateButton) validateButton.disabled = !test
+    const executeNote = document.getElementById("productExecuteNote")
+    if(executeNote){
+        executeNote.classList.remove("ready")
+        executeNote.textContent = !test
+            ? "Select a test and validate to check execution readiness."
+            : test.id === "recharge-basic"
+                ? "QA execution is unavailable for this diagnostic test."
+                : test.id === "activate-offer-basic"
+                    ? "This test is unavailable until its integration contract is approved."
+                    : "Select Validate to check execution readiness."
     }
     const notice = document.getElementById("productModeNotice")
     if(notice && test){
@@ -3599,11 +3716,34 @@ async function validateProductTest(){
     document.getElementById("productExecute").disabled = !productValidated || !qaReady || !productValidationContextRef || testId === "recharge-basic"
     const checks = document.getElementById("productChecks")
     checks.hidden = false
+    const technicalReadiness = document.getElementById("productTechnicalReadiness")
+    if(technicalReadiness) technicalReadiness.hidden = false
     const readinessChecks = [...(data.checks || [data.reason || "Validation blocked"])]
     if(data.execution_ready === true) readinessChecks.push("Execution verification: available")
     if(data.post_execution_db_validation_ready === false) readinessChecks.push("Database post-condition verification: not configured")
     if(data.authorization_state === "REQUIRES_AUTHORIZATION") readinessChecks.push("Authorization: required")
     checks.innerHTML = readinessChecks.map(check => `<div class="check-option">${productValidated ? "[ok]" : "[blocked]"} ${escapeHtml(check)}</div>`).join("")
+    const readinessSummary = document.getElementById("productReadinessSummary")
+    const authorizationRequired = data.authorization_state === "REQUIRES_AUTHORIZATION"
+    if(readinessSummary){
+        const executionReady = Array.isArray(data.checks)
+            && data.checks.includes("QA4 environment")
+            && data.checks.includes("Operation and scenario contract")
+        const dbReady = data.post_execution_db_validation_ready !== false
+        readinessSummary.innerHTML = [
+            ["Infrastructure", executionReady ? "Ready" : "Check required", executionReady ? "" : "info"],
+            ["Authorization", authorizationRequired ? "Required" : "Available", authorizationRequired ? "required" : ""],
+            ["DB verification", dbReady ? "Ready" : "Not configured", dbReady ? "" : "info"]
+        ].map(([key,value,kind]) => `<div class="readiness-item ${kind}"><div class="k">${key}</div><div class="v">${value}</div></div>`).join("")
+        readinessSummary.hidden = false
+    }
+    const executeNote = document.getElementById("productExecuteNote")
+    if(executeNote){
+        executeNote.textContent = authorizationRequired
+            ? "Authorization required before QA execution."
+            : (data.post_execution_db_validation_ready === false ? "Execution can proceed; DB verification is not configured." : "Ready for QA execution.")
+        executeNote.classList.toggle("ready", !document.getElementById("productExecute").disabled)
+    }
     if(!productValidated || data.execution_available !== true) renderProductResult(data)
 }
 
