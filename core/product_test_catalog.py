@@ -16,7 +16,7 @@ PRODUCT_TESTS = (
         "environments": ["QA4"],
         "data_requirement": "Automatic synthetic data",
         "execution_mode": "mock",
-        "execution_mode_notice": "Local simulation - no QA4 request",
+        "execution_mode_notice": "QA4 readiness is evaluated locally; authorization is required before execution.",
         "validation_strategy": "Local deterministic validation",
         "availability": "READY",
         "execution_available": True,
@@ -35,6 +35,8 @@ PRODUCT_TESTS = (
         ),
         "real_operation": "CREATE_OFFERS_CUSTOMER",
         "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+        "real_run_id": "ALPHA_REAL_RUN_03A",
+        "real_authorization": "ONE_QA4_CREATE_CUSTOMER_WITH_OFFER_RUN_03A",
         "real_execution_status": "REAL EXECUTION CONTRACT READY - AUTHORIZATION REQUIRED",
         "post_execution_validation": "NOT AVAILABLE",
         "real_contract_references": {
@@ -53,7 +55,7 @@ PRODUCT_TESTS = (
         "environments": ["QA4"],
         "data_requirement": "Synthetic customer",
         "execution_mode": "mock",
-        "execution_mode_notice": "Local simulation - no QA4 request",
+        "execution_mode_notice": "LOCAL DIAGNOSTIC only; QA4 execution is not available for this operation.",
         "validation_strategy": "Local deterministic request-plan validation",
         "availability": "READY",
         "execution_available": True,
@@ -92,8 +94,10 @@ PRODUCT_TESTS = (
 def _public_product_test(item):
     """Return a UI-safe catalog projection with ASCII-only notices."""
     test = dict(item)
+    for private_field in ("real_authorization", "real_run_id", "scenario_id", "execution_mode"):
+        test.pop(private_field, None)
     if test["id"] == "recharge-basic":
-        test["execution_mode_notice"] = "Local simulation - no QA4 request"
+        test["execution_mode_notice"] = "LOCAL DIAGNOSTIC only; QA4 execution is not available for this operation."
     return test
 
 
@@ -104,6 +108,12 @@ def list_product_tests():
 def get_product_test(test_id):
     item = next((item for item in PRODUCT_TESTS if item["id"] == test_id), None)
     return _public_product_test(item) if item else None
+
+
+def get_product_test_runtime(test_id):
+    """Return the private catalog contract for trusted in-process execution."""
+    item = next((item for item in PRODUCT_TESTS if item["id"] == test_id), None)
+    return dict(item) if item else None
 
 
 def validate_contract_plan(test):

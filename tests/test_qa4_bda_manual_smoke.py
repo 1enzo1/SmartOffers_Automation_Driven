@@ -3,6 +3,7 @@ import inspect
 import json
 
 import pytest
+import tools.qa4_bda_manual_smoke as bda_manual_smoke
 
 from tools.qa4_bda_manual_smoke import (
     CHECKPOINT,
@@ -405,7 +406,9 @@ def test_executor_has_no_network_legacy_or_foreign_runtime_dependencies():
         assert forbidden not in source
 
 
-def test_cli_emits_one_sanitized_json_without_loading_runtime_or_driver(capsys):
+def test_cli_emits_one_sanitized_json_without_loading_runtime_or_driver(capsys, monkeypatch):
+    # CLI coverage must never inherit a developer's private runtime variables.
+    monkeypatch.setattr(bda_manual_smoke.os, "environ", {})
     exit_code = main(
         [
             "--checkpoint", CHECKPOINT,

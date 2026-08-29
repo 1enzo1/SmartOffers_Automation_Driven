@@ -11,8 +11,7 @@ from core.real_execution.sanitized_evidence import (
 )
 
 
-def test_real_run_evidence_is_immutable_allowlisted_and_redacted(monkeypatch):
-    monkeypatch.setenv("SMARTOFFERS_SOURCE_REVISION", "abc123")
+def test_real_run_evidence_is_immutable_allowlisted_and_redacted():
     report = {
         "result": "PASS",
         "executor_send_attempted": True,
@@ -38,6 +37,7 @@ def test_real_run_evidence_is_immutable_allowlisted_and_redacted(monkeypatch):
         "test_offer_ready": True,
         "atomic_in_process_handoff": True,
         "standard_runner_real_path": True,
+        "source_revision": "abc123",
         "msisdn": "must-not-appear",
     }
 
@@ -243,4 +243,36 @@ def test_public_evidence_list_only_includes_recognized_existing_records():
     (directory / "ALPHA_REAL_RUN_02.json").unlink()
     (directory / "unrecognized.json").unlink()
     directory.rmdir()
+    root.rmdir()
+
+
+def test_run_03a_evidence_is_allowlisted_with_explicit_execution_only_validation_state():
+    root = Path("evidencias") / f"test-run-03a-{uuid4().hex}"
+    saved = persist_sanitized_real_run_evidence(
+        {
+            "result": "PASS",
+            "executor_send_attempted": True,
+            "offers_adapter": {"attempts_used": 1},
+            "evidence": {"status_code": 201, "response_received": True},
+        },
+        context={
+            "run_id": "ALPHA_REAL_RUN_03A",
+            "environment": "qa4",
+            "operation": "CREATE_OFFERS_CUSTOMER",
+            "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+            "product_test_name": "Create Customer with Offer",
+            "db_postcondition_verified": False,
+            "db_validation_status": "NOT_CONFIGURED",
+        },
+        evidence_root=root,
+    )
+
+    public = load_sanitized_real_run_evidence("ALPHA_REAL_RUN_03A", evidence_root=root)
+
+    assert saved["run_id"] == "ALPHA_REAL_RUN_03A"
+    assert public["product_test_name"] == "Create Customer with Offer"
+    assert public["db_postcondition_verified"] is False
+    assert public["db_validation_status"] == "NOT_CONFIGURED"
+    (root / "real-controlled" / "ALPHA_REAL_RUN_03A.json").unlink()
+    (root / "real-controlled").rmdir()
     root.rmdir()

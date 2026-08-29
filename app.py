@@ -1,7 +1,7 @@
 import json
 import os
 import importlib
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Flask, Response, jsonify, render_template, request, send_file
 
@@ -43,6 +43,7 @@ from core.real_execution.qa4_real_controlled_bridge import (
     run_atomic_qa4_bda_offer_discovery_and_offers_create,
 )
 from core.real_execution.qa4_bda_offer_discovery import BdaDiscoveryAttemptLedger
+from core.real_execution.operational_release_store import OperationalReleaseStore
 from core.real_execution.sanitized_evidence import (
     load_sanitized_real_run_evidence,
     list_sanitized_real_run_evidence,
@@ -50,6 +51,7 @@ from core.real_execution.sanitized_evidence import (
 )
 from core.product_test_catalog import (
     get_product_test,
+    get_product_test_runtime,
     list_product_tests,
     validate_contract_plan,
 )
@@ -74,8 +76,12 @@ _ALPHA_AUTHORIZATION = "ONE_QA4_OFFERS_CUSTOMER_CREATE_NO_AUTH_UI_RUN"
 _ATOMIC_BDA_AUTHORIZATION = "ONE_ATOMIC_QA4_BDA_DISCOVERY_AND_OFFERS_CREATE_RUN"
 _RUN_02_ID = "ALPHA_REAL_RUN_02"
 _RUN_02_AUTHORIZATION = "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
+_RUN_03A_ID = "ALPHA_REAL_RUN_03A"
+_RUN_03A_AUTHORIZATION = "ONE_QA4_CREATE_CUSTOMER_WITH_OFFER_RUN_03A"
 _RUN_02_BDA_AUTHORIZATION = "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
 _DEFAULT_BDA_DISCOVERY_LEDGER = BdaDiscoveryAttemptLedger()
+_PRODUCT_OPERATIONAL_RELEASES = OperationalReleaseStore()
+_PRODUCT_VALIDATION_CONTEXT_TTL = timedelta(minutes=5)
 
 
 class _RuntimeEnvironment(dict):
@@ -96,11 +102,18 @@ def _run_authorization(context):
     context_data = context if isinstance(context, dict) else {}
     if context_data.get("run_id") == _RUN_02_ID:
         return _RUN_02_AUTHORIZATION
+    if context_data.get("run_id") == _RUN_03A_ID:
+        return _RUN_03A_AUTHORIZATION
     return _ALPHA_AUTHORIZATION
 
 
 def _run_bda_authorization(context):
-    return _RUN_02_BDA_AUTHORIZATION if _run_authorization(context) == _RUN_02_AUTHORIZATION else _ATOMIC_BDA_AUTHORIZATION
+    authorization = _run_authorization(context)
+    if authorization == _RUN_02_AUTHORIZATION:
+        return _RUN_02_BDA_AUTHORIZATION
+    if authorization == _RUN_03A_AUTHORIZATION:
+        return _RUN_03A_AUTHORIZATION
+    return _ATOMIC_BDA_AUTHORIZATION
 
 
 def _qa4_owner_execution_inputs(context):
@@ -279,6 +292,53 @@ def _parse_standard_qa4_timestamp(value):
 
 def _trusted_local_now():
     return datetime.now().astimezone()
+
+
+def _provision_product_operational_release(test_id, trusted_release, expires_at):
+    """Register a host-owned release; this has no HTTP entrypoint.
+
+    The runtime owner supplies an already-approved plan before a user reaches
+    Validate.  Browser validation can only reserve that pre-existing release.
+    """
+    test = get_product_test_runtime(test_id)
+    request_plan = trusted_release.get("request_plan") if isinstance(trusted_release, dict) else None
+    if not test or test_id != "create-customer-basic" or not isinstance(request_plan, dict):
+        return False
+    exact_scope = {
+        "environment": "QA4",
+        "workflow_profile": _STANDARD_QA4_PROFILE,
+        "mode": "real-controlled",
+        "run_id": test["real_run_id"],
+        "owner_authorization": test["real_authorization"],
+        "scenario_id": test["scenario_id"],
+        "application_confirmation": _APPLICATION_CONFIRMATION,
+    }
+    if any(request_plan.get(key) != value for key, value in exact_scope.items()):
+        return False
+    return _PRODUCT_OPERATIONAL_RELEASES.provision(
+        test_id=test_id,
+        trusted_release=trusted_release,
+        now=_trusted_local_now(),
+        expires_at=expires_at,
+    )
+
+
+def _create_product_validation_context(test):
+    """Reserve an opaque context from a pre-provisioned trusted release."""
+    now = _trusted_local_now()
+    return _PRODUCT_OPERATIONAL_RELEASES.reserve(
+        test_id=test["id"],
+        now=now,
+        ttl=_PRODUCT_VALIDATION_CONTEXT_TTL,
+    )
+
+
+def _consume_product_validation_context(test_id, reference):
+    return _PRODUCT_OPERATIONAL_RELEASES.claim(
+        test_id=test_id,
+        reference=reference,
+        now=_trusted_local_now(),
+    )
 
 
 def _atomic_operation_window_status(context):
@@ -504,30 +564,51 @@ def _run_local_recharge_simulation(record):
 
 @app.route("/api/product-tests/<test_id>/validate", methods=["POST"])
 def api_product_test_validate(test_id):
-    test = get_product_test(test_id)
+    test = get_product_test_runtime(test_id)
     if not test:
         return jsonify({"result": "BLOCKED", "reason": "TEST_NOT_FOUND"}), 404
+    public_test = get_product_test(test_id)
     if test["availability"] == "BLOCKED_EXTERNAL_INFORMATION":
         return jsonify({
             "result": "BLOCKED",
             "reason": "ADD_OFFER_EXTERNAL_INFORMATION_REQUIRED",
-            "test": test,
+            "test": public_test,
             "phase": "VALIDATION",
             "execution_available": False,
         })
     if test["availability"] not in {"READY", "CONTRACT_READY"}:
-        return jsonify({"result": "BLOCKED", "reason": "CAPABILITY_NOT_READY", "test": test})
+        return jsonify({"result": "BLOCKED", "reason": "CAPABILITY_NOT_READY", "test": public_test})
     contract_plan = validate_contract_plan(test)
     if contract_plan and not contract_plan["valid"]:
         return jsonify({
             "result": "BLOCKED",
             "reason": contract_plan["reason"],
-            "test": test,
+            "test": public_test,
             "phase": "VALIDATION",
             "display_status": "CONTRACT_MAPPING_BLOCKED",
             "execution_available": False,
         })
     checks = ["Environment", "Test data", "Required configuration", "Preflight"]
+    execution_ready = False
+    post_execution_db_validation_ready = bool(test.get("read_only_validation_ready"))
+    authorization_state = "NOT_APPLICABLE"
+    validation_context_ref = None
+    validation_context_expires_at = None
+    if test_id == "create-customer-basic":
+        checks = [
+            "QA4 environment",
+            "Synthetic test data",
+            "Operation and scenario contract",
+            "Destination contract",
+            "Evidence capture",
+            "One-shot capability",
+            "Authorization required",
+        ]
+        execution_ready = bool(test.get("real_contract_ready"))
+        authorization_state = "REQUIRES_AUTHORIZATION"
+        if execution_ready:
+            validation_context_ref, validation_context_expires_at = _create_product_validation_context(test)
+            execution_ready = validation_context_ref is not None
     if test["availability"] == "CONTRACT_READY":
         checks = [
             "Environment",
@@ -537,43 +618,72 @@ def api_product_test_validate(test_id):
         ]
     return jsonify({
         "result": "PASS",
-        "test": test,
+        "test": public_test,
         "checks": checks,
-        "mode": test["execution_mode"],
+        "mode": "QA_READINESS" if test_id == "create-customer-basic" else test["execution_mode"],
         "execution_available": test["execution_available"],
+        "execution_ready": execution_ready,
+        "post_execution_db_validation_ready": post_execution_db_validation_ready,
+        "authorization_state": authorization_state,
         "phase": "EXECUTION_PREFLIGHT" if test["execution_available"] else "VALIDATION",
         "display_status": (
-            "READY_FOR_LOCAL_MOCK"
+            "QA_READY_REQUIRES_AUTHORIZATION"
+            if test_id == "create-customer-basic" and execution_ready
+            else "AUTHORIZATION_REQUIRED"
+            if test_id == "create-customer-basic"
+            else "READY_FOR_LOCAL_MOCK"
             if test["execution_available"]
             else "READY_FOR_CONTRACT_REVIEW"
         ),
         "reason": (
-            "LOCAL_MOCK_READY"
+            "QA_EXECUTION_REQUIRES_OWNER_AUTHORIZATION"
+            if test_id == "create-customer-basic" and execution_ready
+            else "TRUSTED_OPERATIONAL_RELEASE_REQUIRED"
+            if test_id == "create-customer-basic"
+            else "LOCAL_MOCK_READY"
             if test["execution_available"]
             else "CONTRACT_READY_REAL_BINDING_AND_VALIDATION_REQUIRED"
         ),
         "contract_preview": contract_plan["preview"] if contract_plan else None,
+        "validation_context_ref": validation_context_ref,
+        "validation_context_expires_at": (
+            validation_context_expires_at.isoformat() if validation_context_expires_at else None
+        ),
     })
 
 
 @app.route("/api/product-tests/<test_id>/execute", methods=["POST"])
 def api_product_test_execute(test_id):
-    test = get_product_test(test_id)
+    test = get_product_test_runtime(test_id)
     if not test:
         return jsonify({"result": "BLOCKED", "reason": "TEST_NOT_FOUND"}), 404
+    public_test = get_product_test(test_id)
+    request_data = request.get_json(silent=True) or {}
+    if test_id == "create-customer-basic":
+        if request_data.get("intent") != "EXECUTE_IN_QA":
+            return jsonify({"result": "BLOCKED", "reason": "QA_EXECUTION_INTENT_REQUIRED"})
+        if set(request_data).difference({"intent", "validation_context_ref"}):
+            return jsonify({"result": "BLOCKED", "reason": "PRODUCT_EXECUTION_INPUT_NOT_ALLOWED"})
+        controlled_request, reason = _consume_product_validation_context(
+            test_id, request_data.get("validation_context_ref")
+        )
+        if reason:
+            return jsonify({"result": "BLOCKED", "reason": reason})
+        report, status = _run_standard_qa4_real_controlled_request(controlled_request)
+        return jsonify(report), status
+    if request_data.get("intent") == "EXECUTE_IN_QA" or request_data.get("validation_context_ref"):
+        return jsonify({"result": "BLOCKED", "reason": "QA_EXECUTION_NOT_AVAILABLE"})
     if test["availability"] == "BLOCKED_EXTERNAL_INFORMATION":
         return jsonify({
             "result": "BLOCKED",
             "reason": "ADD_OFFER_EXTERNAL_INFORMATION_REQUIRED",
-            "test": test,
-            "attempts": "0/0",
+            "test": public_test,
         })
     if not test.get("execution_available"):
         return jsonify({
             "result": "BLOCKED",
             "reason": "REAL_BINDING_AND_VALIDATION_NOT_READY",
-            "test": test,
-            "attempts": "0/0",
+            "test": public_test,
         })
     # No real-controlled bridge is reachable from this product-facing endpoint.
     synthetic_data = _prepare_local_product_test_data(test)
@@ -602,10 +712,9 @@ def api_product_test_execute(test_id):
         completion_reason = "LOCAL_CUSTOMER_LINE_SIMULATION_COMPLETED"
     return jsonify({
         "result": local_result,
-        "test": test,
+        "test": public_test,
         "environment": "QA4",
         "duration_ms": 0,
-        "attempts": "0/0",
         "reason": completion_reason,
         "evidence_reference": "MOCK_RUN_NOT_PERSISTED",
         "validation": {
@@ -641,28 +750,32 @@ def api_sanitized_real_run_evidence_list():
     return jsonify({"evidence": list_sanitized_real_run_evidence()})
 
 
-@app.route("/api/qa4/standard/real-controlled-run", methods=["POST"])
-def api_standard_qa4_real_controlled_run():
-    data = request.get_json(silent=True)
+def _run_standard_qa4_real_controlled_request(data):
+    """Invoke the existing controlled service from a trusted in-process caller.
+
+    This is shared by the compatibility endpoint and the product facade.  It
+    intentionally accepts a complete server-owned request plan, never an HTTP
+    redirect or a browser-supplied real-operation contract.
+    """
     if not isinstance(data, dict):
-        return _standard_qa4_api_block("MALFORMED_REQUEST")
+        return {"result": "BLOCKED", "reason": "MALFORMED_REQUEST"}, 400
     if data.get("mode") != "real-controlled":
-        return _standard_qa4_api_block("MODE_NOT_ALLOWED")
+        return {"result": "BLOCKED", "reason": "MODE_NOT_ALLOWED"}, 400
     if data.get("scenario_id") != SYNTHETIC_OFFERS_SCENARIO:
-        return _standard_qa4_api_block("SCENARIO_NOT_ALLOWED")
+        return {"result": "BLOCKED", "reason": "SCENARIO_NOT_ALLOWED"}, 400
     requested_run_id = data.get("run_id")
-    if requested_run_id not in (None, _RUN_02_ID):
-        return _standard_qa4_api_block("RUN_ID_NOT_ALLOWED")
-    expected_authorization = _RUN_02_AUTHORIZATION if requested_run_id == _RUN_02_ID else _ALPHA_AUTHORIZATION
+    if requested_run_id not in (None, _RUN_02_ID, _RUN_03A_ID):
+        return {"result": "BLOCKED", "reason": "RUN_ID_NOT_ALLOWED"}, 400
+    expected_authorization = _run_authorization({"run_id": requested_run_id})
     supplied_authorization = data.get("owner_authorization", _ALPHA_AUTHORIZATION)
     if supplied_authorization != expected_authorization:
-        return _standard_qa4_api_block("OWNER_AUTHORIZATION_REQUIRED")
+        return {"result": "BLOCKED", "reason": "OWNER_AUTHORIZATION_REQUIRED"}, 400
     validation_data = {**data, "mode": "mock"}
     context, evaluated_at, reason = _standard_qa4_api_context(validation_data)
     if reason:
-        return _standard_qa4_api_block(reason)
+        return {"result": "BLOCKED", "reason": reason}, 400
     if data.get("application_confirmation") != _APPLICATION_CONFIRMATION:
-        return _standard_qa4_api_block("APPLICATION_CONFIRMATION_REQUIRED")
+        return {"result": "BLOCKED", "reason": "APPLICATION_CONFIRMATION_REQUIRED"}, 400
     controlled_context = {
         **context,
         "mode": "real-controlled",
@@ -673,10 +786,10 @@ def api_standard_qa4_real_controlled_run():
         controlled_context["run_id"] = requested_run_id
     window_status = _atomic_operation_window_status(controlled_context)
     if window_status:
-        return jsonify({"result": "BLOCKED", "reason": window_status})
+        return {"result": "BLOCKED", "reason": window_status}, 200
     contract = _qa4_controlled_contract_from_environ()
     if not _atomic_static_preflight_ready(controlled_context, contract):
-        return jsonify({"result": "BLOCKED", "reason": "ATOMIC_STATIC_PREFLIGHT_REQUIRED"})
+        return {"result": "BLOCKED", "reason": "ATOMIC_STATIC_PREFLIGHT_REQUIRED"}, 200
     report = run_atomic_qa4_bda_offer_discovery_and_offers_create(
         controlled_context,
         mode="real-controlled",
@@ -712,6 +825,9 @@ def api_standard_qa4_real_controlled_run():
         "test_offer_ready": (report.get("bda_discovery") or {}).get("found_valid_offer") is True,
         "atomic_in_process_handoff": (report.get("bda_discovery") or {}).get("found_valid_offer") is True,
         "standard_runner_real_path": report.get("real_call_executed") is True,
+        "product_test_name": "Create Customer with Offer" if requested_run_id == _RUN_03A_ID else None,
+        "db_postcondition_verified": False,
+        "db_validation_status": "NOT_CONFIGURED" if requested_run_id == _RUN_03A_ID else None,
     }
     # A preflight/BDA block is not an execution result and must not generate a
     # misleading real-run artifact.  A sent request (including a failed one)
@@ -721,8 +837,19 @@ def api_standard_qa4_real_controlled_run():
             evidence_record = persist_sanitized_real_run_evidence(report, context=evidence_context)
         except OSError:
             evidence_record = {"recorded": False, "reason": "LOCAL_EVIDENCE_PERSISTENCE_FAILED"}
-        report = {**report, "evidence_recording": evidence_record}
-    return jsonify(report)
+        public_evidence_reference = evidence_record.get("reference") if evidence_record.get("recorded") is True else None
+        report = {
+            **report,
+            "evidence_recording": evidence_record,
+            **({"evidence_reference": public_evidence_reference} if public_evidence_reference else {}),
+        }
+    return report, 200
+
+
+@app.route("/api/qa4/standard/real-controlled-run", methods=["POST"])
+def api_standard_qa4_real_controlled_run():
+    report, status = _run_standard_qa4_real_controlled_request(request.get_json(silent=True))
+    return jsonify(report), status
 @app.route("/api/api-catalog")
 def api_list_api_catalog():
     return jsonify(list_api_catalog_entries())

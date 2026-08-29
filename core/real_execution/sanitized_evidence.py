@@ -8,7 +8,6 @@ copied to the local evidence directory.
 from __future__ import annotations
 
 import json
-import os
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
@@ -16,7 +15,7 @@ from uuid import uuid4
 
 _ALLOWED_RESULTS = {"PASS", "FAIL", "BLOCKED"}
 EVIDENCE_CAPTURE_VERSION = "2"
-_ALLOWED_RUN_IDS = {"ALPHA_REAL_RUN_01", "ALPHA_REAL_RUN_02"}
+_ALLOWED_RUN_IDS = {"ALPHA_REAL_RUN_01", "ALPHA_REAL_RUN_02", "ALPHA_REAL_RUN_03A"}
 _PUBLIC_FIELDS = (
     "run_id",
     "timestamp",
@@ -39,6 +38,9 @@ _PUBLIC_FIELDS = (
     "retry_count",
     "result",
     "standard_runner_real_path",
+    "product_test_name",
+    "db_postcondition_verified",
+    "db_validation_status",
     "evidence_capture_version",
 )
 
@@ -109,7 +111,10 @@ def _record(report, context, *, run_id, timestamp):
         "retry_count": 0,
         "result": result,
         "standard_runner_real_path": context.get("standard_runner_real_path") is True,
-        "source_revision": _source_revision(),
+        "product_test_name": _product_test_name(context.get("product_test_name")),
+        "db_postcondition_verified": context.get("db_postcondition_verified") is True,
+        "db_validation_status": _db_validation_status(context.get("db_validation_status")),
+        "source_revision": _source_revision(context.get("source_revision")),
     }
 
 
@@ -123,6 +128,14 @@ def _constant_or_empty(value, expected):
 
 def _terminal_preflight(value):
     return value if value in {"READY", "PASS", "BLOCKED", "NOT_RUN"} else "NOT_RECORDED"
+
+
+def _product_test_name(value):
+    return "Create Customer with Offer" if value == "Create Customer with Offer" else ""
+
+
+def _db_validation_status(value):
+    return "NOT_CONFIGURED" if value == "NOT_CONFIGURED" else "NOT_RECORDED"
 
 
 def _status_class(value):
@@ -206,7 +219,7 @@ def _public_consistency_reason(record):
     return ""
 
 
-def _source_revision():
-    value = os.environ.get("SMARTOFFERS_SOURCE_REVISION", "").strip()
+def _source_revision(value):
+    value = str(value or "").strip()
     # A revision is an identifier, never arbitrary environment content.
     return value if value and all(char.isalnum() or char in "._-" for char in value) else "NOT_AVAILABLE"

@@ -8,28 +8,40 @@ pre-Alpha baseline remains `v0.0.0-pre-alpha.1` at
 baseline is `v0.0.0-alpha.1` at `3df093c66ea5790f4a9d3c8b0ea279bccf0a9d86`.
 
 This document describes source capability; it never grants operational access.
-The product remains local-first and mock-first. Production and unscoped real
-transport are denied by default.
+QA is the product purpose. Local diagnostics support development and diagnosis,
+but are not the default product mode. Production and unscoped real transport
+are denied by default.
 
 ## Product flow
 
-`Open app -> QA4 -> Select test -> Validate -> Execute -> Result -> View evidence`
+`Open app -> QA4 -> Select test -> Validate QA readiness -> Execute in QA -> Result -> View evidence`
 
-The primary screen is a product-facing shell over existing Flask endpoints.
+The primary screen is a QA-first shell over existing Flask endpoints. Mock,
+generator, and legacy runner tooling lives under collapsed Diagnostics.
 Guardrails, contracts, and technical details remain sanitized and collapsed by
-default. Validate prepares local prerequisites only; Execute performs only the
-mode allowed by the selected catalog entry.
+default. Validate is non-mutating and reports QA execution readiness separately
+from database post-condition validation.
+
+For a governed product execution, the runtime owner must provision an exact,
+short-lived operational release inside the application process before Validate.
+There is no HTTP/browser route for provisioning and no default release. The
+browser can receive only a one-use opaque validation reference; authorization,
+runtime plan, destination and window data never return to the browser.
 
 ## Current catalog
 
 | Test | Product status | Current permitted behavior | Real readiness |
 |---|---|---|---|
-| Create Customer with Offer | REAL EXECUTION CONTRACT READY | Existing local mock plus the recovered `CREATE_OFFERS_CUSTOMER` controlled execution contract | Separate post-execution customer/line DB validation is not available. The composite Offers operation requires authorization and must not be called a pure customer creation. |
-| Recharge Basic | LOCAL READY | Existing deterministic recharge template through the fake adapter and local plan verification | The sanitized catalog is explicitly blocked for real use. A governed operation/scenario binding and approved read-only result validation are missing. |
+| Create Customer with Offer | QA READY / REQUIRES AUTHORIZATION | Product delegation to the recovered `CREATE_OFFERS_CUSTOMER` controlled execution contract | Execution verification is available under a separate current authorization. Separate post-execution customer/line DB validation is not configured. |
+| Recharge Basic | LOCAL DIAGNOSTIC | Existing deterministic recharge template through the fake adapter and local plan verification | The sanitized catalog is explicitly blocked for real use. A governed operation/scenario binding and approved read-only result validation are missing. |
 | Add Offer Basic | UNAVAILABLE | Safely blocked before discovery, planning, or transport | The exact authoritative requirements are in `ADD_OFFER_EXTERNAL_REQUIREMENTS.md`. |
 
 Synthetic values stay in process memory. Local mock runs have a non-persisted
 summary, not an evidence artifact.
+
+Execution verification is not database post-condition verification. A successful
+controlled HTTP execution must never be presented as customer/line database
+validation while the approved read-only lookup is unavailable.
 
 ## Evidence truth
 

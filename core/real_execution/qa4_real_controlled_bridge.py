@@ -15,8 +15,10 @@ _BLOCKERS = (
 SYNTHETIC_OFFERS_SCENARIO = "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
 ATOMIC_BDA_AUTHORIZATION = "ONE_ATOMIC_QA4_BDA_DISCOVERY_AND_OFFERS_CREATE_RUN"
 RUN_02_BDA_AUTHORIZATION = "ONE_QA4_REPEATABILITY_SMOKE_RUN_02"
+RUN_03A_BDA_AUTHORIZATION = "ONE_QA4_CREATE_CUSTOMER_WITH_OFFER_RUN_03A"
 RUN_01_ID = "ALPHA_REAL_RUN_01"
 RUN_02_ID = "ALPHA_REAL_RUN_02"
+RUN_03A_ID = "ALPHA_REAL_RUN_03A"
 
 
 def run_standard_qa4_real_controlled(
@@ -181,6 +183,8 @@ def _atomic_bda_authorization_matches_context(context, bda_authorization):
     expected = (
         RUN_02_BDA_AUTHORIZATION
         if run_id == RUN_02_ID
+        else RUN_03A_BDA_AUTHORIZATION
+        if run_id == RUN_03A_ID
         else ATOMIC_BDA_AUTHORIZATION
         if run_id in (None, RUN_01_ID)
         else None

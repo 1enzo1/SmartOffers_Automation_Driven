@@ -2,18 +2,23 @@
 
 ## Product acceptance scope
 
-Alpha 1.1 is a local/mock-first product baseline. It does not claim a new QA4
-write, Oracle query, or production capability.
+Alpha 1.1 is a QA-first product baseline. It does not claim a new QA4 write,
+Oracle query, or production capability. Local mocks are Diagnostics only.
 
 ### Accepted capabilities
 
-- The default UI flow is `Open app -> QA4 -> Select test -> Validate -> Execute -> Result -> View evidence`.
+- The default UI flow is `Open app -> QA4 -> Select test -> Validate QA readiness -> Execute in QA -> Result -> View evidence`.
+- The primary workspace exposes no mock execution controls; Diagnostics is
+  collapsed by default.
 - Create Customer Basic and Recharge Basic execute only local deterministic
   simulations with attempts `0/0` and no QA4 request.
 - Add Offer Basic is unavailable until external contract information exists and
   does not expose a half-working Execute path.
 - Controlled evidence is read-only, allowlisted, sanitized, and displayed
   separately from local mock summaries.
+- Create Customer with Offer has a product-facing delegation to the existing
+  governed controlled stack. It remains blocked until a current authorization
+  and all existing runtime gates are present.
 - Test tiers define a practical local-first execution policy.
 
 ### Truthful limitations
@@ -21,6 +26,8 @@ write, Oracle query, or production capability.
 - Create Customer with Offer reuses the historical composite Offers operation
   and is ready for a separately authorized controlled execution. It does not
   have approved post-execution customer/line read-only validation.
+- HTTP execution verification and database post-condition verification are
+  distinct product outcomes; the latter remains not configured.
 - Recharge Basic has a sanitized catalog mapping but no governed real binding
   or approved read-only validation contract.
 - Add Offer Basic's exact external requirements are documented in

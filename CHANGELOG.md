@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased - QA-first product workspace
+
+- Made QA4 the primary product journey and moved generator, runner, and mock
+  tooling into collapsed Diagnostics disclosures.
+- Added truth-based product statuses: QA ready / requires authorization, local
+  diagnostic, and unavailable.
+- Bound the Create Customer with Offer product action to the existing governed
+  controlled stack without adding a transport stack or enabling QA traffic.
+- Made execution verification and database post-condition verification distinct
+  in readiness presentation; customer/line DB validation remains unconfigured.
+
 ## v0.0.0-alpha.2 - Alpha 1.1 source baseline
 
 - Finalized the catalog-driven testing-product flow for QA4 local/mock work.

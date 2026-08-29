@@ -1,4 +1,32 @@
 import app as app_module
+from core.real_execution.operational_release_store import OperationalReleaseStore
+
+
+def _provision_trusted_product_release(monkeypatch):
+    """Provide test-only server-side release material; the browser never sees it."""
+    monkeypatch.setattr(app_module, "_PRODUCT_OPERATIONAL_RELEASES", OperationalReleaseStore())
+    now = app_module._trusted_local_now()
+    expires_at = now + app_module._PRODUCT_VALIDATION_CONTEXT_TTL
+    release = {
+        "release_key": "test-product-release",
+        "request_plan": {
+            "environment": "QA4",
+            "workflow_profile": app_module._STANDARD_QA4_PROFILE,
+            "mode": "real-controlled",
+            "run_id": "ALPHA_REAL_RUN_03A",
+            "owner_authorization": "ONE_QA4_CREATE_CUSTOMER_WITH_OFFER_RUN_03A",
+            "scenario_id": "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4",
+            "application_confirmation": app_module._APPLICATION_CONFIRMATION,
+            "orchestration_id": "test-product-release",
+            "operational_window_ref": "test-product-window",
+            "window_started_at": now.isoformat(),
+            "window_expires_at": expires_at.isoformat(),
+            "evaluated_at": now.isoformat(),
+        },
+    }
+    assert app_module._provision_product_operational_release(
+        "create-customer-basic", release, expires_at
+    ) is True
 from core.api_catalog import get_api_catalog_entry
 import core.product_test_catalog as product_catalog
 
@@ -18,19 +46,23 @@ def test_product_catalog_exposes_only_three_curated_tests(app_client_factory):
     assert tests[0]["availability"] == "READY"
     assert tests[0]["execution_available"] is True
     assert tests[0]["real_operation"] == "CREATE_OFFERS_CUSTOMER"
-    assert tests[0]["scenario_id"] == "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
+    assert "scenario_id" not in tests[0]
+    assert "real_run_id" not in tests[0]
+    assert "real_authorization" not in tests[0]
     assert tests[0]["real_execution_status"] == "REAL EXECUTION CONTRACT READY - AUTHORIZATION REQUIRED"
     assert tests[0]["post_execution_validation"] == "NOT AVAILABLE"
     assert tests[1]["availability"] == "READY"
     assert tests[1]["execution_available"] is True
-    assert tests[1]["execution_mode_notice"] == "Local simulation - no QA4 request"
+    assert tests[1]["execution_mode_notice"] == "LOCAL DIAGNOSTIC only; QA4 execution is not available for this operation."
     assert "â" not in str(tests)
     assert tests[2]["availability"] == "BLOCKED_EXTERNAL_INFORMATION"
     assert tests[2]["execution_available"] is False
     assert all(item["environments"] == ["QA4"] for item in tests)
 
 
-def test_product_catalog_validate_and_execute_are_mock_only(app_client_factory, monkeypatch):
+def test_create_customer_product_execute_requires_explicit_qa_intent_and_never_falls_back_to_mock(
+    app_client_factory, monkeypatch
+):
     client, _ = app_client_factory("product-catalog")
     calls = []
 
@@ -43,34 +75,11 @@ def test_product_catalog_validate_and_execute_are_mock_only(app_client_factory, 
     executed = client.post("/api/product-tests/create-customer-basic/execute")
 
     assert validated.get_json()["result"] == "PASS"
-    assert executed.get_json()["result"] == "PASS"
-    assert executed.get_json()["attempts"] == "0/0"
-    assert executed.get_json()["validation"] == {
-        "result": "PASS",
-        "strategy": "LOCAL_CUSTOMER_LINE_SIMULATION",
-        "external_read_only_lookup_used": False,
-    }
-    assert executed.get_json()["evidence_summary"] == {
-        "preflight": "PASS",
-        "execution": "PASS",
-        "local_verification": "PASS",
-        "request_sent": False,
-    }
-    assert calls[0][0] == {
-        "environment": "qa4",
-        "workflow_profile": "smartoffers_qa4_full_smoke",
-        "test_data": {
-            "entity": "customer_line",
-            "environment": "QA4",
-            "lifecycle": "CREATE",
-            "synthetic": True,
-            "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
-        },
-    }
-    assert calls[0][1] == "mock"
+    assert executed.get_json() == {"result": "BLOCKED", "reason": "QA_EXECUTION_INTENT_REQUIRED"}
+    assert calls == []
 
 
-def test_create_customer_local_execution_keeps_synthetic_data_in_memory_and_returns_only_opaque_reference(app_client_factory, monkeypatch):
+def test_create_customer_product_execute_does_not_expose_local_simulation_data(app_client_factory, monkeypatch):
     client, _ = app_client_factory("product-catalog-synthetic-data")
     received_contexts = []
 
@@ -82,25 +91,8 @@ def test_create_customer_local_execution_keeps_synthetic_data_in_memory_and_retu
     response = client.post("/api/product-tests/create-customer-basic/execute")
     body = response.get_json()
 
-    assert received_contexts[0]["test_data"] == {
-        "entity": "customer_line",
-        "environment": "QA4",
-        "lifecycle": "CREATE",
-        "synthetic": True,
-        "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
-    }
-    assert body["evidence_reference"] == "MOCK_RUN_NOT_PERSISTED"
-    assert body["synthetic_data"] == {
-        "prepared": True,
-        "reference": "LOCAL_SIMULATION_CUSTOMER_LINE_V1",
-    }
-    assert body["validation"] == {
-        "result": "PASS",
-        "strategy": "LOCAL_CUSTOMER_LINE_SIMULATION",
-        "external_read_only_lookup_used": False,
-    }
-    assert "test_data" not in body
-    assert "msisdn" not in str(body).lower()
+    assert body == {"result": "BLOCKED", "reason": "QA_EXECUTION_INTENT_REQUIRED"}
+    assert received_contexts == []
 
 
 def test_create_customer_local_validator_rejects_an_invalid_synthetic_record():
@@ -115,7 +107,7 @@ def test_create_customer_local_validator_rejects_an_invalid_synthetic_record():
     assert app_module._validate_local_customer_line_simulation(invalid_record, "PASS") == "FAIL"
 
 
-def test_create_customer_local_execution_propagates_mock_failure_to_validation_and_evidence(app_client_factory, monkeypatch):
+def test_create_customer_product_execute_blocks_before_local_mock_failure_can_run(app_client_factory, monkeypatch):
     client, _ = app_client_factory("product-catalog-local-fail")
     monkeypatch.setattr(
         app_module,
@@ -125,14 +117,7 @@ def test_create_customer_local_execution_propagates_mock_failure_to_validation_a
 
     body = client.post("/api/product-tests/create-customer-basic/execute").get_json()
 
-    assert body["result"] == "FAIL"
-    assert body["validation"]["result"] == "FAIL"
-    assert body["evidence_summary"] == {
-        "preflight": "FAIL",
-        "execution": "FAIL",
-        "local_verification": "FAIL",
-        "request_sent": False,
-    }
+    assert body == {"result": "BLOCKED", "reason": "QA_EXECUTION_INTENT_REQUIRED"}
 
 
 def test_create_customer_catalog_truthfully_describes_real_readiness():
@@ -166,7 +151,7 @@ def test_recharge_executes_only_a_local_fake_request_plan_and_returns_sanitized_
     assert validated["display_status"] == "READY_FOR_LOCAL_MOCK"
     assert validated["mode"] == "mock"
     assert executed["result"] == "PASS"
-    assert executed["attempts"] == "0/0"
+    assert "attempts" not in executed
     assert executed["reason"] == "LOCAL_RECHARGE_SIMULATION_COMPLETED"
     assert executed["validation"] == {
         "result": "PASS",
@@ -202,7 +187,7 @@ def test_add_offer_blocks_without_offer_discovery_or_transport(app_client_factor
     assert validated.get_json()["reason"] == "ADD_OFFER_EXTERNAL_INFORMATION_REQUIRED"
     assert executed.get_json()["result"] == "BLOCKED"
     assert executed.get_json()["reason"] == "ADD_OFFER_EXTERNAL_INFORMATION_REQUIRED"
-    assert executed.get_json()["attempts"] == "0/0"
+    assert "attempts" not in executed.get_json()
 
 
 def test_catalog_entries_expose_only_sanitized_existing_mappings():
@@ -266,6 +251,141 @@ def test_add_offer_execute_route_blocks_before_mock_facade(app_client_factory, m
     assert response.get_json()["reason"] == "ADD_OFFER_EXTERNAL_INFORMATION_REQUIRED"
 
 
+def test_create_customer_qa_execution_uses_a_validation_context_and_delegates_to_existing_controlled_stack(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("product-run03a-delegation")
+    _provision_trusted_product_release(monkeypatch)
+    calls = []
+    monkeypatch.setattr(
+        app_module,
+        "_run_standard_qa4_real_controlled_request",
+        lambda data: calls.append(data) or ({"result": "BLOCKED", "run_id": "ALPHA_REAL_RUN_03A"}, 200),
+    )
+    validation = client.post("/api/product-tests/create-customer-basic/validate").get_json()
+    response = client.post(
+        "/api/product-tests/create-customer-basic/execute",
+        json={
+            "intent": "EXECUTE_IN_QA",
+            "validation_context_ref": validation["validation_context_ref"],
+        },
+    )
+    assert response.get_json()["run_id"] == "ALPHA_REAL_RUN_03A"
+    assert calls[0]["mode"] == "real-controlled"
+    assert calls[0]["run_id"] == "ALPHA_REAL_RUN_03A"
+    assert calls[0]["scenario_id"] == "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
+    assert calls[0]["owner_authorization"] == "ONE_QA4_CREATE_CUSTOMER_WITH_OFFER_RUN_03A"
+    assert "validation_context_ref" not in calls[0]
+
+
+def test_create_customer_qa_execution_denies_missing_or_reused_validation_context_before_delegate(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("product-run03a-denied")
+    monkeypatch.setattr(app_module, "_run_standard_qa4_real_controlled_request", lambda: (_ for _ in ()).throw(AssertionError("must not delegate")))
+    response = client.post(
+        "/api/product-tests/create-customer-basic/execute",
+        json={"intent": "EXECUTE_IN_QA"},
+    )
+    assert response.get_json() == {"result": "BLOCKED", "reason": "VALIDATION_CONTEXT_REQUIRED"}
+
+
+def test_create_customer_product_context_delegates_directly_to_the_existing_atomic_controlled_stack(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("product-atomic-stack")
+    _provision_trusted_product_release(monkeypatch)
+    atomic_calls = []
+    monkeypatch.setattr(app_module, "_qa4_controlled_contract_from_environ", lambda: {"contract": "trusted"})
+    monkeypatch.setattr(app_module, "_atomic_static_preflight_ready", lambda *_args: True)
+    monkeypatch.setattr(app_module, "_governed_bda_driver", lambda: object())
+    monkeypatch.setattr(
+        app_module,
+        "run_atomic_qa4_bda_offer_discovery_and_offers_create",
+        lambda *args, **kwargs: atomic_calls.append((args, kwargs))
+        or {"result": "BLOCKED", "executor_send_attempted": False, "real_call_executed": False},
+    )
+    validation = client.post("/api/product-tests/create-customer-basic/validate").get_json()
+
+    response = client.post(
+        "/api/product-tests/create-customer-basic/execute",
+        json={"intent": "EXECUTE_IN_QA", "validation_context_ref": validation["validation_context_ref"]},
+    )
+    replay = client.post(
+        "/api/product-tests/create-customer-basic/execute",
+        json={"intent": "EXECUTE_IN_QA", "validation_context_ref": validation["validation_context_ref"]},
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["result"] == "BLOCKED"
+    assert len(atomic_calls) == 1
+    assert atomic_calls[0][0][0]["run_id"] == "ALPHA_REAL_RUN_03A"
+    assert atomic_calls[0][0][0]["scenario_id"] == "CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4"
+    assert replay.get_json() == {"result": "BLOCKED", "reason": "VALIDATION_CONTEXT_INVALID"}
+
+
+def test_create_customer_validation_reports_qa_execution_and_db_validation_separately(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("product-qa-readiness")
+    _provision_trusted_product_release(monkeypatch)
+
+    response = client.post("/api/product-tests/create-customer-basic/validate")
+
+    payload = response.get_json()
+    assert payload["result"] == "PASS"
+    assert payload["execution_ready"] is True
+    assert payload["post_execution_db_validation_ready"] is False
+    assert payload["authorization_state"] == "REQUIRES_AUTHORIZATION"
+
+
+def test_create_customer_validation_requires_a_trusted_operational_release_before_issuing_context(
+    app_client_factory, monkeypatch
+):
+    client, _ = app_client_factory("product-release-required")
+    store = OperationalReleaseStore()
+    monkeypatch.setattr(app_module, "_PRODUCT_OPERATIONAL_RELEASES", store)
+
+    response = client.post("/api/product-tests/create-customer-basic/validate")
+
+    assert response.status_code == 200
+    payload = response.get_json()
+    assert payload["result"] == "PASS"
+    assert payload["authorization_state"] == "REQUIRES_AUTHORIZATION"
+    assert payload["execution_ready"] is False
+    assert payload["validation_context_ref"] is None
+    assert payload["display_status"] == "AUTHORIZATION_REQUIRED"
+    assert store.reserve(
+        test_id="create-customer-basic",
+        now=app_module._trusted_local_now(),
+        ttl=app_module._PRODUCT_VALIDATION_CONTEXT_TTL,
+    ) == (None, None)
+
+
+def test_product_release_provisioning_rejects_wrong_scope_and_browser_auth_injection(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("product-release-scope")
+    monkeypatch.setattr(app_module, "_PRODUCT_OPERATIONAL_RELEASES", OperationalReleaseStore())
+    now = app_module._trusted_local_now()
+    assert app_module._provision_product_operational_release(
+        "create-customer-basic",
+        {
+            "release_key": "wrong-scope",
+            "request_plan": {
+                "environment": "QA4",
+                "workflow_profile": app_module._STANDARD_QA4_PROFILE,
+                "mode": "real-controlled",
+                "run_id": "wrong-run",
+                "owner_authorization": "browser-provided",
+                "scenario_id": "wrong-scenario",
+                "application_confirmation": app_module._APPLICATION_CONFIRMATION,
+            },
+        },
+        now + app_module._PRODUCT_VALIDATION_CONTEXT_TTL,
+    ) is False
+
+    injected = client.post(
+        "/api/product-tests/create-customer-basic/execute",
+        json={
+            "intent": "EXECUTE_IN_QA",
+            "validation_context_ref": "unknown",
+            "owner_authorization": "browser-provided",
+        },
+    )
+    assert injected.get_json() == {"result": "BLOCKED", "reason": "PRODUCT_EXECUTION_INPUT_NOT_ALLOWED"}
+
+
 def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app_client_factory):
     client, _ = app_client_factory("product-catalog-ui")
     html = client.get("/").get_data(as_text=True)
@@ -273,21 +393,42 @@ def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app
     assert 'class="app product-active" id="appShell"' in html
     assert "legacy-sidebar-control" in html
     assert 'onchange="resetProductValidation()"' in html
-    assert 'id="productExecute"' in html and "disabled>Execute test" in html
+    assert 'id="productExecute"' in html and "disabled>Run QA4 test" in html
     assert 'id="productViewEvidence"' in html
     assert 'id="productTechnicalDetails"' in html
-    assert "Local mock run: no persisted evidence artifact." in html
+    assert "Current run: no persisted evidence artifact." in html
     assert "Loading evidence availability..." in html
     assert 'list.textContent = "Loading evidence availability..."' in html
     assert "productHumanStatus(test)" in html
-    assert "Create Customer with Offer" in html
-    assert "REAL EXECUTION CONTRACT READY - AUTHORIZATION REQUIRED" in html
+    assert '<details id="diagnosticsNav">' in html
+    assert '<details id="diagnosticsSidebar">' in html
+    assert 'diagnostics.open = name === "generator" || name === "runner"' in html
+    assert "LOCAL APP" not in html
+    assert "DRY-RUN LOCAL" not in html
+    assert "Run QA4 test" in html
+    assert 'intent: "EXECUTE_IN_QA"' in html
+    assert "validation_context_ref: productValidationContextRef" in html
+    assert "owner_authorization" not in html
+    assert "Local validation passed" in html
+    assert "test.real_operation" not in html
+    assert "execution_available === true" in html
+    assert "read_only_validation_ready" in html
+    assert "QA READY" in html
+    assert "REQUIRES AUTHORIZATION" in html
+    assert "Execution verification: available" in html
+    assert "Database post-condition verification: not configured" in html
+    assert "LOCAL DIAGNOSTIC" in html
+    assert "Automatic synthetic data" not in html
+    assert "current run" in html.lower()
+    assert 'id="productCatalogSummary"' in html
+    assert "QA4 execution is contract-ready and requires explicit authorization." in html
     assert "NOT AVAILABLE" in html
     assert "data.execution_available !== true" in html
     assert 'isContractValidation ? "Validation" : "Status"' in html
-    assert "Create Customer with Offer uses the local mock." in html
-    assert "Local simulation &mdash; no QA4 request" in html
-    assert "Customer/line local simulation passed" in html
+    assert "QA4 execution is contract-ready and requires explicit authorization." in html
+    assert "QA4 readiness is evaluated locally." in html
+    assert "Current run only; no external request." not in html
+    assert "No QA request has been sent yet. QA execution requires authorization." in html
     assert 'data.validation.strategy === "LOCAL_CUSTOMER_LINE_SIMULATION"' in html
     assert 'data.validation.result === "PASS"' in html
     assert "Add Offer needs approved integration details before it can be prepared." in html
@@ -298,16 +439,24 @@ def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app
     assert 'document.getElementById("productResult").hidden = true' in html
     assert "productEvidenceReference = \"\"" in html
     assert "catch (error)" in html
-    assert "LOCAL APP" in html
+    assert "LOCAL APP" not in html
+    assert "DRY-RUN LOCAL" not in html
+    assert 'id="diagnosticsSidebar"' in html
+    assert 'diagnosticSidebar.open = name === "generator" || name === "runner"' in html
+    assert 'id="panel-history"' in html
+    assert 'id="tab-history"' in html
+    assert 'id="historicalEvidenceList"' in html
+    assert '.app.product-active .legacy-workspace-only' in html
+    assert 'class="stats-bar legacy-workspace-only"' in html
     assert "View sanitized JSON" in html
     assert "Evidence:" in html
     assert 'id="productCatalogSummary"' in html
-    assert "Real execution preparation in progress." in html
+    assert "QA READY / REQUIRES AUTHORIZATION" in html
     assert "Additional operation contract information required." in html
     assert "timestamp unavailable" in html
     assert "consistency_reason" in html
     assert "details.open = true" in html
-    assert "LOCAL READY" in html
+    assert "LOCAL DIAGNOSTIC" in html
     assert "UNAVAILABLE" in html
     assert "Additional operation contract information required." in html
     assert "productHumanStatus" in html
@@ -340,5 +489,5 @@ def test_evidence_list_is_separate_from_mock_flow_and_only_lists_known_records(a
 
     assert response.status_code == 200
     assert all(item["run_id"] in {"ALPHA_REAL_RUN_01", "ALPHA_REAL_RUN_02"} for item in response.get_json()["evidence"])
-    assert "Recent controlled evidence" in html
-    assert "Separate from local mock results" in html
+    assert "Historical runs" in html
+    assert "Separate from the current run" in html

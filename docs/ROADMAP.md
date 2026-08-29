@@ -32,7 +32,7 @@ A preparacao para execucao real deve permanecer gradual e controlada. Qualquer c
 | Milestone | State | Scope |
 | --- | --- | --- |
 | `v0.0.0-alpha.1` | DONE | Historical controlled Alpha baseline. |
-| Alpha 1.1 | READY FOR LOCAL PRODUCT VALIDATION | Catalog-driven QA4 local/mock product flow, sanitised evidence UI, and practical test tiers. Real Create Customer, Recharge, and Add Offer contracts remain separate work. |
+| Alpha 1.1 | QA-FIRST PRODUCT PREAUTH | QA-first workspace with Diagnostics secondary, product delegation to the recovered controlled Offers contract, sanitised evidence UI, and practical test tiers. Real transport remains separately authorized. |
 | Real Test Pack | NEXT | Define each new operation-scoped contract, approved read-only validation, and separate Owner authorization before any real execution. |
 | Beta Candidate | FUTURE | Expand only after independently evidenced real test packs are available. |
 

@@ -571,6 +571,54 @@ def test_sent_report_returns_sanitized_evidence_writer_failure(app_client_factor
     }
 
 
+def test_sent_report_exposes_sanitized_evidence_reference_for_active_product_run(
+    app_client_factory, monkeypatch
+):
+    client, _ = app_client_factory("qa4-evidence-reference")
+    monkeypatch.setattr(app_module, "_qa4_controlled_contract_from_environ", lambda: {"contract": "trusted"})
+    monkeypatch.setattr(app_module, "_atomic_static_preflight_ready", lambda *_args: True)
+    monkeypatch.setattr(app_module, "_atomic_operation_window_status", lambda *_args: None)
+    monkeypatch.setattr(app_module, "_governed_bda_driver", lambda: object())
+    monkeypatch.setattr(
+        app_module,
+        "run_atomic_qa4_bda_offer_discovery_and_offers_create",
+        lambda *args, **kwargs: {
+            "result": "PASS",
+            "executor_send_attempted": True,
+            "real_call_executed": True,
+            "evidence": {"response_received": True, "http_status": 200},
+        },
+    )
+    monkeypatch.setattr(
+        app_module,
+        "persist_sanitized_real_run_evidence",
+        lambda *args, **kwargs: {
+            "recorded": True,
+            "reference": "evidencias/real-controlled/ALPHA_REAL_RUN_03A.json",
+            "run_id": "ALPHA_REAL_RUN_03A",
+        },
+    )
+
+    response = client.post(
+        "/api/qa4/standard/real-controlled-run",
+        json={
+            **_context(),
+            "environment": "QA4",
+            "mode": "real-controlled",
+            "scenario_id": SYNTHETIC_OFFERS_SCENARIO,
+            "application_confirmation": "CONFIRM_QA4_CREATE_OFFERS_CUSTOMER",
+            "evaluated_at": EVALUATED_AT,
+            "run_id": "ALPHA_REAL_RUN_03A",
+            "owner_authorization": "ONE_QA4_CREATE_CUSTOMER_WITH_OFFER_RUN_03A",
+            "window_started_at": "2026-08-25T11:00:00+00:00",
+            "window_expires_at": "2026-08-25T13:00:00+00:00",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.get_json()["evidence_reference"] == "evidencias/real-controlled/ALPHA_REAL_RUN_03A.json"
+
+
 def test_selected_synthetic_scenario_api_blocks_wrong_environment_or_scenario_before_bridge(
     app_client_factory, monkeypatch
 ):
@@ -1019,6 +1067,30 @@ def test_atomic_run_id_authorization_mismatch_blocks_before_driver_or_discovery(
 
     assert result["result"] == "BLOCKED"
     assert result["bda_discovery"]["status"] == "QA4_BDA_OFFER_DISCOVERY_BLOCKED"
+
+
+def test_atomic_run_03a_binds_its_exact_bda_authorization_before_discovery(monkeypatch):
+    import core.real_execution.qa4_bda_offer_discovery as bda_discovery
+
+    calls = []
+    monkeypatch.setattr(
+        bda_discovery,
+        "run_qa4_bda_offer_discovery",
+        lambda **kwargs: calls.append(kwargs["authorization"])
+        or {"status": "QA4_BDA_OFFER_DISCOVERY_BLOCKED"},
+    )
+    result = qa4_real_controlled_bridge.run_atomic_qa4_bda_offer_discovery_and_offers_create(
+        _context() | {"run_id": "ALPHA_REAL_RUN_03A"},
+        mode="real-controlled",
+        evaluated_at=EVALUATED_AT,
+        scenario_id=SYNTHETIC_OFFERS_SCENARIO,
+        bda_environ={},
+        bda_driver=object(),
+        bda_authorization={"owner_authorization": "ONE_QA4_CREATE_CUSTOMER_WITH_OFFER_RUN_03A"},
+    )
+
+    assert result["result"] == "BLOCKED"
+    assert calls == [{"owner_authorization": "ONE_QA4_CREATE_CUSTOMER_WITH_OFFER_RUN_03A"}]
 
 
 def test_real_controlled_api_uses_atomic_handoff_and_never_constructs_http_on_bda_block(
