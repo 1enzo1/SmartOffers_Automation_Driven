@@ -64,7 +64,7 @@ Use `docs/TEST_SUITE_RATIONALIZATION_BACKLOG.md`:
 - TIER_2_INTEGRATION_OFFLINE for feature milestones;
 - TIER_3_FULL only for release milestones after manual/external-path safety is confirmed.
 
-The current inventory is 43 Python test files. The documented TIER_0 command
+The current inventory is 45 Python test files. The documented TIER_0 command
 is the default local product check.
 
 ## Run 03 status
@@ -74,3 +74,9 @@ is the default local product check.
 authorization and all existing runtime gates. `READY_FOR_RUN_03_WITH_DB_VALIDATION=false`:
 there is no approved customer/line read-only lookup. See
 `CREATE_CUSTOMER_EXTERNAL_REQUIREMENTS.md`.
+
+Alpha 1.2 contract recovery confirms that Recharge remains a local diagnostic
+because no authoritative governed mutation, response, or validation contract
+was recoverable. Standalone Add Offer remains unavailable; its exact external
+requirements are recorded separately. These states are distinct from the
+proven composite Create Customer with Offer execution path.

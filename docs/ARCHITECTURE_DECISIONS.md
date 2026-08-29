@@ -33,6 +33,18 @@ mutation is introduced to improve the interface.
 
 **Decision:** UI validation and catalog visibility never authorize real
 execution. Every future controlled QA4 run requires its own contract,
+
+## ADR-005 - QA mutation contracts are distinct from diagnostics
+
+**Decision:** `QA_IS_THE_PRODUCT=true` and `MOCK_IS_DIAGNOSTIC_ONLY=true`.
+Catalog status is truth-based: a local template never implies QA readiness.
+The proven composite Create Customer with Offer operation is not inferred to
+be a standalone Add Offer contract. Execution verification remains distinct
+from database post-condition verification.
+
+**Consequences:** Recharge stays local diagnostic and Add Offer stays
+unavailable until authoritative operation, request/response, and validation
+artifacts are supplied.
 preflight, one-shot ledger, sanitised evidence, and explicit Owner decision.
 
 **Consequences:** Run 03 preparation is documentation and source readiness

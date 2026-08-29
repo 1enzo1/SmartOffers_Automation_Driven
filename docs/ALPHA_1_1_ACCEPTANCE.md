@@ -10,8 +10,9 @@ Oracle query, or production capability. Local mocks are Diagnostics only.
 - The default UI flow is `Open app -> QA4 -> Select test -> Validate QA readiness -> Execute in QA -> Result -> View evidence`.
 - The primary workspace exposes no mock execution controls; Diagnostics is
   collapsed by default.
-- Create Customer Basic and Recharge Basic execute only local deterministic
-  simulations with attempts `0/0` and no QA4 request.
+- Create Customer with Offer is the QA-oriented product path and requires a
+  separately authorized controlled run; Recharge Basic remains a local
+  diagnostic with no governed real contract.
 - Add Offer Basic is unavailable until external contract information exists and
   does not expose a half-working Execute path.
 - Controlled evidence is read-only, allowlisted, sanitized, and displayed

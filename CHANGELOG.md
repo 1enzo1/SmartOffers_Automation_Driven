@@ -10,6 +10,9 @@
   controlled stack without adding a transport stack or enabling QA traffic.
 - Made execution verification and database post-condition verification distinct
   in readiness presentation; customer/line DB validation remains unconfigured.
+- Alpha 1.2 contract recovery keeps Recharge as LOCAL DIAGNOSTIC and Add Offer
+  as UNAVAILABLE; exact external requirements are documented without inventing
+  mutation or validation contracts.
 
 ## v0.0.0-alpha.2 - Alpha 1.1 source baseline
 

@@ -2,7 +2,7 @@
 
 This is an initial routing note for the post-Alpha test suite. It does not
 remove tests or change the default test command. The full inventory currently
-contains 43 Python test files under `tests/`.
+contains 45 Python test files under `tests/` (including shared configuration).
 
 ## Proposed tiers
 
@@ -85,8 +85,8 @@ python -m pytest -p no:cacheprovider `
   tests/test_api_catalog.py -q
 ```
 
-This is the current import/config/safety smoke group: 193 tests in about three
-seconds on the local session that created this document.
+This is the current import/config/safety smoke group: 251 tests, collected in
+about 0.66 seconds locally (execution time varies by machine).
 
 ### TIER_1_FEATURE
 
@@ -127,12 +127,23 @@ If that environment condition cannot be established, run the relevant TIER_2
 groups instead and record the limitation; do not accidentally trigger a manual
 smoke path.
 
-Default developer workflow: `TIER_0_FAST` (currently 193 tests) plus the
+The selected TIER_2 milestone group currently contains 126 tests and collected
+in about 0.49 seconds locally. Counts are routing snapshots and tiers may
+overlap by design.
+
+Default developer workflow: `TIER_0_FAST` (currently 251 tests) plus the
 smallest relevant TIER_1 feature group. A normal catalog/UI change therefore
 starts at 193 tests and adds its already-included feature test only when the
 full TIER_0 has been run; a narrower edit may run just its TIER_1 test first.
 
 ## Obvious overlap and candidates
+
+No tests were deleted in this closeout. Recommended future actions are
+merge/re-tier proposals only: share fixtures across the standard-mock modules,
+consolidate repeated manual-smoke policy fixtures, move documentation-only
+checks to a governance job, and quarantine brittle/manual external tests from
+normal discovery. Keep external-risk tests in the release/manual tier until
+measured under an explicitly controlled environment.
 
 - The three `test_qa4_standard_mock_*` files cover adjacent mock API, facade,
   runner, and UI seams. Keep them separate for now, but consider a shared
