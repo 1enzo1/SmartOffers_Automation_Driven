@@ -94,6 +94,11 @@ PRODUCT_TESTS = (
 def _public_product_test(item):
     """Return a UI-safe catalog projection with ASCII-only notices."""
     test = dict(item)
+    test["product_status"] = {
+        "create-customer-basic": "QA READY",
+        "recharge-basic": "LOCAL DIAGNOSTIC",
+        "activate-offer-basic": "UNAVAILABLE",
+    }.get(test["id"], "UNAVAILABLE")
     for private_field in ("real_authorization", "real_run_id", "scenario_id", "execution_mode"):
         test.pop(private_field, None)
     if test["id"] == "recharge-basic":

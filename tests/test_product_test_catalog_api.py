@@ -50,13 +50,16 @@ def test_product_catalog_exposes_only_three_curated_tests(app_client_factory):
     assert "real_run_id" not in tests[0]
     assert "real_authorization" not in tests[0]
     assert tests[0]["real_execution_status"] == "REAL EXECUTION CONTRACT READY - AUTHORIZATION REQUIRED"
+    assert tests[0]["product_status"] == "QA READY"
     assert tests[0]["post_execution_validation"] == "NOT AVAILABLE"
     assert tests[1]["availability"] == "READY"
     assert tests[1]["execution_available"] is True
     assert tests[1]["execution_mode_notice"] == "LOCAL DIAGNOSTIC only; QA4 execution is not available for this operation."
+    assert tests[1]["product_status"] == "LOCAL DIAGNOSTIC"
     assert "â" not in str(tests)
     assert tests[2]["availability"] == "BLOCKED_EXTERNAL_INFORMATION"
     assert tests[2]["execution_available"] is False
+    assert tests[2]["product_status"] == "UNAVAILABLE"
     assert all(item["environments"] == ["QA4"] for item in tests)
 
 

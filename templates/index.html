@@ -3463,6 +3463,7 @@ function selectedProductTest(){
 
 function productHumanStatus(test){
     if(!test) return "Unavailable"
+    if(test.product_status) return test.product_status
     if(test.id === "create-customer-basic") return "QA READY / REQUIRES AUTHORIZATION"
     if(test.id === "recharge-basic") return "LOCAL DIAGNOSTIC"
     return "UNAVAILABLE"
