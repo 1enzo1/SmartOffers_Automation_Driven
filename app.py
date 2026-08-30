@@ -658,7 +658,8 @@ def api_product_test_execute(test_id):
     if not test:
         return jsonify({"result": "BLOCKED", "reason": "TEST_NOT_FOUND"}), 404
     public_test = get_product_test(test_id)
-    request_data = request.get_json(silent=True) or {}
+    parsed_request_data = request.get_json(silent=True)
+    request_data = parsed_request_data if isinstance(parsed_request_data, dict) else {}
     if test_id == "create-customer-basic":
         if request_data.get("intent") != "EXECUTE_IN_QA":
             return jsonify({"result": "BLOCKED", "reason": "QA_EXECUTION_INTENT_REQUIRED"})

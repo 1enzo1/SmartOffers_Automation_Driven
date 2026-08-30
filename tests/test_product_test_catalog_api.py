@@ -1,4 +1,5 @@
 import app as app_module
+import pytest
 from core.real_execution.operational_release_store import OperationalReleaseStore
 
 
@@ -80,6 +81,14 @@ def test_create_customer_product_execute_requires_explicit_qa_intent_and_never_f
     assert validated.get_json()["result"] == "PASS"
     assert executed.get_json() == {"result": "BLOCKED", "reason": "QA_EXECUTION_INTENT_REQUIRED"}
     assert calls == []
+
+
+@pytest.mark.parametrize("malformed", [["intent"], "EXECUTE_IN_QA", 7])
+def test_create_customer_product_execute_blocks_non_mapping_json_without_500(app_client_factory, malformed):
+    client, _ = app_client_factory("product-malformed-input")
+    response = client.post("/api/product-tests/create-customer-basic/execute", json=malformed)
+    assert response.status_code == 200
+    assert response.get_json() == {"result": "BLOCKED", "reason": "QA_EXECUTION_INTENT_REQUIRED"}
 
 
 def test_create_customer_product_execute_does_not_expose_local_simulation_data(app_client_factory, monkeypatch):
