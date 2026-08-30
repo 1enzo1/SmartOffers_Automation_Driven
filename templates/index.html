@@ -1162,6 +1162,134 @@ select.runner-select {
     font-weight: 650;
 }
 
+#historicalEvidenceList {
+    display: grid;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+.historical-run-card {
+    padding: 14px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: rgba(20,31,49,.58);
+}
+
+.historical-run-summary {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 12px;
+    align-items: start;
+}
+
+.historical-run-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 76px;
+    padding: 7px 9px;
+    border: 1px solid var(--border-soft);
+    border-radius: 6px;
+    font-family: var(--sans);
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: .04em;
+}
+
+.historical-run-card[data-result="PASS"] .historical-run-status {
+    color: var(--good);
+    border-color: rgba(40,214,163,.3);
+    background: var(--good-soft);
+}
+
+.historical-run-card[data-result="FAIL"] .historical-run-status {
+    color: #ffd6dc;
+    border-color: rgba(255,85,113,.34);
+    background: var(--bad-soft);
+}
+
+.historical-run-card[data-result="BLOCKED"] .historical-run-status {
+    color: #d8ccff;
+    border-color: rgba(167,139,250,.34);
+    background: var(--blocked-soft);
+}
+
+.historical-run-kind,
+.historical-run-context,
+.historical-run-technical-key {
+    color: var(--muted-2);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.historical-run-title {
+    margin-top: 3px;
+    color: var(--text-strong);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.35;
+}
+
+.historical-run-context {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 7px;
+}
+
+.historical-run-context span {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+}
+
+.historical-run-technical {
+    margin-top: 12px;
+    border-top: 1px solid var(--border-soft);
+    padding-top: 10px;
+}
+
+.historical-run-technical summary {
+    color: var(--text);
+    cursor: pointer;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+.historical-run-technical-body {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.historical-run-technical-row {
+    display: grid;
+    grid-template-columns: minmax(110px, .32fr) minmax(0, 1fr);
+    gap: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    line-height: 1.45;
+}
+
+.historical-run-technical-value {
+    color: var(--text);
+    overflow-wrap: anywhere;
+}
+
+.historical-run-evidence {
+    width: fit-content;
+    margin-top: 2px;
+}
+
+.historical-run-json {
+    margin-top: 2px;
+    font-size: 11px;
+}
+
 #panel-product select {
     font-size: 13px;
 }
@@ -1270,6 +1398,9 @@ select.runner-select {
     .readiness-summary { grid-template-columns: 1fr; }
     .product-result-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .product-result-detail-row { grid-template-columns: 1fr; gap: 4px; }
+    .historical-run-summary { grid-template-columns: 1fr; gap: 10px; }
+    .historical-run-status { width: fit-content; }
+    .historical-run-technical-row { grid-template-columns: 1fr; gap: 3px; }
 }
 
 .product-result-status.status-pass { color: var(--good); }
@@ -2062,11 +2193,7 @@ pre {
         <div class="card">
             <h2>Historical runs</h2>
             <p class="subtitle">Separate from the current run. Only persisted, sanitized controlled records appear here.</p>
-            <div id="historicalEvidenceList" class="suite-note">Loading evidence availability...</div>
-            <details id="historicalEvidenceDetails" class="suite-note" hidden>
-                <summary>View sanitized JSON</summary>
-                <pre id="historicalEvidenceJson"></pre>
-            </details>
+            <div id="historicalEvidenceList">Loading evidence availability...</div>
         </div>
     </div>
 </section>
@@ -3694,24 +3821,68 @@ async function loadControlledEvidence(){
         }
         list.innerHTML = ""
         records.forEach(record => {
-            const button = document.createElement("button")
-            button.type = "button"
-            button.className = "secondary"
-            const reason = record.consistency_reason || record.reason || "Sanitized controlled record"
-            const timestamp = record.timestamp || "timestamp unavailable"
-            button.textContent = `Evidence: ${record.result} — ${record.run_id} — ${timestamp} — ${reason}`
-            button.onclick = () => viewControlledEvidence(record.run_id)
-            list.appendChild(button)
+            const status = historicalRunStatus(record)
+            const card = document.createElement("article")
+            card.className = "historical-run-card"
+            card.dataset.result = status
+
+            const summary = document.createElement("div")
+            summary.className = "historical-run-summary"
+            summary.innerHTML = `
+                <div class="historical-run-status">${status}</div>
+                <div>
+                    <div class="historical-run-kind">Historical QA scenario</div>
+                    <div class="historical-run-title">${escapeHtml(historicalRunLabel(record))}</div>
+                    <div class="historical-run-context">
+                        <span>${escapeHtml(record.environment || "Environment unavailable")}</span>
+                        <span>${escapeHtml(formatHistoricalTimestamp(record.timestamp))}</span>
+                    </div>
+                </div>`
+
+            const details = document.createElement("details")
+            details.className = "historical-run-technical"
+            const reason = record.consistency_reason || record.reason || "No additional classification"
+            details.innerHTML = `
+                <summary>View details</summary>
+                <div class="historical-run-technical-body">
+                    <div class="historical-run-technical-row"><span class="historical-run-technical-key">Run ID</span><span class="historical-run-technical-value">${escapeHtml(record.run_id || "Not available")}</span></div>
+                    <div class="historical-run-technical-row"><span class="historical-run-technical-key">Scenario</span><span class="historical-run-technical-value">${escapeHtml(record.scenario || "Not available")}</span></div>
+                    <div class="historical-run-technical-row"><span class="historical-run-technical-key">Classification</span><span class="historical-run-technical-value">${escapeHtml(reason)}</span></div>
+                    <button class="secondary historical-run-evidence" type="button">View sanitized evidence</button>
+                    <pre class="historical-run-json" hidden></pre>
+                </div>`
+            details.querySelector("button").onclick = () => viewControlledEvidence(record.run_id, details.querySelector("pre"))
+            card.append(summary, details)
+            list.appendChild(card)
         })
     } catch (_) {
         list.textContent = "Controlled evidence is unavailable."
     }
 }
 
-async function viewControlledEvidence(runId){
-    const details = document.getElementById("historicalEvidenceDetails")
-    const json = document.getElementById("historicalEvidenceJson")
-    if(!details || !json) return
+function historicalRunStatus(record){
+    const result = String(record?.result || "BLOCKED").toUpperCase()
+    return ["PASS", "FAIL", "BLOCKED"].includes(result) ? result : "BLOCKED"
+}
+
+function historicalRunLabel(record){
+    const scenario = String(record?.scenario || "").trim()
+    if(!scenario) return "Controlled QA run"
+    return scenario.split("_").filter(Boolean).map(part => part.toUpperCase() === "QA4" ? "QA4" : `${part.charAt(0)}${part.slice(1).toLowerCase()}`).join(" ")
+}
+
+function formatHistoricalTimestamp(timestamp){
+    const date = new Date(timestamp)
+    if(Number.isNaN(date.getTime())) return "Date unavailable"
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "UTC", hour12: false,
+    }).formatToParts(date)
+    const value = type => parts.find(part => part.type === type)?.value || ""
+    return `${value("day")} ${value("month")} ${value("year")} · ${value("hour")}:${value("minute")} UTC`
+}
+
+async function viewControlledEvidence(runId, json){
+    if(!json) return
     try {
         const response = await fetch(`/api/evidence/${encodeURIComponent(runId)}`)
         const data = await response.json()
@@ -3720,8 +3891,7 @@ async function viewControlledEvidence(runId){
     } catch (_) {
         json.textContent = "Sanitized evidence is unavailable."
     }
-    details.hidden = false
-    details.open = true
+    json.hidden = false
 }
 
 function selectedProductTest(){

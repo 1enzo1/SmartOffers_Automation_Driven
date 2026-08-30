@@ -486,14 +486,15 @@ def test_product_workspace_copy_and_typography_are_product_oriented(app_client_f
     assert 'id="historicalEvidenceList"' in html
     assert '.app.product-active .legacy-workspace-only' in html
     assert 'class="stats-bar legacy-workspace-only"' in html
-    assert "View sanitized JSON" in html
-    assert "Evidence:" in html
+    assert "View details" in html
+    assert "Historical QA scenario" in html
+    assert "Evidence:" not in html
     assert 'id="productCatalogSummary"' in html
     assert "QA READY / REQUIRES AUTHORIZATION" in html
     assert "Add Offer needs an approved integration contract before it can run." in html
-    assert "timestamp unavailable" in html
+    assert "Date unavailable" in html
     assert "consistency_reason" in html
-    assert "details.open = true" in html
+    assert "json.hidden = false" in html
     assert "LOCAL DIAGNOSTIC" in html
     assert "UNAVAILABLE" in html
     assert "Unavailable until the required integration contract is approved." in html
@@ -532,3 +533,16 @@ def test_evidence_list_is_separate_from_mock_flow_and_only_lists_known_records(a
     assert all(item["run_id"] in {"ALPHA_REAL_RUN_01", "ALPHA_REAL_RUN_02"} for item in response.get_json()["evidence"])
     assert "Historical runs" in html
     assert "Separate from the current run" in html
+
+
+def test_historical_run_ui_prioritizes_summary_and_keeps_metadata_in_details(app_client_factory):
+    """A history list must not regress to a single technical evidence line."""
+    client, _ = app_client_factory("product-history-summary")
+    html = client.get("/").get_data(as_text=True)
+
+    assert "historical-run-card" in html
+    assert "historicalRunLabel(record)" in html
+    assert "formatHistoricalTimestamp(record.timestamp)" in html
+    assert "View details" in html
+    assert "historical-run-technical" in html
+    assert "Evidence: ${record.result}" not in html
