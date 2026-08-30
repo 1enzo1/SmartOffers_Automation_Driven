@@ -197,6 +197,7 @@ def test_public_evidence_reader_uses_fixed_run_ids_and_field_allowlist():
     assert public["run_id"] == "ALPHA_REAL_RUN_02"
     assert public["result"] == "FAIL"
     assert public["consistency_reason"] == "REQUEST_NOT_CONFIRMED"
+    assert public["source_revision"] is None
     assert "endpoint" not in public
     assert "password" not in public
     assert load_sanitized_real_run_evidence("../ALPHA_REAL_RUN_02", evidence_root=root) is None

@@ -41,6 +41,7 @@ _PUBLIC_FIELDS = (
     "product_test_name",
     "db_postcondition_verified",
     "db_validation_status",
+    "source_revision",
     "evidence_capture_version",
 )
 
