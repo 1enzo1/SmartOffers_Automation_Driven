@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1035,6 +1035,38 @@ select.runner-select {
     background: linear-gradient(135deg, rgba(79,140,255,.09), rgba(20,31,49,.55));
 }
 
+.product-status-badge {
+    display: inline-flex;
+    align-items: center;
+    margin: 0 0 8px;
+    padding: 4px 8px;
+    border: 1px solid rgba(79,140,255,.28);
+    border-radius: 999px;
+    background: var(--accent-soft);
+    color: #c8dbff;
+    font-family: var(--sans);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .03em;
+}
+
+.product-status-badge.diagnostic {
+    border-color: rgba(167,139,250,.28);
+    background: var(--purple-soft);
+    color: #d8ccff;
+}
+
+.product-status-badge.unavailable {
+    border-color: var(--border-strong);
+    background: rgba(83,98,127,.12);
+    color: var(--muted);
+}
+
+.product-overview-copy {
+    display: block;
+    line-height: 1.55;
+}
+
 .product-overview .suite-note {
     margin: 0;
     border: 0;
@@ -1099,8 +1131,145 @@ select.runner-select {
 
 .product-execute-row button { min-width: 170px; }
 
+#productExecute:disabled {
+    background: var(--surface-2);
+    border-color: var(--border-strong);
+    color: var(--muted);
+}
+
+#panel-product .card h2,
+#panel-product button,
+#panel-product select,
+#panel-product label,
+#panel-product .field-label,
+#panel-product .subtitle,
+#panel-product .readiness-item .k,
+#panel-history .card h2,
+#panel-history button,
+#panel-history .subtitle {
+    font-family: var(--sans);
+}
+
+#panel-product .card h2,
+#panel-history .card h2 {
+    font-size: 15px;
+    letter-spacing: -.01em;
+}
+
+#panel-product button,
+#panel-history button {
+    font-size: 12px;
+    font-weight: 650;
+}
+
+#panel-product select {
+    font-size: 13px;
+}
+
+.product-result-hero {
+    margin-top: 14px;
+    padding: 18px;
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    background: rgba(20,31,49,.72);
+}
+
+.product-result-hero.status-pass {
+    border-color: rgba(40,214,163,.3);
+    background: linear-gradient(135deg, var(--good-soft), rgba(20,31,49,.7));
+}
+
+.product-result-hero.status-fail {
+    border-color: rgba(255,85,113,.34);
+    background: linear-gradient(135deg, var(--bad-soft), rgba(20,31,49,.7));
+}
+
+.product-result-hero.status-blocked {
+    border-color: rgba(167,139,250,.32);
+    background: linear-gradient(135deg, var(--blocked-soft), rgba(20,31,49,.7));
+}
+
+.product-result-eyebrow {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+}
+
+.product-result-hero .product-result-status {
+    background: transparent;
+    border: 0;
+    margin-top: 6px;
+    font-family: var(--sans);
+    font-size: 30px;
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1;
+}
+
+.product-result-message {
+    margin: 10px 0 0;
+    color: var(--text);
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.product-result-meta {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.product-result-meta .metric .v {
+    font-family: var(--sans);
+    font-size: 14px;
+}
+
+.product-result-detail {
+    display: grid;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.product-result-detail-row {
+    display: grid;
+    grid-template-columns: minmax(130px, .35fr) minmax(0, 1fr);
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-soft);
+    border-radius: 7px;
+    background: rgba(7,10,16,.3);
+}
+
+.product-result-detail-row .k {
+    color: var(--muted-2);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+}
+
+.product-result-detail-row .v {
+    color: var(--text);
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#productResult > .suite-note {
+    margin-top: 12px;
+    font-family: var(--sans);
+}
+
+#productViewEvidence {
+    margin-top: 10px;
+}
+
 @media (max-width: 720px) {
     .readiness-summary { grid-template-columns: 1fr; }
+    .product-result-meta { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .product-result-detail-row { grid-template-columns: 1fr; gap: 4px; }
 }
 
 .product-result-status.status-pass { color: var(--good); }
@@ -1666,7 +1835,7 @@ pre {
     <aside class="app-sidebar">
         <div class="sidebar-top">
             <div class="section-label sidebar-text">SmartOffers</div>
-            <button class="secondary sidebar-toggle" id="sidebarToggle" type="button" onclick="toggleSidebar()" aria-label="Recolher sidebar" aria-expanded="true" title="Recolher sidebar">
+            <button class="secondary sidebar-toggle" id="sidebarToggle" type="button" onclick="toggleSidebar()" aria-label="Collapse sidebar" aria-expanded="true" title="Collapse sidebar">
                 <span class="sidebar-toggle-icon" id="sidebarToggleIcon">&lt;</span>
             </button>
         </div>
@@ -1683,10 +1852,10 @@ pre {
                 <details id="diagnosticsNav">
                     <summary class="field-label">Diagnostics</summary>
                     <button class="tab-button" id="tab-generator" type="button" onclick="showWorkspace('generator')">
-                        <span class="nav-icon">G</span><span class="sidebar-text">Gerador</span><span class="tab-index">01</span>
+                        <span class="nav-icon">G</span><span class="sidebar-text">Generator</span><span class="tab-index">01</span>
                     </button>
                     <button class="tab-button" id="tab-runner" type="button" onclick="showWorkspace('runner')">
-                        <span class="nav-icon">E</span><span class="sidebar-text">Execucao</span><span class="tab-index">02</span>
+                        <span class="nav-icon">E</span><span class="sidebar-text">Execution</span><span class="tab-index">02</span>
                     </button>
                 </details>
             </nav>
@@ -1877,12 +2046,12 @@ pre {
                 <div id="productChecks" class="check-grid" hidden></div>
             </details>
             <div class="product-execute-row">
-                <button class="success" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute in QA</button>
+                <button class="primary" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute in QA</button>
                 <!-- Backward-compatible label marker for existing UI contract tests: disabled>Run QA4 test -->
             <div id="productExecuteReason" class="product-execute-note">Select a test and validate to check execution readiness.</div>
             </div>
         </div>
-        <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="summary"></div><div id="productEvidence" class="suite-note" hidden></div><button class="secondary" id="productViewEvidence" type="button" hidden onclick="viewProductEvidence()">View evidence</button><pre id="productEvidenceDetails" class="suite-note" hidden></pre><details id="productTechnicalDetails" class="suite-note" hidden><summary>Advanced / Technical details</summary><pre id="productContractPreview"></pre></details></div>
+        <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="product-result-body"></div><div id="productEvidence" class="suite-note" hidden></div><button class="secondary" id="productViewEvidence" type="button" hidden onclick="viewProductEvidence()">View evidence</button><pre id="productEvidenceDetails" class="suite-note" hidden></pre><details id="productTechnicalDetails" class="suite-note" hidden><summary>Advanced / Technical details</summary><pre id="productContractPreview"></pre></details></div>
         <details class="card" id="controlledEvidence"><summary class="field-label">Historical controlled evidence</summary><p class="subtitle">Separate from the current run. Only persisted, sanitized controlled records appear here.</p><div id="controlledEvidenceList" class="suite-note">Loading evidence availability…</div><details id="controlledEvidenceDetails" class="suite-note" hidden><summary>View sanitized JSON</summary><pre id="controlledEvidenceJson"></pre></details></details>
         <details class="card"><summary class="field-label">Advanced / Technical details</summary><p class="subtitle">Legacy generation and runner controls remain available in their own workspace.</p></details>
     </div>
@@ -2262,8 +2431,8 @@ function toggleSidebar(){
     const icon = document.getElementById("sidebarToggleIcon")
 
     toggle.setAttribute("aria-expanded", collapsed ? "false" : "true")
-    toggle.setAttribute("aria-label", collapsed ? "Expandir sidebar" : "Recolher sidebar")
-    toggle.title = collapsed ? "Expandir sidebar" : "Recolher sidebar"
+    toggle.setAttribute("aria-label", collapsed ? "Expand sidebar" : "Collapse sidebar")
+    toggle.title = collapsed ? "Expand sidebar" : "Collapse sidebar"
     icon.textContent = collapsed ? ">" : "<"
 
     try {
@@ -2280,8 +2449,8 @@ function applySidebarPreference(){
     if(collapsed){
         document.getElementById("appShell").classList.add("sidebar-collapsed")
         document.getElementById("sidebarToggle").setAttribute("aria-expanded", "false")
-        document.getElementById("sidebarToggle").setAttribute("aria-label", "Expandir sidebar")
-        document.getElementById("sidebarToggle").title = "Expandir sidebar"
+        document.getElementById("sidebarToggle").setAttribute("aria-label", "Expand sidebar")
+        document.getElementById("sidebarToggle").title = "Expand sidebar"
         document.getElementById("sidebarToggleIcon").textContent = ">"
     }
 }
@@ -3589,7 +3758,21 @@ function resetProductValidation(){
     const overview = document.getElementById("productOverview")
     if(summary){
         summary.hidden = !test
-        summary.textContent = test ? `${test.description} Status: ${productHumanStatus(test)}. ${test.id === "create-customer-basic" ? "No QA request has been sent yet. QA execution requires authorization." : test.id === "recharge-basic" ? "Local diagnostics are available separately." : "Additional operation contract information required."}` : ""
+        const displayDescription = !test
+            ? ""
+            : test.id === "create-customer-basic"
+                ? "Prepare a synthetic customer and offer for controlled QA execution."
+                : test.id === "recharge-basic"
+                    ? "Run a local recharge diagnostic without sending a QA request."
+                    : "Add Offer needs an approved integration contract before it can run."
+        const statusKind = test.id === "recharge-basic"
+            ? "diagnostic"
+            : test.id === "activate-offer-basic"
+                ? "unavailable"
+                : "qa-ready"
+        summary.innerHTML = test
+            ? `<span class="product-status-badge ${statusKind}">${escapeHtml(productHumanStatus(test))}</span><span class="product-overview-copy">${escapeHtml(displayDescription)}</span>`
+            : ""
     }
     if(overview) overview.hidden = !test
     const validateButton = document.getElementById("productValidate")
@@ -3607,7 +3790,11 @@ function resetProductValidation(){
     }
     const notice = document.getElementById("productModeNotice")
     if(notice && test){
-        notice.textContent = test.execution_mode_notice || "Static plan - no QA4 request"
+        notice.textContent = test.id === "create-customer-basic"
+            ? "Select Validate to confirm readiness. Authorization is required to execute in QA."
+            : test.id === "recharge-basic"
+                ? "Local diagnostic only. QA execution is unavailable."
+                : "Unavailable until the required integration contract is approved."
     }
 }
 
@@ -3641,17 +3828,22 @@ function renderProductResult(data){
     if(!result || !body) return
     const test = data.test || productCatalog.find(item => item.id === selectedProductTest()) || {}
     const isContractValidation = data.phase === "VALIDATION" && test.availability === "CONTRACT_READY"
-    const rows = [
-        [isContractValidation ? "Validation" : "Status", isContractValidation ? "Passed" : (data.result || "BLOCKED")],
-        ["Availability", productHumanStatus(test)],
+    const status = isContractValidation ? "Passed" : String(data.result || "BLOCKED").toUpperCase()
+    const statusClass = productResultStatusClass(isContractValidation ? "PASS" : data.result)
+    const message = productReason(data)
+    const metaRows = [
+        ["Test", test.name || "Selected test"],
         ["Environment", data.environment || "QA4"],
-        ["Test", test.name || "Selected test"], ["Duration", `${data.duration_ms || 0} ms`],
-        ["Reason", productReason(data)],
+        ...(data.attempts ? [["Attempts", data.attempts]] : []),
+        ["Duration", `${data.duration_ms || 0} ms`],
     ]
-    if(data.attempts) rows.splice(4, 0, ["Attempts", data.attempts])
+    const detailRows = []
     const capabilityNote = productCapabilityNote(test)
-    if(capabilityNote) rows.push(["Execution", capabilityNote])
-    if(test.id === "create-customer-basic") rows.push(["Post-execution validation", "NOT AVAILABLE"])
+    if(capabilityNote && isContractValidation) detailRows.push(["Execution", capabilityNote])
+    if(test.id === "create-customer-basic") detailRows.push([
+        "DB verification",
+        "Not configured. QA execution can still complete, but the database post-condition is not independently verified.",
+    ])
     if(data.validation) {
         const isLocalCustomerSimulation = data.validation.strategy === "LOCAL_CUSTOMER_LINE_SIMULATION" || data.validation.strategy === "LOCAL_MOCK_FACADE"
         const localValidationLabel = data.validation.result === "PASS"
@@ -3659,14 +3851,26 @@ function renderProductResult(data){
             : data.validation.result === "BLOCKED"
                 ? "Local validation blocked"
                 : "Local validation failed"
-        rows.push(["Validation", isLocalCustomerSimulation ? localValidationLabel : data.validation.result || "Completed"])
+        detailRows.push(["Validation", isLocalCustomerSimulation ? localValidationLabel : data.validation.result || "Completed"])
     }
-    if(data.contract_preview) rows.push(["Validation scope", "Existing QA4 contract checked. No request was sent."])
-    body.innerHTML = rows.map(([key, value], index) => `<div class="metric"><div class="k">${escapeHtml(key)}</div><div class="v ${index === 0 ? `product-result-status ${productResultStatusClass(data.result)}` : ""}">${escapeHtml(value)}</div></div>`).join("")
+    if(data.contract_preview) detailRows.push(["Validation scope", "Existing QA4 contract checked. No request was sent."])
+    body.innerHTML = `
+        <div class="product-result-hero ${statusClass}">
+            <div class="product-result-eyebrow">Result</div>
+            <div class="product-result-status ${statusClass}">${escapeHtml(status)}</div>
+            <p class="product-result-message">${escapeHtml(message)}</p>
+        </div>
+        <div class="product-result-meta">
+            ${metaRows.map(([key, value]) => `<div class="metric"><div class="k">${escapeHtml(key)}</div><div class="v">${escapeHtml(value)}</div></div>`).join("")}
+        </div>
+        <div class="product-result-detail">
+            ${detailRows.map(([key, value]) => `<div class="product-result-detail-row"><div class="k">${escapeHtml(key)}</div><div class="v">${escapeHtml(value)}</div></div>`).join("")}
+        </div>`
     const showEvidence = Boolean(data.evidence_reference) || data.result !== "BLOCKED"
+    const hasEvidenceReference = Boolean(data.evidence_reference)
     productEvidenceReference = data.evidence_reference || (showEvidence ? "Current run: no persisted evidence artifact." : "")
     const evidence = document.getElementById("productEvidence")
-    evidence.textContent = showEvidence ? `Evidence availability: ${productEvidenceReference}` : ""
+    evidence.textContent = hasEvidenceReference ? "Evidence available for this run." : (showEvidence ? "No persisted evidence is available for this run." : "")
     evidence.hidden = !showEvidence
     const evidenceButton = document.getElementById("productViewEvidence")
     const evidenceDetails = document.getElementById("productEvidenceDetails")
@@ -3713,7 +3917,9 @@ async function validateProductTest(){
     productValidated = data.result === "PASS"
     productValidationContextRef = data.validation_context_ref || ""
     const qaReady = data.execution_available === true && data.test?.read_only_validation_ready === false
-    document.getElementById("productExecute").disabled = !productValidated || !qaReady || !productValidationContextRef || testId === "recharge-basic"
+    const executeButton = document.getElementById("productExecute")
+    executeButton.disabled = !productValidated || !qaReady || !productValidationContextRef || testId === "recharge-basic"
+    const authorizationAvailable = !executeButton.disabled
     const checks = document.getElementById("productChecks")
     checks.hidden = false
     const technicalReadiness = document.getElementById("productTechnicalReadiness")
@@ -3732,17 +3938,17 @@ async function validateProductTest(){
         const dbReady = data.post_execution_db_validation_ready !== false
         readinessSummary.innerHTML = [
             ["Infrastructure", executionReady ? "Ready" : "Check required", executionReady ? "" : "info"],
-            ["Authorization", authorizationRequired ? "Required" : "Available", authorizationRequired ? "required" : ""],
+            ["Authorization", authorizationAvailable ? "Available" : "Required", authorizationAvailable ? "" : "required"],
             ["DB verification", dbReady ? "Ready" : "Not configured", dbReady ? "" : "info"]
         ].map(([key,value,kind]) => `<div class="readiness-item ${kind}"><div class="k">${key}</div><div class="v">${value}</div></div>`).join("")
         readinessSummary.hidden = false
     }
     const executeNote = document.getElementById("productExecuteReason")
     if(executeNote){
-        executeNote.textContent = authorizationRequired
-            ? "Authorization required before QA execution."
-            : (data.post_execution_db_validation_ready === false ? "Execution can proceed; DB verification is not configured." : "Ready for QA execution.")
-        executeNote.classList.toggle("ready", !document.getElementById("productExecute").disabled)
+        executeNote.textContent = executeButton.disabled
+            ? (authorizationRequired ? "Authorization required before QA execution." : "Execution is not available for this test.")
+            : "Ready for QA execution."
+        executeNote.classList.toggle("ready", authorizationAvailable)
     }
     if(!productValidated || data.execution_available !== true) renderProductResult(data)
 }

@@ -427,11 +427,46 @@ def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app
     assert "QA4 execution is contract-ready and requires explicit authorization." in html
     assert "NOT AVAILABLE" in html
     assert "data.execution_available !== true" in html
-    assert 'isContractValidation ? "Validation" : "Status"' in html
+    assert 'const status = isContractValidation ? "Passed"' in html
+
+
+def test_product_ui_marks_reserved_server_context_as_authorized_for_execution(app_client_factory):
+    client, _ = app_client_factory("product-authorized-display")
+    html = client.get("/").get_data(as_text=True)
+
+    assert "const authorizationAvailable = !executeButton.disabled" in html
+    assert '["Authorization", authorizationAvailable ? "Available" : "Required"' in html
+    assert 'executeNote.textContent = executeButton.disabled' in html
+    assert '"Ready for QA execution."' in html
+
+
+def test_product_result_renders_one_dominant_status_before_secondary_metadata(app_client_factory):
+    client, _ = app_client_factory("product-result-hierarchy")
+    html = client.get("/").get_data(as_text=True)
+
+    assert 'class="product-result-hero' in html
+    assert 'class="product-result-meta"' in html
+    assert 'class="product-result-detail"' in html
+    assert 'id="productResultBody" class="product-result-body"' in html
+    assert '.product-result-hero .product-result-status' in html
+    assert '.product-result-hero .product-result-status {\n    background: transparent;' in html
+    assert 'evidence.textContent = hasEvidenceReference ? "Evidence available for this run."' in html
+
+
+def test_product_workspace_copy_and_typography_are_product_oriented(app_client_factory):
+    client, _ = app_client_factory("product-copy-polish")
+    html = client.get("/").get_data(as_text=True)
+
+    assert '#panel-product .card h2' in html
+    assert '#panel-product button' in html
+    assert 'class="primary" id="productExecute"' in html
+    assert 'through the safe local test flow' not in html
+    assert 'Static plan - no QA4 request' not in html
+    assert 'aria-label="Collapse sidebar"' in html
     assert "QA4 execution is contract-ready and requires explicit authorization." in html
     assert "QA4 readiness is evaluated locally." in html
     assert "Current run only; no external request." not in html
-    assert "No QA request has been sent yet. QA execution requires authorization." in html
+    assert "Select Validate to confirm readiness. Authorization is required to execute in QA." in html
     assert 'data.validation.strategy === "LOCAL_CUSTOMER_LINE_SIMULATION"' in html
     assert 'data.validation.result === "PASS"' in html
     assert "Add Offer needs approved integration details before it can be prepared." in html
@@ -455,14 +490,17 @@ def test_primary_ui_hides_legacy_controls_and_resets_validation_on_selection(app
     assert "Evidence:" in html
     assert 'id="productCatalogSummary"' in html
     assert "QA READY / REQUIRES AUTHORIZATION" in html
-    assert "Additional operation contract information required." in html
+    assert "Add Offer needs an approved integration contract before it can run." in html
     assert "timestamp unavailable" in html
     assert "consistency_reason" in html
     assert "details.open = true" in html
     assert "LOCAL DIAGNOSTIC" in html
     assert "UNAVAILABLE" in html
-    assert "Additional operation contract information required." in html
+    assert "Unavailable until the required integration contract is approved." in html
     assert "productHumanStatus" in html
+    assert ".product-status-badge.diagnostic" in html
+    assert ".product-status-badge.unavailable" in html
+    assert "const statusKind = test.id === \"recharge-basic\"" in html
     assert 'const showEvidence = Boolean(data.evidence_reference) || data.result !== "BLOCKED"' in html
     assert "productReason(data)" in html
     assert "Contract preview" not in html
