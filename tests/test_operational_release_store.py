@@ -46,3 +46,38 @@ def test_expired_and_replayed_releases_cannot_be_claimed():
         None,
         "VALIDATION_CONTEXT_INVALID",
     )
+
+
+def test_provision_rejects_invalid_scope_fields_and_duplicate_release_key():
+    store = OperationalReleaseStore()
+    now = datetime(2026, 8, 29, tzinfo=timezone.utc)
+
+    invalid_cases = (
+        {"test_id": "", "trusted_release": _release(), "now": now, "expires_at": now + timedelta(minutes=1)},
+        {"test_id": "create", "trusted_release": {"release_key": "", "request_plan": {}}, "now": now, "expires_at": now + timedelta(minutes=1)},
+        {"test_id": "create", "trusted_release": {"release_key": "r", "request_plan": None}, "now": now, "expires_at": now + timedelta(minutes=1)},
+        {"test_id": "create", "trusted_release": _release("clock"), "now": now, "expires_at": now},
+    )
+    for case in invalid_cases:
+        assert store.provision(**case) is False
+
+    assert store.provision(
+        test_id="create", trusted_release=_release("duplicate"), now=now,
+        expires_at=now + timedelta(minutes=1),
+    ) is True
+    assert store.provision(
+        test_id="other", trusted_release=_release("duplicate"), now=now,
+        expires_at=now + timedelta(minutes=1),
+    ) is False
+
+
+def test_release_claim_rejects_invalid_references_and_scope_mismatch():
+    store = OperationalReleaseStore()
+    now = datetime(2026, 8, 29, tzinfo=timezone.utc)
+
+    assert store.claim(test_id="create", reference=None, now=now) == (
+        None, "VALIDATION_CONTEXT_REQUIRED"
+    )
+    assert store.claim(test_id="create", reference="unknown", now=now) == (
+        None, "VALIDATION_CONTEXT_INVALID"
+    )
