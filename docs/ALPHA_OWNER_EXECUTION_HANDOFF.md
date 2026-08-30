@@ -2,7 +2,7 @@
 
 ## Baseline and scope
 
-- baseline: `c207bda`;
+- baseline: current `codex/post-alpha-ux` source (historical Alpha tag remains immutable);
 - scenario: `CREATE_OFFERS_CUSTOMER_SYNTHETIC_QA4`;
 - environment: QA4 only;
 - attempts: one; retry: zero; fallback: false;
@@ -23,12 +23,11 @@ Offers adapter, manual executor, one-shot ledger, and evidence contract.
 The Flask application remains usable locally for the available mock boundary:
 `QA4 Standard mock` and the real-controlled API's sanitized `BLOCKED` result.
 
-## Single missing composition link
+## Product-facing execution path
 
-In an execution environment whose policy permits the Owner-authorized QA4
-mutation, bind the existing application entry to
-`run_standard_qa4_real_controlled` with only the already-supported injection
-seam:
+When an Owner-authorized QA4 mutation is intentionally scheduled, the product
+path is already bound to `run_standard_qa4_real_controlled` through the existing
+injection seam:
 
 1. resolve the ignored local QA4 runtime in memory;
 2. use the existing bounded BDA offer discovery and keep the product code only
@@ -65,3 +64,19 @@ derived URL fingerprint must match the independent approved fingerprint, while
 missing or non-matching attestation denies execution without exposing either
 value. This exception does not relax the legacy generic API-health
 path/hash preflight, which remains fail-closed for its own checkpoint.
+
+## Preauthorization checklist and stop conditions
+
+Before any live action, confirm the QA4 destination attestation, current
+operation/scenario allowlist, synthetic data, evidence capture, and a fresh
+server-side operational release. The product validation context must be
+created and consumed once; attempts remain `0/1` until immediately before a
+request, then become `1/1`. Retry and fallback stay disabled and production is
+always denied. Stop without sending a request if any gate, runtime, or network
+condition is absent; stopping is the rollback action for this one-shot flow.
+
+Expected sanitized outcomes are `PASS`, `FAIL`, or `BLOCKED`, with request and
+response state recorded by the evidence writer. Database post-condition
+validation is not configured for this product path and must not be presented as
+HTTP execution proof. This handoff ends at `READY_FOR_OWNER_AUTHORIZATION`;
+it does not provision a release, call Oracle, or send HTTP.
