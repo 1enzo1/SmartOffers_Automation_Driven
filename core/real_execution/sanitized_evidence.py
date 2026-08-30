@@ -222,7 +222,7 @@ def _persisted_record_shape_is_safe(record):
         if not isinstance(ledger, dict):
             return False
         for field in ("attempts_used", "max_attempts", "retry_count"):
-            if field in ledger and (type(ledger[field]) is not int or ledger[field] < 0):
+            if field in ledger and ledger[field] is not None and (type(ledger[field]) is not int or ledger[field] < 0):
                 return False
     return True
 
