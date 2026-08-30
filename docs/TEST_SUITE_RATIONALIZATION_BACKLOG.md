@@ -2,7 +2,8 @@
 
 This is an initial routing note for the post-Alpha test suite. It does not
 remove tests or change the default test command. The full inventory currently
-contains 48 Python test files under `tests/` (including shared configuration).
+contains 851 collected tests across 48 Python test files under `tests/`
+(including shared configuration).
 
 ## Proposed tiers
 
@@ -72,8 +73,8 @@ The tier classification is a routing rule, not an execution authorization.
 routine selectors cannot silently absorb a new file: the tier contract test
 fails until the mapping is updated. The current collection counts are:
 
-- `tier0`: 416 tests (`python -m pytest -p no:cacheprovider --collect-only -q -m tier0`)
-- `tier1`: 245 tests (`... -m tier1`)
+- `tier0`: 419 tests (`python -m pytest -p no:cacheprovider --collect-only -q -m tier0`)
+- `tier1`: 254 tests (`... -m tier1`)
 - `tier2`: 53 tests (`... -m tier2`)
 - `tier3`: 125 tests, including the four manual/external-risk modules (`... -m tier3`)
 
@@ -102,7 +103,7 @@ python -m pytest -p no:cacheprovider `
   tests/test_api_catalog.py -q
 ```
 
-This is the current import/config/safety smoke group: 251 tests, collected in
+This is the current import/config/safety smoke group: 215 tests, collected in
 about 0.66 seconds locally (execution time varies by machine).
 
 ### TIER_1_FEATURE
@@ -144,13 +145,13 @@ If that environment condition cannot be established, run the relevant TIER_2
 groups instead and record the limitation; do not accidentally trigger a manual
 smoke path.
 
-The selected TIER_2 milestone group currently contains 126 tests and collected
+The selected TIER_2 milestone group currently contains 141 tests and collected
 in about 0.49 seconds locally. Counts are routing snapshots and tiers may
 overlap by design.
 
-Default developer workflow: `TIER_0_FAST` (currently 251 tests) plus the
+Default developer workflow: `TIER_0_FAST` (currently 215 tests) plus the
 smallest relevant TIER_1 feature group. A normal catalog/UI change therefore
-starts at 193 tests and adds its already-included feature test only when the
+starts at 215 tests and adds its already-included feature test only when the
 full TIER_0 has been run; a narrower edit may run just its TIER_1 test first.
 
 ## Obvious overlap and candidates

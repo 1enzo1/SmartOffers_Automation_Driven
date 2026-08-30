@@ -22,12 +22,15 @@ its response was not durably captured.
 ## ADR-003 - Unavailable capabilities fail closed in the catalog
 
 **Decision:** Add Offer stays unavailable until its operation-scoped contract,
-governed offer source, and read-only validation are known. Create Customer and
-Recharge remain local-only until their real bindings and validations are
-approved.
+governed offer source, and read-only validation are known. Create Customer with
+Offer has a recovered execution contract but remains authorization-gated and
+has no configured post-execution DB validation; Recharge remains local-only
+until its real binding and validation are approved.
 
 **Consequences:** No hardcoded offer, arbitrary SQL, or accidental external
-mutation is introduced to improve the interface.
+mutation is introduced to improve the interface. The recovered Create Customer
+with Offer execution contract remains distinct from Recharge and standalone
+Add Offer contracts.
 
 ## ADR-004 - Real execution remains a separately authorized boundary
 
