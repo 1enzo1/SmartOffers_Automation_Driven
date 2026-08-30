@@ -2,7 +2,7 @@
 
 This is an initial routing note for the post-Alpha test suite. It does not
 remove tests or change the default test command. The full inventory currently
-contains 851 collected tests across 48 Python test files under `tests/`
+contains 853 collected tests across 48 Python test files under `tests/`
 (including shared configuration).
 
 ## Proposed tiers
@@ -73,7 +73,7 @@ The tier classification is a routing rule, not an execution authorization.
 routine selectors cannot silently absorb a new file: the tier contract test
 fails until the mapping is updated. The current collection counts are:
 
-- `tier0`: 419 tests (`python -m pytest -p no:cacheprovider --collect-only -q -m tier0`)
+- `tier0`: 421 tests (`python -m pytest -p no:cacheprovider --collect-only -q -m tier0`)
 - `tier1`: 254 tests (`... -m tier1`)
 - `tier2`: 53 tests (`... -m tier2`)
 - `tier3`: 125 tests, including the four manual/external-risk modules (`... -m tier3`)

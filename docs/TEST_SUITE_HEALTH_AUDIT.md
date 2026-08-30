@@ -2,9 +2,9 @@
 
 ## Inventory
 
-Current collection is **851 tests in 48 test files**:
+Current collection is **853 tests in 48 test files**:
 
-- Tier 0 (fast safety/import/config): 419
+- Tier 0 (fast safety/import/config): 421
 - Tier 1 (feature-targeted): 254
 - Tier 2 (offline integration/governance): 53
 - Tier 3 (release/manual-risk): 125

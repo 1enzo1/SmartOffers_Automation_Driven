@@ -64,8 +64,8 @@ Use `docs/TEST_SUITE_RATIONALIZATION_BACKLOG.md`:
 - TIER_2_INTEGRATION_OFFLINE for feature milestones;
 - TIER_3_FULL only for release milestones after manual/external-path safety is confirmed.
 
-The current inventory is 48 Python test files (851 collected tests). Executable
-markers in `tests/conftest.py` route 419 tests to TIER_0, 254 to TIER_1, 53 to
+The current inventory is 48 Python test files (853 collected tests). Executable
+markers in `tests/conftest.py` route 421 tests to TIER_0, 254 to TIER_1, 53 to
 TIER_2, and 125 to the release/manual TIER_3 set. Routine selectors exclude
 manual/external-risk modules.
 
