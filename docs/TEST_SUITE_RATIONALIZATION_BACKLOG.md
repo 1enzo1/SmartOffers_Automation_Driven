@@ -65,6 +65,23 @@ scoped authorization and environment review:
 
 The tier classification is a routing rule, not an execution authorization.
 
+## Executable routing (current)
+
+`tests/conftest.py` assigns every `test_*.py` module exactly one primary marker
+(`tier0` through `tier3`). Pytest markers are registered in `pytest.ini`, so
+routine selectors cannot silently absorb a new file: the tier contract test
+fails until the mapping is updated. The current collection counts are:
+
+- `tier0`: 406 tests (`python -m pytest -p no:cacheprovider --collect-only -q -m tier0`)
+- `tier1`: 234 tests (`... -m tier1`)
+- `tier2`: 53 tests (`... -m tier2`)
+- `tier3`: 125 tests, including the four manual/external-risk modules (`... -m tier3`)
+
+Use Tier 0 plus the relevant feature tier for small changes; add Tier 2 for
+offline integration milestones; reserve Tier 3 for release review. The marker
+assignment is local-only and performs no network, Oracle, or external-driver
+selection.
+
 ## Practical execution commands
 
 The following commands turn the routing note into a repeatable local workflow.
