@@ -1,3 +1,5 @@
+import pytest
+
 from core.real_execution.run03a_static_preflight import build_run03a_static_preflight
 
 
@@ -24,3 +26,22 @@ def test_run03a_static_preflight_blocks_missing_gate_and_malformed_input():
 def test_run03a_static_preflight_blocks_production_and_nonzero_attempts():
     assert build_run03a_static_preflight(dict(READY, production=True))["status"] == "BLOCKED"
     assert build_run03a_static_preflight(dict(READY, attempts_used="1/1"))["status"] == "BLOCKED"
+
+
+@pytest.mark.parametrize("value", ["false", "False", None, 0, 1, True])
+def test_run03a_static_preflight_rejects_non_false_production_values(value):
+    report = build_run03a_static_preflight(dict(READY, production=value))
+    assert report["status"] == "BLOCKED"
+
+
+def test_run03a_static_preflight_rejects_missing_production_and_unknown_fields():
+    missing = dict(READY)
+    del missing["production"]
+    assert build_run03a_static_preflight(missing)["status"] == "BLOCKED"
+    assert build_run03a_static_preflight(dict(READY, unexpected=True))["status"] == "BLOCKED"
+
+
+def test_run03a_static_preflight_exposes_each_gate():
+    report = build_run03a_static_preflight(READY)
+    assert report["gates"]["product_real_binding_complete"] is True
+    assert report["gates"]["production"] is True
