@@ -34,7 +34,7 @@ A preparacao para execucao real deve permanecer gradual e controlada. Qualquer c
 | `v0.0.0-alpha.1` | DONE | Historical controlled Alpha baseline. |
 | Alpha 1.1 | QA-FIRST PRODUCT PREAUTH | QA-first workspace with Diagnostics secondary, product delegation to the recovered controlled Offers contract, sanitised evidence UI, and practical test tiers. Real transport remains separately authorized. |
 | Real Test Pack | NEXT | Define each new operation-scoped contract, approved read-only validation, and separate Owner authorization before any real execution. |
-| Alpha 1.2 preparation | IN PROGRESS | Recover authoritative Recharge and standalone Add Offer contracts locally; retain truthful LOCAL DIAGNOSTIC / UNAVAILABLE states where evidence is absent. |
+| Alpha 1.2 preparation | IN PROGRESS | Local contract archaeology and safe product/test hardening are complete for this pass; authoritative Recharge and standalone Add Offer contracts remain external. |
 | Beta Candidate | FUTURE | Expand only after independently evidenced real test packs are available. |
 
 The historical Offers execution is represented by the product as **Create

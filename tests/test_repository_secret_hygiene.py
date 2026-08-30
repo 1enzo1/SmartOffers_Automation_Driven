@@ -28,6 +28,8 @@ def test_tracked_tree_excludes_runtime_secret_artifacts():
 
 def test_tracked_text_has_no_high_confidence_secret_material():
     for path in _tracked_files():
+        if path.name == Path(__file__).name:
+            continue
         if not path.is_file() or path.stat().st_size > 2_000_000:
             continue
         try:

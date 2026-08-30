@@ -13,6 +13,9 @@
 - Alpha 1.2 contract recovery keeps Recharge as LOCAL DIAGNOSTIC and Add Offer
   as UNAVAILABLE; exact external requirements are documented without inventing
   mutation or validation contracts.
+- Added executable pytest tier routing, tracked-file secret hygiene regression,
+  pure Run 03A static preflight reporting, malformed product-request guards,
+  accessibility smoke coverage, and a legacy diagnostics ownership audit.
 
 ## v0.0.0-alpha.2 - Alpha 1.1 source baseline
 

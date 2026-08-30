@@ -21,6 +21,8 @@ TIER_FILE_MAP = {
     "test_qa4_standard_mock_runner.py": "tier0", "test_qa4_standard_mock_ui.py": "tier0",
     "test_qa4_bda_mock_executor.py": "tier0", "test_smoke_consolidation.py": "tier0",
     "test_test_tier_contract.py": "tier0",
+    "test_repository_secret_hygiene.py": "tier0", "test_product_accessibility.py": "tier0",
+    "test_run03a_static_preflight.py": "tier1",
     "test_sanitized_evidence.py": "tier1", "test_operational_release_store.py": "tier1",
     "test_acm_local_runtime_preflight.py": "tier1", "test_bda_local_runtime_preflight.py": "tier1",
     "test_qa4_bda_offer_discovery.py": "tier1", "test_qa4_offers_customer_adapter.py": "tier1",
