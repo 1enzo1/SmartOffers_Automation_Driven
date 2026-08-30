@@ -670,7 +670,10 @@ def api_product_test_execute(test_id):
         )
         if reason:
             return jsonify({"result": "BLOCKED", "reason": reason})
-        report, status = _run_standard_qa4_real_controlled_request(controlled_request)
+        try:
+            report, status = _run_standard_qa4_real_controlled_request(controlled_request)
+        except Exception:
+            return jsonify({"result": "BLOCKED", "reason": "LOCAL_EXECUTION_ERROR"}), 500
         return jsonify(report), status
     if request_data.get("intent") == "EXECUTE_IN_QA" or request_data.get("validation_context_ref"):
         return jsonify({"result": "BLOCKED", "reason": "QA_EXECUTION_NOT_AVAILABLE"})

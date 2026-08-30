@@ -298,6 +298,25 @@ def test_create_customer_qa_execution_denies_missing_or_reused_validation_contex
     assert response.get_json() == {"result": "BLOCKED", "reason": "VALIDATION_CONTEXT_REQUIRED"}
 
 
+def test_create_customer_product_execute_sanitizes_local_delegate_exception(app_client_factory, monkeypatch):
+    client, _ = app_client_factory("product-local-exception")
+    _provision_trusted_product_release(monkeypatch)
+    validation = client.post("/api/product-tests/create-customer-basic/validate").get_json()
+
+    def fail(_request):
+        raise RuntimeError("private runtime detail")
+
+    monkeypatch.setattr(app_module, "_run_standard_qa4_real_controlled_request", fail)
+    response = client.post(
+        "/api/product-tests/create-customer-basic/execute",
+        json={"intent": "EXECUTE_IN_QA", "validation_context_ref": validation["validation_context_ref"]},
+    )
+
+    assert response.status_code == 500
+    assert response.get_json() == {"result": "BLOCKED", "reason": "LOCAL_EXECUTION_ERROR"}
+    assert "private runtime detail" not in response.get_data(as_text=True)
+
+
 def test_create_customer_product_context_delegates_directly_to_the_existing_atomic_controlled_stack(app_client_factory, monkeypatch):
     client, _ = app_client_factory("product-atomic-stack")
     _provision_trusted_product_release(monkeypatch)
