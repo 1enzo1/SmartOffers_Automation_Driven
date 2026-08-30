@@ -31,3 +31,17 @@ def test_validate_and_execute_start_disabled_without_selected_test(app_client_fa
     html = _page(app_client_factory)
     assert re.search(r'id="productValidate"[^>]*disabled', html)
     assert re.search(r'id="productExecute"[^>]*disabled', html)
+
+
+def test_workspace_tabs_expose_selection_and_panel_relationships(app_client_factory):
+    html = _page(app_client_factory)
+    assert 'id="tab-product"' in html and 'aria-controls="panel-product"' in html
+    assert 'id="tab-history"' in html and 'aria-controls="panel-history"' in html
+    assert 'id="tab-product" type="button" aria-selected="true"' in html
+    assert 'id="tab-history" type="button" aria-selected="false"' in html
+
+
+def test_dynamic_product_readiness_and_execution_messages_are_live_regions(app_client_factory):
+    html = _page(app_client_factory)
+    assert 'id="productReadinessSummary"' in html and 'aria-live="polite"' in html
+    assert 'id="productExecuteReason"' in html and 'aria-live="polite"' in html

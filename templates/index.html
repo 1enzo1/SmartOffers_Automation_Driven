@@ -1974,18 +1974,18 @@ pre {
         <section class="sidebar-section workspace-section">
             <div class="section-label sidebar-text">Workspace</div>
             <nav class="workspace-tabs" aria-label="Areas do dashboard">
-                <button class="tab-button active" id="tab-product" type="button" onclick="showWorkspace('product')">
+                <button class="tab-button active" id="tab-product" type="button" aria-selected="true" aria-controls="panel-product" onclick="showWorkspace('product')">
                     <span class="nav-icon">01</span><span class="sidebar-text">Run a test</span><span class="tab-index">QA4</span>
                 </button>
-                <button class="tab-button" id="tab-history" type="button" onclick="showWorkspace('history')">
+                <button class="tab-button" id="tab-history" type="button" aria-selected="false" aria-controls="panel-history" onclick="showWorkspace('history')">
                     <span class="nav-icon">H</span><span class="sidebar-text">Historical runs</span><span class="tab-index">QA4</span>
                 </button>
                 <details id="diagnosticsNav">
                     <summary class="field-label">Diagnostics</summary>
-                    <button class="tab-button" id="tab-generator" type="button" onclick="showWorkspace('generator')">
+                    <button class="tab-button" id="tab-generator" type="button" aria-selected="false" aria-controls="panel-generator" onclick="showWorkspace('generator')">
                         <span class="nav-icon">G</span><span class="sidebar-text">Generator</span><span class="tab-index">01</span>
                     </button>
-                    <button class="tab-button" id="tab-runner" type="button" onclick="showWorkspace('runner')">
+                    <button class="tab-button" id="tab-runner" type="button" aria-selected="false" aria-controls="panel-runner" onclick="showWorkspace('runner')">
                         <span class="nav-icon">E</span><span class="sidebar-text">Execution</span><span class="tab-index">02</span>
                     </button>
                 </details>
@@ -2171,7 +2171,7 @@ pre {
                 <div class="product-mode-note" id="productModeNotice">QA4 readiness is evaluated locally. Real execution requires explicit authorization.</div>
             </div>
             <button class="primary" id="productValidate" type="button" onclick="validateProductTest()" disabled>Validate</button>
-            <div id="productReadinessSummary" class="readiness-summary" hidden></div>
+            <div id="productReadinessSummary" class="readiness-summary" aria-live="polite" hidden></div>
             <details id="productTechnicalReadiness" class="technical-readiness" hidden>
                 <summary>Technical readiness details</summary>
                 <div id="productChecks" class="check-grid" hidden></div>
@@ -2179,7 +2179,7 @@ pre {
             <div class="product-execute-row">
                 <button class="primary" id="productExecute" type="button" onclick="executeProductTest()" disabled>Execute in QA</button>
                 <!-- Backward-compatible label marker for existing UI contract tests: disabled>Run QA4 test -->
-            <div id="productExecuteReason" class="product-execute-note">Select a test and validate to check execution readiness.</div>
+            <div id="productExecuteReason" class="product-execute-note" aria-live="polite">Select a test and validate to check execution readiness.</div>
             </div>
         </div>
         <div class="card" id="productResult" hidden><h2>Test result</h2><div id="productResultBody" class="product-result-body"></div><div id="productEvidence" class="suite-note" hidden></div><button class="secondary" id="productViewEvidence" type="button" hidden onclick="viewProductEvidence()">View evidence</button><pre id="productEvidenceDetails" class="suite-note" hidden></pre><details id="productTechnicalDetails" class="suite-note" hidden><summary>Advanced / Technical details</summary><pre id="productContractPreview"></pre></details></div>
@@ -2584,9 +2584,14 @@ function applySidebarPreference(){
 
 function showWorkspace(name){
     document.querySelectorAll(".tab-panel").forEach(panel => panel.classList.remove("active"))
-    document.querySelectorAll(".tab-button").forEach(tab => tab.classList.remove("active"))
+    document.querySelectorAll(".tab-button").forEach(tab => {
+        tab.classList.remove("active")
+        tab.setAttribute("aria-selected", "false")
+    })
     document.getElementById(`panel-${name}`).classList.add("active")
-    document.getElementById(`tab-${name}`).classList.add("active")
+    const activeTab = document.getElementById(`tab-${name}`)
+    activeTab.classList.add("active")
+    activeTab.setAttribute("aria-selected", "true")
     document.getElementById("appShell").classList.toggle("product-active", name === "product" || name === "history")
     const diagnostics = document.getElementById("diagnosticsNav")
     if(diagnostics) diagnostics.open = name === "generator" || name === "runner"
