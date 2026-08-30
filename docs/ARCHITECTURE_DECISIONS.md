@@ -33,6 +33,10 @@ mutation is introduced to improve the interface.
 
 **Decision:** UI validation and catalog visibility never authorize real
 execution. Every future controlled QA4 run requires its own contract,
+preflight, one-shot ledger, sanitised evidence, and explicit Owner decision.
+
+**Consequences:** Run 03 preparation is documentation and source readiness
+only. It cannot be inferred from Run 01/02 or Alpha 1.1 local tests.
 
 ## ADR-005 - QA mutation contracts are distinct from diagnostics
 
@@ -45,7 +49,3 @@ from database post-condition verification.
 **Consequences:** Recharge stays local diagnostic and Add Offer stays
 unavailable until authoritative operation, request/response, and validation
 artifacts are supplied.
-preflight, one-shot ledger, sanitised evidence, and explicit Owner decision.
-
-**Consequences:** Run 03 preparation is documentation and source readiness
-only. It cannot be inferred from Run 01/02 or Alpha 1.1 local tests.

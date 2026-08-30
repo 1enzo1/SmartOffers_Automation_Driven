@@ -46,11 +46,11 @@ other operations, other environments, and other scenarios must remain denied.
 
 ## Owner execution boundary
 
-The exact composition link above is not present in this worktree because the
-platform auto-review policy rejected the application binding.  Once that policy
-is available in the target environment, the Owner can use the existing
-application and scenario without changing business logic or supplying source
-edits.
+The product-facing composition is present in the current source: the QA-first
+application creates a server-side, operation-scoped context and delegates to
+the existing Standard Runner and real-controlled bridge.  A live run still
+requires an explicit Owner authorization and live runtime; this document does
+not grant either.
 ## Operation-scoped authorization
 
 The application confirmation is necessary but not sufficient. The persistent

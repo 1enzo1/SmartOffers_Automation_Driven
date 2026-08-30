@@ -452,3 +452,21 @@ def test_alpha_gate_record_validates_attempt_policy_without_claiming_to_store_it
 
     assert "normalizer validates `attempts=1` and `retry=0` before emitting" in normalized_content
     assert "It also records one attempt, zero retry" not in normalized_content
+
+
+def test_current_product_docs_agree_on_run03a_preauthorization_state():
+    project_state = _read("docs/PROJECT_STATE.md")
+    roadmap = _read("docs/ROADMAP.md")
+    acceptance = _read("docs/ALPHA_1_1_ACCEPTANCE.md")
+    decisions = _read("docs/ARCHITECTURE_DECISIONS.md")
+    handoff = _read("docs/ALPHA_OWNER_EXECUTION_HANDOFF.md")
+    docs = "\n".join([project_state, roadmap, acceptance, decisions, handoff])
+
+    assert "Create Customer with Offer" in docs
+    assert "READY_FOR_RUN_03_EXECUTION_PREAUTH=true" in project_state
+    assert "Run 03 is not ready or authorized." not in acceptance
+    assert "It is not equivalent to the historical `Create Customer with Offer`" not in roadmap
+    assert "The exact composition link above is not present" not in handoff
+    assert "READY_FOR_RUN_03_WITH_DB_VALIDATION=false" in project_state
+    assert "DB post-condition validation" in acceptance
+    assert "## ADR-004" in decisions and "## ADR-005" in decisions

@@ -37,8 +37,11 @@ A preparacao para execucao real deve permanecer gradual e controlada. Qualquer c
 | Alpha 1.2 preparation | IN PROGRESS | Recover authoritative Recharge and standalone Add Offer contracts locally; retain truthful LOCAL DIAGNOSTIC / UNAVAILABLE states where evidence is absent. |
 | Beta Candidate | FUTURE | Expand only after independently evidenced real test packs are available. |
 
-The adjacent Alpha Offers operation is not a Create Customer contract. Do not
-infer Run 03 readiness from a historical Offers execution.
+The historical Offers execution is represented by the product as **Create
+Customer with Offer** and is not a standalone pure customer-creation contract.
+Run 03A source readiness comes from the current governed product delegation,
+not from historical success alone; authorization and live runtime remain
+separate prerequisites.
 
 Os MVPs 7.6.x e 7.7.x sao historico concluido/aprovado. O plano futuro parte do
 recorte MVP7.8.3B DB-only:

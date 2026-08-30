@@ -29,13 +29,16 @@ Oracle query, or production capability. Local mocks are Diagnostics only.
   have approved post-execution customer/line read-only validation.
 - HTTP execution verification and database post-condition verification are
   distinct product outcomes; the latter remains not configured.
+- DB post-condition validation remains a separate capability and is not
+  configured for the current product flow.
 - Recharge Basic has a sanitized catalog mapping but no governed real binding
   or approved read-only validation contract.
 - Add Offer Basic's exact external requirements are documented in
   `ADD_OFFER_EXTERNAL_REQUIREMENTS.md`.
 - The immutable Run 02 evidence is represented as `FAIL` because a response
   was not durably captured, regardless of historical runtime reporting.
-- Run 03 is not ready or authorized.
+- Run 03A is source-ready for a separately authorized controlled execution, but
+  it is not authorized, released, or executed in this baseline.
 
 ## Acceptance gates
 
