@@ -48,6 +48,32 @@ def test_execution_route_reports_blocked_instead_of_pass(app_client_factory, mon
     assert "RUN|END|PASS" not in body
 
 
+def test_legacy_stream_does_not_expose_internal_exception_details():
+    def failing_factory(*args, **kwargs):
+        raise RuntimeError("password=super-secret internal host")
+
+    events = _collect_events(
+        service.stream_legacy_execution(
+            "variante", analisar=False, process_factory=failing_factory
+        )
+    )
+
+    assert events == [
+        "RUN|START|variante",
+        "LOG|EXECUTION_MODE|mock|environment=none|profile=none",
+        "ERROR|Legacy execution failed",
+    ]
+    assert all("super-secret" not in event and "internal host" not in event for event in events)
+
+
+def test_legacy_test_loader_rejects_paths_outside_base(monkeypatch):
+    base = Path(".test_output") / "security_loader"
+    base.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setattr(service, "BASE_PATH", str(base))
+
+    assert service.load_legacy_test("..") == {"erro": "pasta nao encontrada"}
+
+
 def test_exit_code_zero_with_error_response_is_fail():
     scenario = _scenario_folder(
         {"status": "Error", "result": False, "uniqueId": None, "event": {}}

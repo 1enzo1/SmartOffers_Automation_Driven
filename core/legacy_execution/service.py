@@ -153,8 +153,10 @@ def stream_legacy_execution(
             response_summary=response_summary,
         )
         yield f"data:RUN|END|{status}|{total_steps}|{errors}\n\n"
-    except Exception as exc:
-        yield f"data:ERROR|{str(exc)}\n\n"
+    except Exception:
+        # Compatibility endpoint: never stream secrets, paths, or connection
+        # details that may be embedded in exception text.
+        yield "data:ERROR|Legacy execution failed\n\n"
 
 
 def build_legacy_execution_env(
@@ -281,7 +283,15 @@ def load_legacy_test(name):
     if not name:
         return {}
 
-    folder = os.path.join(BASE_PATH, name)
+    base = Path(BASE_PATH).resolve()
+    folder_path = (base / str(name)).resolve()
+    try:
+        folder_path.relative_to(base)
+    except ValueError:
+        return {"erro": "pasta nao encontrada"}
+    folder = str(folder_path)
+    if folder_path == base or not folder_path.is_dir():
+        return {"erro": "pasta nao encontrada"}
 
     if not os.path.exists(folder):
         return {"erro": "pasta não encontrada"}
