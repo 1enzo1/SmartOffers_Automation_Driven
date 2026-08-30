@@ -247,6 +247,46 @@ def test_public_evidence_list_only_includes_recognized_existing_records():
     root.rmdir()
 
 
+@pytest.mark.parametrize(
+    "field,value",
+    [
+        ("result", "SUCCESS"),
+        ("http_status_class", "200"),
+        ("timestamp", {"raw": True}),
+        ("attempts_after", "1"),
+        ("request_sent", "true"),
+        ("static_preflight", {"unexpected": True}),
+    ],
+)
+def test_public_reader_rejects_malformed_persisted_fields(field, value):
+    root = Path("evidencias") / f"test-malformed-public-{uuid4().hex}"
+    directory = root / "real-controlled"
+    directory.mkdir(parents=True)
+    payload = {"run_id": "ALPHA_REAL_RUN_02", "result": "FAIL"}
+    payload[field] = value
+    path = directory / "ALPHA_REAL_RUN_02.json"
+    path.write_text(json.dumps(payload), encoding="utf-8")
+
+    assert load_sanitized_real_run_evidence("ALPHA_REAL_RUN_02", evidence_root=root) is None
+    path.unlink()
+    directory.rmdir()
+    root.rmdir()
+
+
+def test_public_reader_rejects_partial_or_invalid_json_without_exposing_content():
+    root = Path("evidencias") / f"test-partial-public-{uuid4().hex}"
+    directory = root / "real-controlled"
+    directory.mkdir(parents=True)
+    partial = directory / "ALPHA_REAL_RUN_02.json"
+    partial.write_text(json.dumps({"run_id": "ALPHA_REAL_RUN_02"}), encoding="utf-8")
+    assert load_sanitized_real_run_evidence("ALPHA_REAL_RUN_02", evidence_root=root) is None
+    partial.write_text("{truncated", encoding="utf-8")
+    assert load_sanitized_real_run_evidence("ALPHA_REAL_RUN_02", evidence_root=root) is None
+    partial.unlink()
+    directory.rmdir()
+    root.rmdir()
+
+
 def test_run_03a_evidence_is_allowlisted_with_explicit_execution_only_validation_state():
     root = Path("evidencias") / f"test-run-03a-{uuid4().hex}"
     saved = persist_sanitized_real_run_evidence(

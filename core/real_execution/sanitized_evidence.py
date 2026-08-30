@@ -128,7 +128,7 @@ def _constant_or_empty(value, expected):
 
 
 def _terminal_preflight(value):
-    return value if value in {"READY", "PASS", "BLOCKED", "NOT_RUN"} else "NOT_RECORDED"
+    return value if isinstance(value, str) and value in {"READY", "PASS", "BLOCKED", "NOT_RUN"} else "NOT_RECORDED"
 
 
 def _product_test_name(value):
@@ -181,6 +181,8 @@ def load_sanitized_real_run_evidence(run_id, *, evidence_root="evidencias"):
         return None
     if not isinstance(record, dict) or record.get("run_id") != run_id:
         return None
+    if not _persisted_record_shape_is_safe(record):
+        return None
     public = {field: record.get(field) for field in _PUBLIC_FIELDS}
     consistency_reason = _public_consistency_reason(public)
     if consistency_reason:
@@ -189,6 +191,40 @@ def load_sanitized_real_run_evidence(run_id, *, evidence_root="evidencias"):
         public["result"] = "FAIL"
         public["consistency_reason"] = consistency_reason
     return public
+
+
+def _persisted_record_shape_is_safe(record):
+    """Reject malformed persisted data before applying the public allowlist."""
+    if "result" not in record or record["result"] not in _ALLOWED_RESULTS:
+        return False
+    status_class = record.get("http_status_class")
+    if status_class is not None and status_class not in {"2xx", "3xx", "4xx", "5xx", "1xx", "none"}:
+        return False
+    for field in ("static_preflight", "operational_preflight", "destination_attestation", "authorization_verification"):
+        if field in record and (not isinstance(record[field], str) or record[field] not in {"READY", "PASS", "BLOCKED", "NOT_RUN", "NOT_RECORDED"}):
+            return False
+    timestamp = record.get("timestamp")
+    if timestamp is not None:
+        if not isinstance(timestamp, str):
+            return False
+        try:
+            datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+        except ValueError:
+            return False
+    for field in ("request_sent", "response_received"):
+        if field in record and type(record[field]) is not bool:
+            return False
+    for field in ("attempts_before", "attempts_after", "retry_count"):
+        if field in record and record[field] is not None and (type(record[field]) is not int or record[field] < 0):
+            return False
+    ledger = record.get("attempt_ledger")
+    if ledger is not None:
+        if not isinstance(ledger, dict):
+            return False
+        for field in ("attempts_used", "max_attempts", "retry_count"):
+            if field in ledger and (type(ledger[field]) is not int or ledger[field] < 0):
+                return False
+    return True
 
 
 def list_sanitized_real_run_evidence(*, evidence_root="evidencias"):
