@@ -2,6 +2,9 @@
 
 ## Unreleased - QA-first product workspace
 
+- Added a canonical current-product usage guide covering the rendered QA
+  workflow, Diagnostics, evidence/history, capability limits, and safe operator
+  actions.
 - Made QA4 the primary product journey and moved generator, runner, and mock
   tooling into collapsed Diagnostics disclosures.
 - Added truth-based product statuses: QA ready / requires authorization, local

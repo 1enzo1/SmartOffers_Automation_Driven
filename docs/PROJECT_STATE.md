@@ -16,6 +16,10 @@ are denied by default.
 
 `Open app -> QA4 -> Select test -> Validate QA readiness -> Execute in QA -> Result -> View evidence`
 
+The operator-facing description of the current UI, actions, statuses,
+limitations, Diagnostics, and safe workflows is maintained in
+[`CURRENT_PRODUCT_USAGE.md`](CURRENT_PRODUCT_USAGE.md).
+
 The primary screen is a QA-first shell over existing Flask endpoints. Mock,
 generator, and legacy runner tooling lives under collapsed Diagnostics.
 Guardrails, contracts, and technical details remain sanitized and collapsed by

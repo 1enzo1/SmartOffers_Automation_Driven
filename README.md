@@ -88,6 +88,10 @@ Para desenvolvimento local:
 python app.py
 ```
 
+Para entender o fluxo QA-first atual, o significado de cada status e o que um
+operador pode executar com seguranca, consulte
+[`docs/CURRENT_PRODUCT_USAGE.md`](docs/CURRENT_PRODUCT_USAGE.md).
+
 Rotas principais:
 
 - `GET /`
